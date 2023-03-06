@@ -1,0 +1,8 @@
+name: Grafana Backend Unit & Integration Tests
+outputs: {}
+inputs: {}
+runs:
+  using: composite
+  steps:
+  - shell: bash
+    run: go run ./cmd backend test
