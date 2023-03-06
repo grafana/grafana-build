@@ -4,4 +4,5 @@ inputs: {}
 runs:
   using: composite
   steps:
-  - run: go run ./cmd
+  - shell: bash
+    run: go run ./cmd backend build
