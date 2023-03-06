@@ -18,6 +18,8 @@ func PipelineArgsFromContext(c *cli.Context) pipelines.PipelineArgs {
 		args.Path = "."
 	}
 
+	args.Context = c
+
 	return args
 }
 

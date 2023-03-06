@@ -16,5 +16,12 @@ var TestBackendIntegration = &cli.Command{
 }
 
 var BuildBackend = &cli.Command{
-	Name: "build",
+	Name:   "build",
+	Action: PipelineAction(pipelines.GrafanaBackendBuild),
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:     "version",
+			Required: false,
+		},
+	},
 }
