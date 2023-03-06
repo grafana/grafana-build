@@ -18,7 +18,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, args PipelineArg
 		return fmt.Errorf("not a valid distribution")
 	}
 
-	buildinfo, err := containers.GetBuildInfo(ctx, d, args.Path, version)
+	buildinfo, err := containers.GetBuildInfo(ctx, d, args.Grafana, version)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, args PipelineArg
 	output := filepath.Join("bin", string(distro))
 
 	if _, err := containers.
-		CompileBackend(d, distro, args.Path, buildinfo).
+		CompileBackend(d, distro, args.Grafana, buildinfo).
 		Export(ctx, output); err != nil {
 		panic(err)
 	}

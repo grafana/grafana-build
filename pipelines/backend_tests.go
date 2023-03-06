@@ -14,7 +14,7 @@ func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArg
 	})
 
 	r := []*dagger.Container{
-		containers.BackendTestShort(c, args.Path),
+		containers.BackendTestShort(c, args.Grafana),
 	}
 
 	return containers.Run(ctx, r)
@@ -27,7 +27,7 @@ func GrafanaBackendTestIntegration(ctx context.Context, d *dagger.Client, args P
 	})
 
 	r := []*dagger.Container{
-		containers.BackendTestIntegration(c, args.Path),
+		containers.BackendTestIntegration(c, args.Grafana),
 	}
 
 	return containers.Run(ctx, r)

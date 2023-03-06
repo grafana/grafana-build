@@ -9,8 +9,9 @@ import (
 
 type PipelineArgs struct {
 	// These arguments are ones that are available at the global level.
-	Path    string
+	Grafana *dagger.Directory
 	Verbose bool
+	Version string
 
 	// Context is available for all sub-commands that define their own flags.
 	Context *cli.Context

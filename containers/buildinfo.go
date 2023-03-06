@@ -20,8 +20,7 @@ const GitImage = "alpine/git:v2.36.3"
 
 // GetBuildInfo runs a dagger pipeline using the alpine/git image to get information from the git repository.
 // Because this function both creates containers and pulls data from them, it will actually run containers to get the build info for the git repository.
-func GetBuildInfo(ctx context.Context, d *dagger.Client, path, version string) (*BuildInfo, error) {
-	dir := d.Host().Directory(path)
+func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, version string) (*BuildInfo, error) {
 	container := d.Container().From(GitImage).
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src")
