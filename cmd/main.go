@@ -92,7 +92,7 @@ var app = &cli.App{
 		{
 			Name:        "backend",
 			Usage:       "Grafana Backend (Golang) operations",
-			Subcommands: []*cli.Command{TestBackendUnit, TestBackendIntegration},
+			Subcommands: BackendCommands,
 		},
 	},
 }

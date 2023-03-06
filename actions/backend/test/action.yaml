@@ -1,4 +1,4 @@
-name: Grafana Backend Unit & Integration Tests
+name: Grafana Backend unit tests
 outputs: {}
 inputs: {}
 runs:

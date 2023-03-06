@@ -18,5 +18,13 @@ var TestBackendIntegration = &cli.Command{
 var BuildBackend = &cli.Command{
 	Name:   "build",
 	Action: PipelineAction(pipelines.GrafanaBackendBuild),
-	Flags:  []cli.Flag{},
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "distro",
+			Usage: "See the list of distributions with 'go tool dist list'",
+			Value: "linux/amd64",
+		},
+	},
 }
+
+var BackendCommands = []*cli.Command{TestBackendUnit, TestBackendIntegration, BuildBackend}
