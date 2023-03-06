@@ -1,0 +1,7 @@
+name: Build Grafana Backend
+outputs: {}
+inputs: {}
+runs:
+  using: composite
+  steps:
+  - run: go run ./cmd

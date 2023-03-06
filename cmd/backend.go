@@ -14,3 +14,7 @@ var TestBackendIntegration = &cli.Command{
 	Name:   "test-integration",
 	Action: PipelineAction(pipelines.GrafanaBackendTestIntegration),
 }
+
+var BuildBackend = &cli.Command{
+	Name: "build",
+}
