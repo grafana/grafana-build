@@ -55,7 +55,7 @@ func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		WithMountedDirectory("/src", args.Grafana).
 		WithMountedDirectory("/src/bin", backend).
 		WithMountedDirectory("/src/public", frontend).
-		WithMountedDirectory("/src/plugins-bundled/dist/input-datasource", plugin).
+		WithMountedDirectory("/src/plugins-bundled/internal/input-datasource", plugin).
 		WithWorkdir("/src").
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
 		WithExec(append([]string{"tar", "-czf", "grafana.tar.gz"}, PackagedPaths...))
