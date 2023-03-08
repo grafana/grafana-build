@@ -20,6 +20,7 @@ func NodeContainer(d *dagger.Client, base string) *dagger.Container {
 		container = container.WithExec([]string{"apk", "update"})
 		container = container.WithExec([]string{"apk", "add", "make"})
 	}
+	container = container.WithEnvVariable("NODE_OPTIONS", "--max_old_space_size=8000")
 
 	return container
 }
