@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"io/fs"
 	"log"
@@ -13,7 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func PipelineArgsFromContext(ctx context.Context, c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
+func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
 	args := pipelines.PipelineArgs{}
 	args.Verbose = c.Bool("v")
 	args.Version = c.String("version")
@@ -31,7 +30,7 @@ func PipelineArgsFromContext(ctx context.Context, c *cli.Context, client *dagger
 	}
 
 	// By default we should assume that we want to clone Grafana.
-	dir, err := containers.Clone(ctx, client, "https://github.com/grafana/grafana.git", args.Version)
+	dir, err := containers.Clone(client, "https://github.com/grafana/grafana.git", args.Version)
 	if err != nil {
 		return pipelines.PipelineArgs{}, err
 	}
@@ -66,7 +65,7 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 			return err
 		}
 
-		args, err := PipelineArgsFromContext(ctx, c, client)
+		args, err := PipelineArgsFromContext(c, client)
 		if err != nil {
 			return err
 		}
@@ -94,6 +93,7 @@ var app = &cli.App{
 			Usage:       "Grafana Backend (Golang) operations",
 			Subcommands: BackendCommands,
 		},
+		PackageCommand,
 	},
 }
 

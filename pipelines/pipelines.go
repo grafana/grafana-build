@@ -1,3 +1,4 @@
+// package pipelines has functions and types that orchestrate containers.
 package pipelines
 
 import (

@@ -1,7 +1,6 @@
 package containers
 
 import (
-	"context"
 	"errors"
 	"strconv"
 
@@ -15,7 +14,7 @@ type GitCloneOptions struct {
 }
 
 // CloneContainer returns the container definition that uses git clone to clone the 'git url' and checks out the ref provided at 'ref'.
-func CloneContainer(ctx context.Context, d *dagger.Client, opts *GitCloneOptions) (*dagger.Container, error) {
+func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container, error) {
 	if opts.URL == "" {
 		return nil, errors.New("URL can not be empty")
 	}
@@ -42,8 +41,8 @@ func CloneContainer(ctx context.Context, d *dagger.Client, opts *GitCloneOptions
 }
 
 // Clone returns the directory with the cloned repository ('url') and checked out ref ('ref').
-func Clone(ctx context.Context, d *dagger.Client, url, ref string) (*dagger.Directory, error) {
-	container, err := CloneContainer(ctx, d, &GitCloneOptions{
+func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
+	container, err := CloneContainer(d, &GitCloneOptions{
 		URL:   url,
 		Ref:   ref,
 		Depth: 1,

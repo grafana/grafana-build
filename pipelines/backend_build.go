@@ -10,25 +10,32 @@ import (
 	"github.com/grafana/grafana-build/executil"
 )
 
+func GrafanaBackendBuildDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, distro executil.Distribution, version string) (*dagger.Directory, error) {
+	if distro == "" {
+		return nil, fmt.Errorf("not a valid distribution")
+	}
+
+	buildinfo, err := containers.GetBuildInfo(ctx, d, src, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return containers.CompileBackend(d, distro, src, buildinfo), nil
+}
+
 // GrafanaBackendBuild builds the Grafana backend.
 func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	version := args.Context.String("version")
 	distro := executil.Distribution(args.Context.String("distro"))
-	if distro == "" {
-		return fmt.Errorf("not a valid distribution")
-	}
+	output := filepath.Join("bin", string(distro))
 
-	buildinfo, err := containers.GetBuildInfo(ctx, d, args.Grafana, version)
+	container, err := GrafanaBackendBuildDirectory(ctx, d, args.Grafana, distro, version)
 	if err != nil {
 		return err
 	}
 
-	output := filepath.Join("bin", string(distro))
-
-	if _, err := containers.
-		CompileBackend(d, distro, args.Grafana, buildinfo).
-		Export(ctx, output); err != nil {
-		panic(err)
+	if _, err := container.Export(ctx, output); err != nil {
+		return err
 	}
 
 	return nil
