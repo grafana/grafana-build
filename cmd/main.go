@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -13,9 +14,11 @@ import (
 )
 
 func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
-	args := pipelines.PipelineArgs{}
-	args.Verbose = c.Bool("v")
-	args.Version = c.String("version")
+	var (
+		verbose    = c.Bool("v")
+		version    = c.String("version")
+		enterprise = c.Bool("enterprise")
+	)
 
 	path := c.Args().Get(0)
 	if path == "" {
@@ -25,30 +28,49 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 	f, err := os.Stat(path)
 	// It's okay if the folder doesn't exist; if it doesn't, we'll just clone the repo.
 	// Other errors though it's worth just returning on.
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return pipelines.PipelineArgs{}, err
-	}
-
-	// By default we should assume that we want to clone Grafana.
-	dir, err := containers.Clone(client, "https://github.com/grafana/grafana.git", args.Version)
-	if err != nil {
-		return pipelines.PipelineArgs{}, err
-	}
-
-	// If it does exist but it's not a directory then we should throw an error.
-	// If it doesn't exist, then this block will be skipped and the project will be cloned.
-	if f != nil {
+	if err == nil {
+		// If it does exist but it's not a directory then we should throw an error.
+		// If it doesn't exist, then this block will be skipped and the project will be cloned.
 		if !f.IsDir() {
 			return pipelines.PipelineArgs{}, errors.New("path provided is not a directory")
 		}
 
-		dir = client.Host().Directory(path)
+		return pipelines.PipelineArgs{
+			Verbose:    verbose,
+			Version:    version,
+			Enterprise: enterprise,
+			Context:    c,
+			Grafana:    client.Host().Directory(path),
+		}, nil
 	}
 
-	args.Context = c
-	args.Grafana = dir
+	if !errors.Is(err, fs.ErrNotExist) {
+		return pipelines.PipelineArgs{}, err
+	}
 
-	return args, nil
+	// If the folder doesn't exist, then we want to clone Grafana.
+	src, err := containers.Clone(client, "https://github.com/grafana/grafana.git", version)
+	if err != nil {
+		return pipelines.PipelineArgs{}, err
+	}
+
+	// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
+	if enterprise {
+		enterpriseDir, err := containers.CloneWithSSHAuth(client, filepath.Clean(os.Getenv("HOME")+"/.ssh/id_rsa"), "git@github.com:grafana/grafana-enterprise.git", version)
+		if err != nil {
+			return pipelines.PipelineArgs{}, err
+		}
+
+		src = containers.InitializeEnterprise(client, src, enterpriseDir)
+	}
+
+	return pipelines.PipelineArgs{
+		Verbose:    verbose,
+		Version:    version,
+		Enterprise: enterprise,
+		Context:    c,
+		Grafana:    src,
+	}, nil
 }
 
 func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
@@ -81,6 +103,10 @@ var app = &cli.App{
 			Aliases: []string{"v"},
 			Value:   false,
 		},
+		&cli.BoolFlag{
+			Name:  "enterprise",
+			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
+		},
 		&cli.StringFlag{
 			Name:     "version",
 			Required: false,
@@ -98,7 +124,6 @@ var app = &cli.App{
 }
 
 func main() {
-
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}

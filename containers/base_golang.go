@@ -13,7 +13,7 @@ func GolangContainer(d *dagger.Client, base string) *dagger.Container {
 	// The Golang alpine containers don't come with make installed
 	if strings.Contains(base, "alpine") {
 		container = container.WithExec([]string{"apk", "update"})
-		container = container.WithExec([]string{"apk", "add", "make"})
+		container = container.WithExec([]string{"apk", "add", "make", "build-base"})
 	}
 
 	return container

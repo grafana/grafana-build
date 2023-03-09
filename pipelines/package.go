@@ -3,13 +3,12 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/executil"
 )
-
-const PackagerContainer = "busybox:1.36"
 
 // PackagedPaths are paths that are included in the grafana tarball.
 var PackagedPaths = []string{
@@ -48,16 +47,23 @@ func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		return err
 	}
 
-	plugin := containers.BuildPlugin(d, src, "plugins-bundled/internal/input-datasource", nodeVersion)
+	plugins, err := containers.BuildPlugins(ctx, d, src, "plugins-bundled/internal", nodeVersion)
+	if err != nil {
+		return err
+	}
 
 	packager := d.Container().
-		From(PackagerContainer).
+		From(containers.BusyboxImage).
 		WithMountedDirectory("/src", args.Grafana).
 		WithMountedDirectory("/src/bin", backend).
 		WithMountedDirectory("/src/public", frontend).
-		WithMountedDirectory("/src/plugins-bundled/internal/input-datasource", plugin).
-		WithWorkdir("/src").
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
+		WithWorkdir("/src")
+
+	for _, v := range plugins {
+		packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
+	}
+
+	packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
 		WithExec(append([]string{"tar", "-czf", "grafana.tar.gz"}, PackagedPaths...))
 
 	if _, err := packager.File("grafana.tar.gz").Export(ctx, "grafana.tar.gz"); err != nil {

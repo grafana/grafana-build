@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"context"
 	"path"
 
 	"dagger.io/dagger"
@@ -23,7 +24,22 @@ type Plugin struct {
 	Directory *dagger.Directory
 }
 
-/// // BuildAllPlugins builds all plugins in the directory located at 'src'. Each sub-directory is assumed to be a plugin.
-/// func BuildAllPlugins(d *dagger.Client, src *dagger.Directory, nodeVersion string) []Plugin {
-/// 	return nil
-/// }
+// BuildPlugins builds all plugins in the directory located at 'pluginsPath' in 'src'. Each sub-directory is assumed to be a plugin.
+func BuildPlugins(ctx context.Context, d *dagger.Client, src *dagger.Directory, pluginsPath, nodeVersion string) ([]Plugin, error) {
+	dir := src.Directory(pluginsPath)
+	entries, err := dir.Entries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	plugins := make([]Plugin, len(entries))
+	for i, v := range entries {
+		plugins[i] = Plugin{
+			Name: v,
+			// In a normal situation we would provide the directory as 'dir' and simply use the sub-path of 'v' but the plugins need the entire source tree of Grafana.
+			Directory: BuildPlugin(d, src, path.Join(pluginsPath, v), nodeVersion),
+		}
+	}
+
+	return plugins, nil
+}

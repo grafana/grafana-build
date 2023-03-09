@@ -9,17 +9,21 @@ import (
 	"github.com/grafana/grafana-build/executil"
 )
 
-const GoImage = "golang:1.20.1"
+const GoImage = "golang:1.20.1-alpine"
 
 var DefaultDistros = []executil.Distribution{executil.DistDarwinAMD64, executil.DistDarwinARM64, executil.DistLinuxAMD64, executil.DistLinuxARM, executil.DistLinuxARM64, executil.DistWindowsAMD64}
 
+var GrafanaCommands = []string{
+	"grafana",
+	"grafana-server",
+	"grafana-cli",
+}
+
 func compileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
 	opts := &executil.GoBuildOpts{
-		Main:              path.Join("pkg", "cmd", "grafana"),
-		Output:            path.Join("bin", string(distro), "grafana"),
 		ExperimentalFlags: []string{},
 		Distribution:      distro,
-		CGOEnabled:        false,
+		CGOEnabled:        true,
 		TrimPath:          true,
 		LDFlags: map[string][]string{
 			"-w": nil,
@@ -44,20 +48,27 @@ func compileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 	}
 
 	var (
-		cmd = executil.GoBuildCmd(opts)
 		env = executil.GoBuildEnv(opts)
 	)
 
-	log.Println("Building backend with env", env)
-	log.Println("Building backend with command", cmd)
 	builder := GolangContainer(d, GoImage).
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src").
-		WithExec([]string{"make", "gen-go"}).
-		WithExec(cmd.Args)
+		WithExec([]string{"make", "gen-go"})
 
 	for k, v := range env {
 		builder = builder.WithEnvVariable(k, v)
+	}
+
+	for _, v := range GrafanaCommands {
+		opts := opts
+		opts.Main = path.Join("pkg", "cmd", v)
+		opts.Output = path.Join("bin", string(distro), v)
+
+		cmd := executil.GoBuildCmd(opts)
+		log.Printf("Building '%s' with env: '%+v'", v, env)
+		log.Printf("Building '%s' with command: '%+v'", v, cmd)
+		builder = builder.WithExec(cmd.Args)
 	}
 
 	return builder
