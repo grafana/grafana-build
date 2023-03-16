@@ -13,6 +13,33 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var app = &cli.App{
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "verbose",
+			Aliases: []string{"v"},
+			Value:   false,
+		},
+		&cli.BoolFlag{
+			Name:  "enterprise",
+			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
+		},
+		&cli.StringFlag{
+			Name:     "version",
+			Required: false,
+			Value:    "main",
+		},
+	},
+	Commands: []*cli.Command{
+		{
+			Name:        "backend",
+			Usage:       "Grafana Backend (Golang) operations",
+			Subcommands: BackendCommands,
+		},
+		PackageCommand,
+	},
+}
+
 func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
 	var (
 		verbose    = c.Bool("v")
@@ -94,33 +121,6 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 
 		return pf(c.Context, client, args)
 	}
-}
-
-var app = &cli.App{
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "verbose",
-			Aliases: []string{"v"},
-			Value:   false,
-		},
-		&cli.BoolFlag{
-			Name:  "enterprise",
-			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
-		},
-		&cli.StringFlag{
-			Name:     "version",
-			Required: false,
-			Value:    "main",
-		},
-	},
-	Commands: []*cli.Command{
-		{
-			Name:        "backend",
-			Usage:       "Grafana Backend (Golang) operations",
-			Subcommands: BackendCommands,
-		},
-		PackageCommand,
-	},
 }
 
 func main() {
