@@ -10,7 +10,7 @@ var PackageCommand = &cli.Command{
 	Usage:  "Creates a grafana.tar.gz in the current working directory",
 	Action: PipelineAction(pipelines.Package),
 	Flags: []cli.Flag{
-		FlagDistro,
+		FlagDistros,
 	},
 	Subcommands: []*cli.Command{
 		{

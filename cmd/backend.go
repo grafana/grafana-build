@@ -19,7 +19,7 @@ var BuildBackend = &cli.Command{
 	Name:   "build",
 	Action: PipelineAction(pipelines.GrafanaBackendBuild),
 	Flags: []cli.Flag{
-		FlagDistro,
+		FlagDistros,
 	},
 }
 

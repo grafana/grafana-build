@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -23,24 +24,27 @@ var PackagedPaths = []string{
 	"docs/sources/",
 }
 
-func TarFilename(args PipelineArgs) string {
-	name := "grafana.tar.gz"
+func TarFilename(args PipelineArgs, distro executil.Distribution) string {
+	name := "grafana"
 	if args.Enterprise {
-		name = "grafana-enterprise.tar.gz"
+		name = "grafana-enterprise"
 	}
 
-	return name
+	suffix := string(distro)
+	suffix = strings.ReplaceAll(suffix, "/", "-")
+
+	return fmt.Sprintf("%s-%s.tar.gz", name, suffix)
 }
 
-// PackageFile builds and packages Grafana into a tar.gz and returns the dagger file that holds the tarball.
-func PackageFile(ctx context.Context, d *dagger.Client, args PipelineArgs) (*dagger.File, error) {
+// PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
+func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
 	var (
 		src     = args.Grafana
 		version = args.Context.String("version")
-		distro  = executil.Distribution(args.Context.String("distro"))
+		distros = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	)
 
-	backend, err := GrafanaBackendBuildDirectory(ctx, d, src, distro, version)
+	backends, err := GrafanaBackendBuildDirectories(ctx, d, src, distros, version)
 	if err != nil {
 		return nil, err
 	}
@@ -61,40 +65,46 @@ func PackageFile(ctx context.Context, d *dagger.Client, args PipelineArgs) (*dag
 		return nil, err
 	}
 
-	packager := d.Container().
-		From(containers.BusyboxImage).
-		WithMountedDirectory("/src", args.Grafana).
-		WithMountedDirectory("/src/bin", backend).
-		WithMountedDirectory("/src/public", frontend).
-		WithWorkdir("/src")
+	packages := make(map[executil.Distribution]*dagger.File, len(backends))
+	for k, backend := range backends {
+		packager := d.Container().
+			From(containers.BusyboxImage).
+			WithMountedDirectory("/src", args.Grafana).
+			WithMountedDirectory("/src/bin", backend).
+			WithMountedDirectory("/src/public", frontend).
+			WithWorkdir("/src")
 
-	for _, v := range plugins {
-		packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
+		for _, v := range plugins {
+			packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
+		}
+		name := TarFilename(args, k)
+		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
+			WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
+		packages[k] = packager.File(name)
 	}
-	name := TarFilename(args)
-	packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
-		WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
 
-	return packager.File(name), nil
+	return packages, nil
 }
 
-// Package builds and packages Grafana into a tar.gz.
+// Package builds and packages Grafana into a tar.gz for each distribution provided.
 func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	file, err := PackageFile(ctx, d, args)
+	packages, err := PackageFiles(ctx, d, args)
 	if err != nil {
 		return err
 	}
 
-	name := TarFilename(args)
-	if _, err := file.Export(ctx, name); err != nil {
-		return err
+	for k, file := range packages {
+		name := TarFilename(args, k)
+		if _, err := file.Export(ctx, name); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 // PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
 func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	targz, err := PackageFile(ctx, d, args)
+	packages, err := PackageFiles(ctx, d, args)
 	if err != nil {
 		return err
 	}
@@ -104,10 +114,17 @@ func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) er
 		auth = containers.NewGCPServiceAccount(key)
 	}
 
-	uploader, err := containers.GCSUploadFile(d, containers.GoogleCloudImage, auth, targz, args.Context.Path("destination"))
-	if err != nil {
-		return err
+	for distro, targz := range packages {
+		dst := path.Join(args.Context.Path("destination"), TarFilename(args, distro))
+		uploader, err := containers.GCSUploadFile(d, containers.GoogleCloudImage, auth, targz, dst)
+		if err != nil {
+			return err
+		}
+
+		if err := containers.ExitError(ctx, uploader); err != nil {
+			return err
+		}
 	}
 
-	return containers.ExitError(ctx, uploader)
+	return nil
 }
