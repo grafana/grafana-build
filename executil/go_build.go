@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-
-	"dagger.io/dagger"
 )
 
 // Distribution is a string that represents the GOOS and GOARCH environment variables joined by a "/".
@@ -135,8 +133,14 @@ func DistrosFromStringSlice(s []string) []Distribution {
 	return d
 }
 
-func Platform(d Distribution) dagger.Platform {
-	return dagger.Platform(d)
+func DistroOneOf(d Distribution, distros []Distribution) bool {
+	for _, v := range distros {
+		if d == v {
+			return true
+		}
+	}
+
+	return false
 }
 
 func IsWindows(d Distribution) bool {
@@ -173,8 +177,11 @@ type GoBuildOpts struct {
 	// Workdir should be the root of the project, ideally where the go.mod lives.
 	Workdir string
 
-	// Distribution is the combination of OS/architecture that this program is compiled for.
-	Distribution Distribution
+	// OS is value supplied to the GOOS environment variable
+	OS string
+
+	// Arch is value supplied to the GOARCH environment variable
+	Arch string
 
 	// BuildMode: The 'go build' and 'go install' commands take a -buildmode argument which
 	// indicates which kind of object file is to be built. Currently supported values
@@ -198,7 +205,7 @@ type GoBuildOpts struct {
 	// Valid values are sse2 (default), softfloat.
 	Go386 Go386
 
-	// CC is the command to use to compile C code when CGO is enabled.
+	// CC is the command to use to compile C code when CGO is enabled. (Sets the "CC" environment variable)
 	CC string
 
 	// Output is the path where the compiled artifact should be produced; the '-o' flag basically.
@@ -220,7 +227,10 @@ func OSAndArch(d Distribution) (string, string) {
 
 // GoBuildEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.
 func GoBuildEnv(opts *GoBuildOpts) map[string]string {
-	os, arch := OSAndArch(opts.Distribution)
+	var (
+		os   = opts.OS
+		arch = opts.Arch
+	)
 
 	env := map[string]string{"GOOS": os, "GOARCH": arch}
 

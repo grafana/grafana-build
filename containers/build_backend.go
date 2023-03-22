@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-build/executil"
 )
 
-const GoImage = "golang:1.20.1-alpine"
+const GoImage = "golang:1.20.1-bullseye"
 
 var GrafanaCommands = []string{
 	"grafana",
@@ -19,9 +19,13 @@ var GrafanaCommands = []string{
 
 func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
 	log.Println("Creating Grafana backend build container for", distro)
+
+	os, arch := executil.OSAndArch(distro)
+
 	opts := &executil.GoBuildOpts{
 		ExperimentalFlags: []string{},
-		Distribution:      distro,
+		OS:                os,
+		Arch:              arch,
 		CGOEnabled:        true,
 		TrimPath:          true,
 		LDFlags: map[string][]string{
@@ -50,10 +54,29 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		env = executil.GoBuildEnv(opts)
 	)
 
-	builder := GolangContainer(d, executil.Platform(distro), GoImage).
+	platform := dagger.Platform("linux/amd64")
+	if arch == "arm64" {
+		platform = dagger.Platform("linux/arm64")
+	}
+
+	if arch == "arm" {
+		platform = dagger.Platform("linux/arm")
+	}
+
+	builder := GolangContainer(d, platform, GoImage).
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go"})
+
+	// If we're building for darwin...
+	if os == "darwin" {
+		if arch == "amd64" {
+			builder = WithDarwinAMD64Toolchain(builder)
+		}
+		if arch == "arm64" {
+			builder = WithDarwinARM64Toolchain(builder)
+		}
+	}
 
 	for k, v := range env {
 		builder = builder.WithEnvVariable(k, v)
