@@ -31,7 +31,7 @@ func lookupGitHubToken(c *cli.Context) (string, error) {
 	var errData bytes.Buffer
 	ghPath, err := exec.LookPath("gh")
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("GitHub CLI not installed (expected a --github-token flag, a GITHUB_TOKEN environment variable, or a configured GitHub CLI)")
 	}
 
 	cmd := exec.CommandContext(c.Context, ghPath, "auth", "token")
