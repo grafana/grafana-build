@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -29,6 +29,20 @@ var app = &cli.App{
 			Required: false,
 			Value:    "main",
 		},
+		&cli.StringFlag{
+			Name:     "github-token",
+			Required: false,
+		},
+	},
+	Before: func(cctx *cli.Context) error {
+		token, err := lookupGitHubToken(cctx)
+		if err != nil {
+			return fmt.Errorf("failed to find a GitHub access token: %w", err)
+		}
+		if token == "" {
+			return fmt.Errorf("could not find a GitHub token in the environment")
+		}
+		return cctx.Set("github-token", token)
 	},
 	Commands: []*cli.Command{
 		{
@@ -83,7 +97,7 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 
 	// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
 	if enterprise {
-		enterpriseDir, err := containers.CloneWithSSHAuth(client, filepath.Clean(os.Getenv("HOME")+"/.ssh/id_rsa"), "git@github.com:grafana/grafana-enterprise.git", version)
+		enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", version)
 		if err != nil {
 			return pipelines.PipelineArgs{}, err
 		}
