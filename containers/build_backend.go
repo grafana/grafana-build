@@ -1,7 +1,6 @@
 package containers
 
 import (
-	"fmt"
 	"log"
 	"path"
 
@@ -9,7 +8,7 @@ import (
 	"github.com/grafana/grafana-build/executil"
 )
 
-const GoImage = "golang:1.20.1-bullseye"
+const GoImage = "golang:1.20.1-alpine"
 
 var GrafanaCommands = []string{
 	"grafana",
@@ -20,41 +19,19 @@ var GrafanaCommands = []string{
 func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
 	log.Println("Creating Grafana backend build container for", distro)
 
-	os, arch := executil.OSAndArch(distro)
-
-	opts := &executil.GoBuildOpts{
-		ExperimentalFlags: []string{},
-		OS:                os,
-		Arch:              arch,
-		CGOEnabled:        true,
-		TrimPath:          true,
-		LDFlags: map[string][]string{
-			"-w": nil,
-			"-s": nil,
-			"-X": {
-				fmt.Sprintf("main.version=%s", buildinfo.Version),
-				fmt.Sprintf("main.commit=%s", buildinfo.Commit),
-				fmt.Sprintf("main.buildstamp=%d", buildinfo.Timestamp.Unix()),
-				fmt.Sprintf("main.buildBranch=%s", buildinfo.Branch),
-			},
-			"-linkmode=external":  nil,
-			"-extldflags=-static": nil,
-		},
-		Tags: []string{
-			"netgo",
-			"osusergo",
-		},
-	}
-
-	if executil.IsWindows(distro) {
-		opts.BuildMode = executil.BuildModeExe
+	// These options determine the CLI arguments and environment variables passed to the go build command.
+	goBuildOptsFunc, ok := DistributionGoOpts[distro]
+	if !ok {
+		goBuildOptsFunc = DefaultBuildOpts
 	}
 
 	var (
-		env = executil.GoBuildEnv(opts)
+		opts     = goBuildOptsFunc(distro, buildinfo)
+		os, arch = executil.OSAndArch(distro)
+		env      = executil.GoBuildEnv(opts)
+		platform = dagger.Platform("linux/amd64")
 	)
 
-	platform := dagger.Platform("linux/amd64")
 	if arch == "arm64" {
 		platform = dagger.Platform("linux/arm64")
 	}
@@ -63,19 +40,19 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		platform = dagger.Platform("linux/arm")
 	}
 
-	builder := GolangContainer(d, platform, GoImage).
-		WithMountedDirectory("/src", dir).
+	// For now, if we're not building for Linux, then we're going to be using rfratto/viceroy.
+	builder := GolangContainer(d, platform, GoImage)
+	if os != "linux" {
+		builder = ViceroyContainer(d, distro, platform, ViceroyImage)
+	}
+
+	builder = builder.WithMountedDirectory("/src", dir).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go"})
 
-	// If we're building for darwin...
-	if os == "darwin" {
-		if arch == "amd64" {
-			builder = WithDarwinAMD64Toolchain(builder)
-		}
-		if arch == "arm64" {
-			builder = WithDarwinARM64Toolchain(builder)
-		}
+	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
+	if os != "linux" {
+		builder = WithViceroyEnv(builder, opts)
 	}
 
 	for k, v := range env {
@@ -88,8 +65,10 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		opts.Output = path.Join("bin", string(distro), v)
 
 		cmd := executil.GoBuildCmd(opts)
+		log.Printf("Building '%s' on platform: '%+v'", v, platform)
 		log.Printf("Building '%s' with env: '%+v'", v, env)
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
+		builder = builder.WithExec([]string{"env"})
 		builder = builder.WithExec(cmd.Args)
 	}
 
@@ -111,7 +90,8 @@ type CompileConfig struct {
 // CompileBackend returns a reference to a dagger directory that contains a usable Grafana binary from the cloned source code at 'grafanaPath'.
 // The returned directory can be exported, which will cause the container to execute the build, or can be mounted into other containers.
 func CompileBackend(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Directory {
-	return BackendBinDir(CompileBackendBuilder(d, distro, dir, buildinfo), distro)
+	container := CompileBackendBuilder(d, distro, dir, buildinfo)
+	return BackendBinDir(container, distro)
 }
 
 func BackendBinDir(container *dagger.Container, distro executil.Distribution) *dagger.Directory {

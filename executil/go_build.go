@@ -208,6 +208,9 @@ type GoBuildOpts struct {
 	// CC is the command to use to compile C code when CGO is enabled. (Sets the "CC" environment variable)
 	CC string
 
+	// CXX is the command to use to compile C++ code when CGO is enabled. (Sets the "CXX" environment variable)
+	CXX string
+
 	// Output is the path where the compiled artifact should be produced; the '-o' flag basically.
 	Output string
 
@@ -223,6 +226,22 @@ type GoBuildOpts struct {
 func OSAndArch(d Distribution) (string, string) {
 	p := strings.Split(string(d), "/")
 	return p[0], p[1]
+}
+
+func ArchVersion(d Distribution) string {
+	p := strings.Split(string(d), "/")
+	if len(p) > 3 {
+		return ""
+	}
+
+	// ARM specifically must be specified without a 'v' prefix.
+	// GOAMD64, however, expects a 'v' prefix.
+	// Specifying the ARM version with the 'v' prefix and without is supported in Docker's platform argument, however.
+	if arch := p[1]; arch == "arm" {
+		return strings.TrimPrefix(p[2], "v")
+	}
+
+	return p[2]
 }
 
 // GoBuildEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.
@@ -247,6 +266,14 @@ func GoBuildEnv(opts *GoBuildOpts) map[string]string {
 
 	if opts.ExperimentalFlags != nil {
 		env["GOEXPERIMENT"] = strings.Join(opts.ExperimentalFlags, ",")
+	}
+
+	if opts.CC != "" {
+		env["CC"] = opts.CC
+	}
+
+	if opts.CXX != "" {
+		env["CXX"] = opts.CXX
 	}
 
 	return env
