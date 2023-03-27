@@ -12,9 +12,9 @@ import (
 )
 
 // lookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
-func lookupGitHubToken(cctx *cli.Context) (string, error) {
+func lookupGitHubToken(c *cli.Context) (string, error) {
 	log.Print("Looking for a GitHub token")
-	token := cctx.String("github-token")
+	token := c.String("github-token")
 	if token != "" {
 		log.Print("Using GitHub token provided via flag")
 		return token, nil
@@ -30,18 +30,19 @@ func lookupGitHubToken(cctx *cli.Context) (string, error) {
 	var data bytes.Buffer
 	var errData bytes.Buffer
 	ghPath, err := exec.LookPath("gh")
-	if err == nil {
-		cmd := exec.CommandContext(cctx.Context, ghPath, "auth", "token")
-		cmd.Stdout = &data
-		cmd.Stderr = &errData
-		err = cmd.Run()
-		if err != nil {
-			log.Printf("Querying gh for an access token failed: %s", errData.String())
-			return "", fmt.Errorf("lookup in gh failed: %w", err)
-		}
-		log.Print("Using GitHub token provided via gh")
-		return strings.TrimSpace(data.String()), nil
+	if err != nil {
+		return "", nil
 	}
 
-	return "", nil
+	cmd := exec.CommandContext(c.Context, ghPath, "auth", "token")
+	cmd.Stdout = &data
+	cmd.Stderr = &errData
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("Querying gh for an access token failed: %s", errData.String())
+		return "", fmt.Errorf("lookup in gh failed: %w", err)
+	}
+
+	log.Print("Using GitHub token provided via gh")
+	return strings.TrimSpace(data.String()), nil
 }
