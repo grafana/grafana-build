@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	dagger.io/dagger v0.4.6
+	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli/v2 v2.24.4
 )
