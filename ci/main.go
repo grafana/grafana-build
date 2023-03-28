@@ -18,13 +18,35 @@ func init() {
 	log.SetOutput(os.Stderr)
 }
 
-func mainAction(c *cli.Context) error {
-	ctx := c.Context
+func lintProject(ctx context.Context, dc *dagger.Client) error {
+	workDir := dc.Host().Directory(".")
+	container := dc.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
+		From("golangci/golangci-lint:v1.52.2").
+		WithWorkdir("/src").
+		WithMountedDirectory("/src", workDir).
+		WithExec([]string{"golangci-lint", "run"})
+
+	if _, err := container.ExitCode(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func mainAction(cctx *cli.Context) (rerr error) {
+	ctx := cctx.Context
 	dc, err := dagger.Connect(ctx, dagger.WithLogOutput(log.Default().Writer()))
 	if err != nil {
 		return err
 	}
-	defer dc.Close()
+	defer func() {
+		if err := dc.Close(); rerr == nil && err != nil {
+			rerr = err
+		}
+	}()
+
+	if err := lintProject(ctx, dc); err != nil {
+		return fmt.Errorf("linting failed: %w", err)
+	}
 
 	workDir := dc.Host().Directory(".")
 	goContainer := dc.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
@@ -69,5 +91,7 @@ func main() {
 			},
 		},
 	}
-	app.RunContext(ctx, os.Args)
+	if err := app.RunContext(ctx, os.Args); err != nil {
+		log.Fatal(err.Error())
+	}
 }
