@@ -27,23 +27,20 @@ func ViceroyContainer(d *dagger.Client, distro executil.Distribution, platform d
 	// * armv6l
 	// * arm64
 	goURL := fmt.Sprintf(GoURL, "amd64")
-	if _, arch := executil.OSAndArch(distro); arch == "arm64" {
+	switch _, arch := executil.OSAndArch(distro); arch {
+	case "arm64":
 		goURL = fmt.Sprintf(GoURL, arch)
-	}
-
-	if _, arch := executil.OSAndArch(distro); arch == "arm" {
+	case "arm":
 		goURL = fmt.Sprintf(GoURL, "armv6l")
 	}
 
 	container := d.Container(opts).From(base)
 
-	// Install Go and other dependencies
-	container = container.WithExec([]string{"apt-get", "update"})
-	container = container.WithExec([]string{"apt-get", "install", "-yq", "curl", "make"})
-	container = container.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)})
+	// Install Go manually, and install make, git, and curl from the package manager.
 	container = container.WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-yq", "git"})
-	container = container.WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
+		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
+		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
 
 	return container
 }

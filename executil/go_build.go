@@ -133,16 +133,6 @@ func DistrosFromStringSlice(s []string) []Distribution {
 	return d
 }
 
-func DistroOneOf(d Distribution, distros []Distribution) bool {
-	for _, v := range distros {
-		if d == v {
-			return true
-		}
-	}
-
-	return false
-}
-
 func IsWindows(d Distribution) bool {
 	return strings.Split(string(d), "/")[0] == "windows"
 }

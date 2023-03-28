@@ -32,11 +32,10 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		platform = dagger.Platform("linux/amd64")
 	)
 
-	if arch == "arm64" {
+	switch arch {
+	case "arm64":
 		platform = dagger.Platform("linux/arm64")
-	}
-
-	if arch == "arm" {
+	case "arm":
 		platform = dagger.Platform("linux/arm")
 	}
 
