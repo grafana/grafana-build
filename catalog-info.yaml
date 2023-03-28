@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  title: Grafana Build
+  name: grafana-build
+  description: Tooling for building Grafana
+  annotations:
+    github.com/project-slug: grafana/grafana-build
+    backstage.io/source-location: url:https://github.com/grafana/grafana-build/
+spec:
+  type: library
+  lifecycle: experimental
+  owner: "group:grafana-delivery"
+  system: grafana
