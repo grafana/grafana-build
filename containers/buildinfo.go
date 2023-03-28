@@ -16,6 +16,15 @@ type BuildInfo struct {
 	Timestamp time.Time
 }
 
+func (b *BuildInfo) LDFlags() []string {
+	return []string{
+		fmt.Sprintf("main.version=%s", b.Version),
+		fmt.Sprintf("main.commit=%s", b.Commit),
+		fmt.Sprintf("main.buildstamp=%d", b.Timestamp.Unix()),
+		fmt.Sprintf("main.buildBranch=%s", b.Branch),
+	}
+}
+
 const GitImage = "alpine/git:v2.36.3"
 
 // GetBuildInfo runs a dagger pipeline using the alpine/git image to get information from the git repository.

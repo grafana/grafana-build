@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-
-	"dagger.io/dagger"
 )
 
 // Distribution is a string that represents the GOOS and GOARCH environment variables joined by a "/".
@@ -135,10 +133,6 @@ func DistrosFromStringSlice(s []string) []Distribution {
 	return d
 }
 
-func Platform(d Distribution) dagger.Platform {
-	return dagger.Platform(d)
-}
-
 func IsWindows(d Distribution) bool {
 	return strings.Split(string(d), "/")[0] == "windows"
 }
@@ -173,8 +167,11 @@ type GoBuildOpts struct {
 	// Workdir should be the root of the project, ideally where the go.mod lives.
 	Workdir string
 
-	// Distribution is the combination of OS/architecture that this program is compiled for.
-	Distribution Distribution
+	// OS is value supplied to the GOOS environment variable
+	OS string
+
+	// Arch is value supplied to the GOARCH environment variable
+	Arch string
 
 	// BuildMode: The 'go build' and 'go install' commands take a -buildmode argument which
 	// indicates which kind of object file is to be built. Currently supported values
@@ -198,8 +195,11 @@ type GoBuildOpts struct {
 	// Valid values are sse2 (default), softfloat.
 	Go386 Go386
 
-	// CC is the command to use to compile C code when CGO is enabled.
+	// CC is the command to use to compile C code when CGO is enabled. (Sets the "CC" environment variable)
 	CC string
+
+	// CXX is the command to use to compile C++ code when CGO is enabled. (Sets the "CXX" environment variable)
+	CXX string
 
 	// Output is the path where the compiled artifact should be produced; the '-o' flag basically.
 	Output string
@@ -218,9 +218,28 @@ func OSAndArch(d Distribution) (string, string) {
 	return p[0], p[1]
 }
 
+func ArchVersion(d Distribution) string {
+	p := strings.Split(string(d), "/")
+	if len(p) > 3 {
+		return ""
+	}
+
+	// ARM specifically must be specified without a 'v' prefix.
+	// GOAMD64, however, expects a 'v' prefix.
+	// Specifying the ARM version with the 'v' prefix and without is supported in Docker's platform argument, however.
+	if arch := p[1]; arch == "arm" {
+		return strings.TrimPrefix(p[2], "v")
+	}
+
+	return p[2]
+}
+
 // GoBuildEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.
 func GoBuildEnv(opts *GoBuildOpts) map[string]string {
-	os, arch := OSAndArch(opts.Distribution)
+	var (
+		os   = opts.OS
+		arch = opts.Arch
+	)
 
 	env := map[string]string{"GOOS": os, "GOARCH": arch}
 
@@ -237,6 +256,14 @@ func GoBuildEnv(opts *GoBuildOpts) map[string]string {
 
 	if opts.ExperimentalFlags != nil {
 		env["GOEXPERIMENT"] = strings.Join(opts.ExperimentalFlags, ",")
+	}
+
+	if opts.CC != "" {
+		env["CC"] = opts.CC
+	}
+
+	if opts.CXX != "" {
+		env["CXX"] = opts.CXX
 	}
 
 	return env

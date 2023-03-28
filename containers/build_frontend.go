@@ -19,5 +19,5 @@ func CompileFrontend(d *dagger.Client, src *dagger.Directory, nodeVersion string
 		WithWorkdir("/src").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "build"}).
-		Directory("public")
+		Directory("public/")
 }
