@@ -24,7 +24,7 @@ inputs:
     required: false
   distros:
     description: 'A list of distributions to create packages for'
-    default: ['linux/amd64', 'linux/arm64']
+    default: 'linux/amd64,linux/arm64'
     required: true
 runs:
   using: composite
@@ -39,5 +39,5 @@ runs:
         --enterprise-ref=${{ inputs.enterprise_ref }} \
         --destination=${{ inputs.destination }} \
         --github-token=${{ inputs.github_token }} \
-        --distro=${{ join(inputs.distros, ",") }} \
+        --distro=${{ inputs.distros }} \
         --gcp-service-account-key=/var/gcp-service-account-key.json
