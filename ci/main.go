@@ -18,20 +18,6 @@ func init() {
 	log.SetOutput(os.Stderr)
 }
 
-func lintProject(ctx context.Context, dc *dagger.Client) error {
-	workDir := dc.Host().Directory(".")
-	container := dc.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
-		From("golangci/golangci-lint:v1.52.2").
-		WithWorkdir("/src").
-		WithMountedDirectory("/src", workDir).
-		WithExec([]string{"golangci-lint", "run"})
-
-	if _, err := container.ExitCode(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
 func mainAction(cctx *cli.Context) (rerr error) {
 	ctx := cctx.Context
 	dc, err := dagger.Connect(ctx, dagger.WithLogOutput(log.Default().Writer()))
@@ -87,7 +73,23 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:   "main",
+				Usage:  "Execute the whole CI pipeline",
 				Action: mainAction,
+			},
+			{
+				Name:   "lint",
+				Action: lintAction,
+			},
+			{
+				Name:  "docs",
+				Usage: "Commands around documentation building and serving",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "serve",
+						Usage:  "Serve the documentation for local development on port 8000",
+						Action: serveDocsAction,
+					},
+				},
 			},
 		},
 	}

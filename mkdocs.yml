@@ -1,0 +1,18 @@
+docs_dir: docs
+edit_uri: edit/main/docs/
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+nav:
+  - index.md
+repo_url: https://github.com/grafana/grafana-build
+site_name: Grafana Build
+theme:
+  features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.footer
+  name: material
