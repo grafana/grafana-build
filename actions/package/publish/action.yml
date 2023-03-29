@@ -30,7 +30,7 @@ runs:
   using: composite
   steps:
   - shell: bash
-    run: echo ${{ inputs.gcp_service_account_key }} > /var/gcp-service-account-key.json
+    run: echo ${{ inputs.gcp_service_account_key }} > /gcp-service-account-key.json
   - shell: bash
     run: |
       go run ./cmd package publish \
@@ -40,4 +40,4 @@ runs:
         --destination=${{ inputs.destination }} \
         --github-token=${{ inputs.github_token }} \
         --distro=${{ inputs.distros }} \
-        --gcp-service-account-key=/var/gcp-service-account-key.json
+        --gcp-service-account-key=/gcp-service-account-key.json
