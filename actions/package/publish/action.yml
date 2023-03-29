@@ -14,7 +14,7 @@ inputs:
     descrpition: 'The version string to assign to the packages'
     required: false
   destination:
-    description: 'The GCS bucket path to upload the 'grafana.tar.gz's to. This destination should be a folder'
+    description: 'The GCS bucket path to upload the "grafana.tar.gz" packages to. This destination should be a folder'
     required: false
   github_token:
     description: 'The token used to clone Grafana and Grafana Enterprise'
