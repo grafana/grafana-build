@@ -1,0 +1,43 @@
+name: Package Grafana Backend
+inputs:
+  grafana_ref:
+    description: 'The commit to use when checking out Grafana'
+    required: true
+    default: 'main'
+  enterprise:
+    description: 'Whether or not to use Grafana Enterprise. Supplying this argument means that you have a GitHub token that is capable of cloning Grafana Enterprise'
+    required: false
+  enterprise_ref:
+    description: 'The commit to use when checking out Grafana Enterprise'
+    required: false
+  version:
+    descrpition: 'The version string to assign to the packages'
+    required: false
+  destination:
+    description: 'The GCS bucket path to upload the 'grafana.tar.gz's to. This destination should be a folder'
+    required: false
+  github_token:
+    description: 'The token used to clone Grafana and Grafana Enterprise'
+    required: false
+  gcp_service_account_key:
+    description: 'The service account key used to upload the artifacts to Google Cloud Storage'
+    required: false
+  distros:
+    description: 'A list of distributions to create packages for'
+    default: ['linux/amd64', 'linux/arm64']
+    required: true
+runs:
+  using: composite
+  steps:
+  - shell: bash
+    run: echo ${{ inputs.gcp_service_account_key }} > /var/gcp-service-account-key.json
+  - shell: bash
+    run: |
+      go run ./cmd package publish \
+        --grafana-ref=${{ inputs.grafana_ref }} \
+        --enterprise=${{ inputs.enterprise }} \
+        --enterprise-ref=${{ inputs.enterprise_ref }} \
+        --destination=${{ inputs.destination }} \
+        --github-token=${{ inputs.github_token }} \
+        --distro=${{ join(inputs.distros, ",") }} \
+        --gcp-service-account-key=/var/gcp-service-account-key.json

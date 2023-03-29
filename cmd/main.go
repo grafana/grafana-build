@@ -25,7 +25,12 @@ var app = &cli.App{
 			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
 		},
 		&cli.StringFlag{
-			Name:     "version",
+			Name:     "grafana-ref",
+			Required: false,
+			Value:    "main",
+		},
+		&cli.StringFlag{
+			Name:     "enterprise-ref",
 			Required: false,
 			Value:    "main",
 		},
@@ -56,9 +61,11 @@ var app = &cli.App{
 
 func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
 	var (
-		verbose    = c.Bool("v")
-		version    = c.String("version")
-		enterprise = c.Bool("enterprise")
+		verbose       = c.Bool("v")
+		version       = c.String("version")
+		ref           = c.String("grafana-ref")
+		enterprise    = c.Bool("enterprise")
+		enterpriseRef = c.String("enterprise-ref")
 	)
 
 	path := c.Args().Get(0)
@@ -77,11 +84,13 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 		}
 
 		return pipelines.PipelineArgs{
-			Verbose:    verbose,
-			Version:    version,
-			Enterprise: enterprise,
-			Context:    c,
-			Grafana:    client.Host().Directory(path),
+			Verbose:       verbose,
+			Version:       version,
+			Ref:           ref,
+			EnterpriseRef: enterpriseRef,
+			Enterprise:    enterprise,
+			Context:       c,
+			Grafana:       client.Host().Directory(path),
 		}, nil
 	}
 
@@ -90,14 +99,14 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 	}
 
 	// If the folder doesn't exist, then we want to clone Grafana.
-	src, err := containers.Clone(client, "https://github.com/grafana/grafana.git", version)
+	src, err := containers.Clone(client, "https://github.com/grafana/grafana.git", ref)
 	if err != nil {
 		return pipelines.PipelineArgs{}, err
 	}
 
 	// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
 	if enterprise {
-		enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", version)
+		enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", enterpriseRef)
 		if err != nil {
 			return pipelines.PipelineArgs{}, err
 		}

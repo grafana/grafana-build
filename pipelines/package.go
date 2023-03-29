@@ -40,7 +40,7 @@ func TarFilename(args PipelineArgs, distro executil.Distribution) string {
 func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
 	var (
 		src     = args.Grafana
-		version = args.Context.String("version")
+		version = strings.TrimPrefix(args.Context.String("version"), "v")
 		distros = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	)
 
