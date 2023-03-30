@@ -101,30 +101,3 @@ func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	}
 	return nil
 }
-
-// PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
-func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	packages, err := PackageFiles(ctx, d, args)
-	if err != nil {
-		return err
-	}
-
-	var auth containers.GCPAuthenticator = &containers.GCPInheritedAuth{}
-	if key := args.Context.String("key"); key != "" {
-		auth = containers.NewGCPServiceAccount(key)
-	}
-
-	for distro, targz := range packages {
-		dst := path.Join(args.Context.Path("destination"), TarFilename(args, distro))
-		uploader, err := containers.GCSUploadFile(d, containers.GoogleCloudImage, auth, targz, dst)
-		if err != nil {
-			return err
-		}
-
-		if err := containers.ExitError(ctx, uploader); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

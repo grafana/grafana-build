@@ -19,8 +19,8 @@ inputs:
   github_token:
     description: 'The token used to clone Grafana and Grafana Enterprise'
     required: false
-  gcp_service_account_key:
-    description: 'The service account key used to upload the artifacts to Google Cloud Storage'
+  gcp_service_account_key_base64:
+    description: 'The service account key used to upload the artifacts to Google Cloud Storage, encoded in base64'
     required: false
   distros:
     description: 'A list of distributions to create packages for'
@@ -40,4 +40,4 @@ runs:
         --destination=${{ inputs.destination }} \
         --github-token=${{ inputs.github_token }} \
         --distro=${{ inputs.distros }} \
-        --gcp-service-account-key=/gcp-service-account-key.json
+        --gcp-service-account-key-base64=${{ inputs.gcp_service_account_key_base64 }}

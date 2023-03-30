@@ -16,21 +16,32 @@ type GCPAuthenticator interface {
 
 // GCPServiceAccount satisfies GCPAuthenticator and injects the provided ServiceAccount into the filesystem and adds a 'gcloud auth activate-service-account'
 type GCPServiceAccount struct {
-	JSONFile string
+	DaggerFile *dagger.File
+	JSONFile   string
 }
 
 func (a *GCPServiceAccount) Authenticate(d *dagger.Client, c *dagger.Container) (*dagger.Container, error) {
-	return c.
-		WithMountedFile(
-			"/opt/service_account.json",
-			d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
-		).
-		WithExec([]string{"gcloud", "auth", "activate-service-account", "--key-file", "/opt/service_account.json"}), nil
+	container := c.WithMountedFile(
+		"/opt/service_account.json",
+		d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
+	)
+
+	if a.DaggerFile != nil {
+		container = container.WithMountedFile("/opt/service_account.json", a.DaggerFile)
+	}
+
+	return container.WithExec([]string{"gcloud", "auth", "activate-service-account", "--key-file", "/opt/service_account.json"}), nil
 }
 
 func NewGCPServiceAccount(filepath string) *GCPServiceAccount {
 	return &GCPServiceAccount{
 		JSONFile: filepath,
+	}
+}
+
+func NewGCPServiceAccountWithFile(file *dagger.File) *GCPServiceAccount {
+	return &GCPServiceAccount{
+		DaggerFile: file,
 	}
 }
 

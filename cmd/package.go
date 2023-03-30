@@ -24,6 +24,11 @@ var PackageCommand = &cli.Command{
 					Required: true,
 				},
 				&cli.StringFlag{
+					Name:     "gcp-service-account-key-base64",
+					Usage:    "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
+					Required: false,
+				},
+				&cli.StringFlag{
 					Name:     "gcp-service-account-key",
 					Usage:    "Provides a service-account keyfile to use to authenticate with the Google Cloud SDK. If not provided or is empty, then $XDG_CONFIG_HOME/gcloud will be mounted in the container",
 					Required: false,
