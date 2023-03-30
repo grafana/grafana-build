@@ -55,7 +55,7 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 		cloneArgs = append(cloneArgs, "--depth", strconv.Itoa(opts.Depth))
 	}
 
-	cloneArgs = append(cloneArgs, cloneURL, "src")
+	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 
 	container := d.Container().From(GitImage).
 		WithEntrypoint([]string{})
@@ -76,8 +76,10 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`ssh-keyscan %s > /root/.ssh/known_hosts`, host)})
 	}
 
+	cloneURLSecret := d.SetSecret("git-clone-url", cloneURL)
 	container = container.
-		WithExec(cloneArgs)
+		WithSecretVariable("GIT_CLONE_URL", cloneURLSecret).
+		WithExec([]string{"/bin/sh", "-c", strings.Join(cloneArgs, " ")})
 
 	return container, nil
 }
