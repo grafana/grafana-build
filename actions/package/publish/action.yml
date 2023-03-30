@@ -16,9 +16,6 @@ inputs:
   destination:
     description: 'The GCS bucket path to upload the "grafana.tar.gz" packages to. This destination should be a folder'
     required: false
-  github_token:
-    description: 'The token used to clone Grafana and Grafana Enterprise'
-    required: false
   gcp_service_account_key_base64:
     description: 'The service account key used to upload the artifacts to Google Cloud Storage, encoded in base64'
     required: false
@@ -35,7 +32,7 @@ runs:
         --enterprise=${{ inputs.enterprise }} \
         --enterprise-ref=${{ inputs.enterprise_ref }} \
         --grafana-ref=${{ inputs.grafana_ref }} \
-        --github-token=${{ inputs.github_token }} \
+        --github-token=${{ secrets.GITHUB_TOKEN }} \
       package \
         --distro=${{ inputs.distros }} \
       publish \
