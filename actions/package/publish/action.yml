@@ -33,8 +33,8 @@ runs:
     run: |
       go run ./cmd \
         --enterprise=${{ inputs.enterprise }} \
-        --enterprise-ref=${{ inputs.enterprise_ref }} \
-        --grafana-ref=${{ inputs.grafana_ref }} \
+        --enterprise-ref="${{ inputs.enterprise_ref }}" \
+        --grafana-ref="${{ inputs.grafana_ref }}" \
       package \
         --distro=${{ inputs.distros }} \
       publish \
