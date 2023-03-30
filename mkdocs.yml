@@ -8,6 +8,10 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - index.md
+  - "Guides":
+    - guides/building.md
+  - "Meta":
+    - meta/docs.md
 repo_url: https://github.com/grafana/grafana-build
 site_name: Grafana Build
 theme:

@@ -1,3 +1,4 @@
 # Welcome to Grafana Build
 
-This repository should make it as easy as possible to build a Grafana binary for various platforms.
+Grafana Build is a build pipeline for Grafana using Dagger.
+The goal of this project is to make it as easy as possible to generate builds as part of the overall release pipeline.
