@@ -30,8 +30,6 @@ runs:
   using: composite
   steps:
   - shell: bash
-    run: echo ${{ inputs.gcp_service_account_key }} > /gcp-service-account-key.json
-  - shell: bash
     run: |
       go run ./cmd package publish \
         --grafana-ref=${{ inputs.grafana_ref }} \
