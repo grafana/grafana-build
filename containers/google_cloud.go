@@ -72,7 +72,10 @@ func GCSUploadDirectory(d *dagger.Client, image string, auth GCPAuthenticator, d
 		return nil, err
 	}
 
-	return container.WithExec([]string{"gsutil", "-m", "rsync", "-r", "/src", dst}), nil
+	secret := d.SetSecret("gcs-destination", dst)
+	container = container.WithSecretVariable("GCS_DESTINATION", secret)
+
+	return container.WithExec([]string{"/bin/sh", "-c", "gsutil -m rsync -r /src ${GCS_DESTINATION}"}), nil
 }
 
 func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *dagger.File, dst string) (*dagger.Container, error) {
@@ -84,6 +87,7 @@ func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *
 	if err != nil {
 		return nil, err
 	}
-
-	return container.WithExec([]string{"gsutil", "cp", "/src/file", dst}), nil
+	secret := d.SetSecret("gcs-destination", dst)
+	container = container.WithSecretVariable("GCS_DESTINATION", secret)
+	return container.WithExec([]string{"/bin/sh", "-c", "gsutil cp /src/file ${GCS_DESTINATION}"}), nil
 }
