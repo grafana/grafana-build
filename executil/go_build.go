@@ -220,7 +220,7 @@ func OSAndArch(d Distribution) (string, string) {
 
 func ArchVersion(d Distribution) string {
 	p := strings.Split(string(d), "/")
-	if len(p) > 3 {
+	if len(p) < 3 {
 		return ""
 	}
 

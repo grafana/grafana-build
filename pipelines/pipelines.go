@@ -16,6 +16,7 @@ type PipelineArgs struct {
 	Enterprise    bool
 	EnterpriseRef string
 	Version       string
+	BuildID       string
 
 	// Context is available for all sub-commands that define their own flags.
 	Context *cli.Context

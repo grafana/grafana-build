@@ -24,16 +24,25 @@ var PackagedPaths = []string{
 	"docs/sources/",
 }
 
+// TarFileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
 func TarFilename(args PipelineArgs, distro executil.Distribution) string {
 	name := "grafana"
 	if args.Enterprise {
 		name = "grafana-enterprise"
 	}
+	var (
+		// This should return something like "linux", "arm"
+		os, arch = executil.OSAndArch(distro)
+		// If applicable this will be set to something like "7" (for arm7)
+		archv = executil.ArchVersion(distro)
+	)
+	if archv != "" {
+		arch = strings.Join([]string{arch, archv}, "-")
+	}
 
-	suffix := string(distro)
-	suffix = strings.ReplaceAll(suffix, "/", "-")
+	p := []string{name, args.Version, os, arch, args.BuildID}
 
-	return fmt.Sprintf("%s-%s.tar.gz", name, suffix)
+	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.

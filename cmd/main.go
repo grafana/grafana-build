@@ -5,13 +5,19 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 var app = &cli.App{
 	Flags: []cli.Flag{
@@ -36,6 +42,10 @@ var app = &cli.App{
 		},
 		&cli.StringFlag{
 			Name:     "github-token",
+			Required: false,
+		},
+		&cli.StringFlag{
+			Name:     "build-id",
 			Required: false,
 		},
 	},
@@ -66,7 +76,12 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 		ref           = c.String("grafana-ref")
 		enterprise    = c.Bool("enterprise")
 		enterpriseRef = c.String("enterprise-ref")
+		buildID       = c.String("build-id")
 	)
+
+	if buildID == "" {
+		buildID = randomString(12)
+	}
 
 	path := c.Args().Get(0)
 	if path == "" {
@@ -84,6 +99,7 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 		}
 
 		return pipelines.PipelineArgs{
+			BuildID:       buildID,
 			Verbose:       verbose,
 			Version:       version,
 			Ref:           ref,
@@ -115,6 +131,7 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 	}
 
 	return pipelines.PipelineArgs{
+		BuildID:    buildID,
 		Verbose:    verbose,
 		Version:    version,
 		Enterprise: enterprise,
