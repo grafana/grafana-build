@@ -53,6 +53,14 @@ func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map
 		distros = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	)
 
+	if version == "" {
+		v, err := containers.GetPackageJSONVersion(ctx, d, src)
+		if err != nil {
+			return nil, err
+		}
+		version = v
+	}
+
 	backends, err := GrafanaBackendBuildDirectories(ctx, d, src, distros, version)
 	if err != nil {
 		return nil, err
