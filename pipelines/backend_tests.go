@@ -35,12 +35,12 @@ func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArg
 	c := d.Pipeline("backend tests", dagger.PipelineOpts{
 		Description: "Runs backend unit tests",
 	})
-	if args.Context.Bool("unit") == true {
+	if args.Context.Bool("unit") {
 		// add unit tests to execution list
 		log.Println("Unit tests will be run")
 		r = append(r, containers.BackendTestShort(c, args.Grafana))
 	}
-	if args.Context.Bool("integration") == true {
+	if args.Context.Bool("integration") {
 		// add integration tests to execution list
 		log.Printf("Integration tests will be run using a '%s' database", db)
 		r = append(r, containers.BackendTestIntegration(c, args.Grafana))
