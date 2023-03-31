@@ -26,6 +26,9 @@ inputs:
     description: 'A list of distributions to create packages for'
     default: 'linux/amd64,linux/arm64'
     required: true
+  build_id:
+    description: 'The build number, which is appended to the package name (before .tar.gz)'
+    required: true
 runs:
   using: composite
   steps:
@@ -35,6 +38,7 @@ runs:
         --enterprise=${{ inputs.enterprise }} \
         --enterprise-ref="${{ inputs.enterprise_ref }}" \
         --grafana-ref="${{ inputs.grafana_ref }}" \
+        --build-id="${{ inputs.build_id }}" \
       package \
         --distro=${{ inputs.distros }} \
       publish \
