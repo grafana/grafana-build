@@ -2,17 +2,18 @@ package pipelines
 
 import (
 	"context"
-	"dagger.io/dagger"
 	"fmt"
-	"github.com/grafana/grafana-build/containers"
 	"log"
 	"strings"
+
+	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/containers"
 )
 
 var IntegrationDatabases = []string{"sqlite", "mysql", "postgres"}
 
-// list of strings, string
-func Contains(arr []string, v string) bool {
+// contains returns true if the string v is in the slice arr
+func contains(arr []string, v string) bool {
 	for _, str := range arr {
 		if str == v {
 			return true
@@ -25,10 +26,9 @@ func Contains(arr []string, v string) bool {
 func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 
 	db := args.Context.String("database")
-	log.Println("db", db)
 
 	// verify the database is one of the available choices
-	if !Contains(IntegrationDatabases, db) {
+	if !contains(IntegrationDatabases, db) {
 		return fmt.Errorf("database needs to be one of %s", strings.Join(IntegrationDatabases, ","))
 	}
 	var r = []*dagger.Container{}
