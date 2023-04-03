@@ -2,9 +2,7 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -12,25 +10,11 @@ import (
 
 var IntegrationDatabases = []string{"sqlite", "mysql", "postgres"}
 
-// contains returns true if the string v is in the slice arr
-func contains(arr []string, v string) bool {
-	for _, str := range arr {
-		if str == v {
-			return true
-		}
-	}
-	return false
-}
-
 // GrafanabackendTests runs the Grafana backend test containers for short (unit) and integration tests.
 func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 
 	db := args.Context.String("database")
 
-	// verify the database is one of the available choices
-	if !contains(IntegrationDatabases, db) {
-		return fmt.Errorf("database needs to be one of %s", strings.Join(IntegrationDatabases, ","))
-	}
 	var r = []*dagger.Container{}
 	c := d.Pipeline("backend tests", dagger.PipelineOpts{
 		Description: "Runs backend unit tests",

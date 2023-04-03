@@ -8,11 +8,41 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// contains returns true if the string v is in the slice arr
+func contains(arr []string, v string) bool {
+	for _, str := range arr {
+		if str == v {
+			return true
+		}
+	}
+	return false
+}
+
+type ChoiceValue struct {
+	value   string
+	choices []string
+}
+
+func (c *ChoiceValue) String() string {
+	return c.value
+}
+
+func (c *ChoiceValue) Set(val string) error {
+	if !contains(c.choices, val) {
+		return fmt.Errorf("'%s' needs to be one of %s", val, strings.Join(c.choices, ","))
+	}
+
+	c.value = val
+
+	return nil
+}
+
 // ChoiceFlag is a cli.Flag whose value is populated from preconfigured choices
 type ChoiceFlag struct {
 	Name         string
 	Usage        string
 	Value        string
+	choiceValue  *ChoiceValue
 	HasBeenSet   bool
 	Choices      []string
 	Aliases      []string
@@ -29,11 +59,18 @@ func (f *ChoiceFlag) String() string {
 }
 
 func (f *ChoiceFlag) Apply(set *flag.FlagSet) error {
-	// set default value so that environment wont be able to overwrite it
-	f.defaultValue = f.Value
+	if !contains(f.Choices, f.Value) {
+		return fmt.Errorf("'%s' needs to be one of %s", f.Value, strings.Join(f.Choices, ","))
+	}
+
+	f.choiceValue = &ChoiceValue{
+		// set default value so that flagset wont be able to overwrite it
+		value:   f.Value,
+		choices: f.Choices,
+	}
 
 	for _, name := range f.Names() {
-		set.String(name, f.Value, f.Usage)
+		set.Var(f.choiceValue, name, f.Usage)
 	}
 
 	return nil
@@ -84,7 +121,7 @@ func (f *ChoiceFlag) GetCategory() string {
 // GetValue returns the flags value as string representation and an empty
 // string if the flag takes no value at all.
 func (f *ChoiceFlag) GetValue() string {
-	return f.Value
+	return f.choiceValue.value
 }
 
 // GetEnvVars returns the env vars for this flag
