@@ -16,21 +16,32 @@ type GCPAuthenticator interface {
 
 // GCPServiceAccount satisfies GCPAuthenticator and injects the provided ServiceAccount into the filesystem and adds a 'gcloud auth activate-service-account'
 type GCPServiceAccount struct {
-	JSONFile string
+	DaggerFile *dagger.File
+	JSONFile   string
 }
 
 func (a *GCPServiceAccount) Authenticate(d *dagger.Client, c *dagger.Container) (*dagger.Container, error) {
-	return c.
-		WithMountedFile(
-			"/opt/service_account.json",
-			d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
-		).
-		WithExec([]string{"gcloud", "auth", "activate-service-account", "--key-file", "/opt/service_account.json"}), nil
+	container := c.WithMountedFile(
+		"/opt/service_account.json",
+		d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
+	)
+
+	if a.DaggerFile != nil {
+		container = container.WithMountedFile("/opt/service_account.json", a.DaggerFile)
+	}
+
+	return container.WithExec([]string{"gcloud", "auth", "activate-service-account", "--key-file", "/opt/service_account.json"}), nil
 }
 
 func NewGCPServiceAccount(filepath string) *GCPServiceAccount {
 	return &GCPServiceAccount{
 		JSONFile: filepath,
+	}
+}
+
+func NewGCPServiceAccountWithFile(file *dagger.File) *GCPServiceAccount {
+	return &GCPServiceAccount{
+		DaggerFile: file,
 	}
 }
 
@@ -61,7 +72,10 @@ func GCSUploadDirectory(d *dagger.Client, image string, auth GCPAuthenticator, d
 		return nil, err
 	}
 
-	return container.WithExec([]string{"gsutil", "-m", "rsync", "-r", "/src", dst}), nil
+	secret := d.SetSecret("gcs-destination", dst)
+	container = container.WithSecretVariable("GCS_DESTINATION", secret)
+
+	return container.WithExec([]string{"/bin/sh", "-c", "gsutil -m rsync -r /src ${GCS_DESTINATION}"}), nil
 }
 
 func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *dagger.File, dst string) (*dagger.Container, error) {
@@ -73,6 +87,7 @@ func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *
 	if err != nil {
 		return nil, err
 	}
-
-	return container.WithExec([]string{"gsutil", "cp", "/src/file", dst}), nil
+	secret := d.SetSecret("gcs-destination", dst)
+	container = container.WithSecretVariable("GCS_DESTINATION", secret)
+	return container.WithExec([]string{"/bin/sh", "-c", "gsutil cp /src/file ${GCS_DESTINATION}"}), nil
 }

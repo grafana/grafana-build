@@ -25,12 +25,21 @@ var app = &cli.App{
 			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
 		},
 		&cli.StringFlag{
-			Name:     "version",
+			Name:     "grafana-ref",
+			Required: false,
+			Value:    "main",
+		},
+		&cli.StringFlag{
+			Name:     "enterprise-ref",
 			Required: false,
 			Value:    "main",
 		},
 		&cli.StringFlag{
 			Name:     "github-token",
+			Required: false,
+		},
+		&cli.StringFlag{
+			Name:     "build-id",
 			Required: false,
 		},
 	},
@@ -56,10 +65,18 @@ var app = &cli.App{
 
 func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
 	var (
-		verbose    = c.Bool("v")
-		version    = c.String("version")
-		enterprise = c.Bool("enterprise")
+		verbose       = c.Bool("v")
+		version       = c.String("version")
+		ref           = c.String("grafana-ref")
+		enterprise    = c.Bool("enterprise")
+		enterpriseRef = c.String("enterprise-ref")
+		buildID       = c.String("build-id")
+		src           *dagger.Directory
 	)
+
+	if buildID == "" {
+		buildID = randomString(12)
+	}
 
 	path := c.Args().Get(0)
 	if path == "" {
@@ -69,43 +86,53 @@ func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.P
 	f, err := os.Stat(path)
 	// It's okay if the folder doesn't exist; if it doesn't, we'll just clone the repo.
 	// Other errors though it's worth just returning on.
-	if err == nil {
-		// If it does exist but it's not a directory then we should throw an error.
-		// If it doesn't exist, then this block will be skipped and the project will be cloned.
-		if !f.IsDir() {
-			return pipelines.PipelineArgs{}, errors.New("path provided is not a directory")
+	if err != nil {
+		// If there was some error other than the directory not existing, then we likely need to return that.
+		if !errors.Is(err, fs.ErrNotExist) {
+			return pipelines.PipelineArgs{}, err
 		}
 
-		return pipelines.PipelineArgs{
-			Verbose:    verbose,
-			Version:    version,
-			Enterprise: enterprise,
-			Context:    c,
-			Grafana:    client.Host().Directory(path),
-		}, nil
-	}
-
-	if !errors.Is(err, fs.ErrNotExist) {
-		return pipelines.PipelineArgs{}, err
-	}
-
-	// If the folder doesn't exist, then we want to clone Grafana.
-	src, err := containers.Clone(client, "https://github.com/grafana/grafana.git", version)
-	if err != nil {
-		return pipelines.PipelineArgs{}, err
-	}
-
-	// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
-	if enterprise {
-		enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", version)
+		// If the folder doesn't exist, then we want to clone Grafana.
+		srcDir, err := containers.Clone(client, "https://github.com/grafana/grafana.git", ref)
 		if err != nil {
 			return pipelines.PipelineArgs{}, err
 		}
 
-		src = containers.InitializeEnterprise(client, src, enterpriseDir)
+		// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
+		if enterprise {
+			enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", enterpriseRef)
+			if err != nil {
+				return pipelines.PipelineArgs{}, err
+			}
+
+			srcDir = containers.InitializeEnterprise(client, srcDir, enterpriseDir)
+		}
+
+		// Set the source directory to the result of the git clone.
+		src = srcDir
+	} else {
+		// If it does exist but it's not a directory then we should throw an error.
+		if !f.IsDir() {
+			return pipelines.PipelineArgs{}, errors.New("path provided is not a directory")
+		}
+
+		// Set the source directory to be the path provided.
+		src = client.Host().Directory(path)
+	}
+
+	if version == "" {
+		log.Println("Version not provided; getting version from package.json...")
+		v, err := containers.GetPackageJSONVersion(c.Context, client, src)
+		if err != nil {
+			return pipelines.PipelineArgs{}, err
+		}
+
+		version = v
+		log.Println("Got version", v)
 	}
 
 	return pipelines.PipelineArgs{
+		BuildID:    buildID,
 		Verbose:    verbose,
 		Version:    version,
 		Enterprise: enterprise,

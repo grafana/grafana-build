@@ -19,12 +19,17 @@ var PackageCommand = &cli.Command{
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:     "destination",
-					Usage:    "GCS URL to upload the package (example: gs://bucket/grafana.tar.gz)",
+					Usage:    "GCS URL to upload the packages to (example: gs://bucket/grafana/)",
 					Aliases:  []string{"d"},
 					Required: true,
 				},
 				&cli.StringFlag{
-					Name:     "key",
+					Name:     "gcp-service-account-key-base64",
+					Usage:    "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
+					Required: false,
+				},
+				&cli.StringFlag{
+					Name:     "gcp-service-account-key",
 					Usage:    "Provides a service-account keyfile to use to authenticate with the Google Cloud SDK. If not provided or is empty, then $XDG_CONFIG_HOME/gcloud will be mounted in the container",
 					Required: false,
 				},

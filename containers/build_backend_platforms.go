@@ -122,4 +122,6 @@ var DistributionGoOpts = map[executil.Distribution]DistroBuildOptsFunc{
 
 	executil.DistWindowsAMD64: BuildOptsDynamicWindows,
 	executil.DistWindowsARM64: BuildOptsDynamicWindows,
+
+	executil.DistPlan9AMD64: BuildOptsDynamic,
 }

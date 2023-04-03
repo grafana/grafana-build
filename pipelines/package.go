@@ -24,23 +24,32 @@ var PackagedPaths = []string{
 	"docs/sources/",
 }
 
+// TarFileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
 func TarFilename(args PipelineArgs, distro executil.Distribution) string {
 	name := "grafana"
 	if args.Enterprise {
 		name = "grafana-enterprise"
 	}
+	var (
+		// This should return something like "linux", "arm"
+		os, arch = executil.OSAndArch(distro)
+		// If applicable this will be set to something like "7" (for arm7)
+		archv = executil.ArchVersion(distro)
+	)
+	if archv != "" {
+		arch = strings.Join([]string{arch, archv}, "-")
+	}
 
-	suffix := string(distro)
-	suffix = strings.ReplaceAll(suffix, "/", "-")
+	p := []string{name, args.Version, os, arch, args.BuildID}
 
-	return fmt.Sprintf("%s-%s.tar.gz", name, suffix)
+	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
 func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
 	var (
 		src     = args.Grafana
-		version = args.Context.String("version")
+		version = args.Version
 		distros = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	)
 
@@ -99,32 +108,5 @@ func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			return err
 		}
 	}
-	return nil
-}
-
-// PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
-func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	packages, err := PackageFiles(ctx, d, args)
-	if err != nil {
-		return err
-	}
-
-	var auth containers.GCPAuthenticator = &containers.GCPInheritedAuth{}
-	if key := args.Context.String("key"); key != "" {
-		auth = containers.NewGCPServiceAccount(key)
-	}
-
-	for distro, targz := range packages {
-		dst := path.Join(args.Context.Path("destination"), TarFilename(args, distro))
-		uploader, err := containers.GCSUploadFile(d, containers.GoogleCloudImage, auth, targz, dst)
-		if err != nil {
-			return err
-		}
-
-		if err := containers.ExitError(ctx, uploader); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

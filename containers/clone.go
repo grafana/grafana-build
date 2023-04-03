@@ -27,6 +27,10 @@ type GitCloneOptions struct {
 }
 
 // CloneContainer returns the container definition that uses git clone to clone the 'git url' and checks out the ref provided at 'ref'.
+// Multiple refs can be provided via a space character (' '). If multiple refs are provided, then the container will attempt to checkout
+// each ref at a time, stopping at the first one that is successful.
+// This can be useful in PRs which have a coupled association with another codebase.
+// A practical example (and why this exists): "${pr_source_branch} ${pr_target_branch} ${main}" will first attempt to checkout the PR source branch, then the PR target branch, then "main"; whichever is successul first.
 func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container, error) {
 	var err error
 	if opts.URL == "" {
@@ -45,17 +49,12 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 		}
 	}
 
-	ref := "main"
-	if opts.Ref != "" {
-		ref = opts.Ref
-	}
-
-	cloneArgs := []string{"git", "clone", "--branch", ref}
+	cloneArgs := []string{"git", "clone"}
 	if opts.Depth != 0 {
 		cloneArgs = append(cloneArgs, "--depth", strconv.Itoa(opts.Depth))
 	}
 
-	cloneArgs = append(cloneArgs, cloneURL, "src")
+	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 
 	container := d.Container().From(GitImage).
 		WithEntrypoint([]string{})
@@ -76,18 +75,45 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`ssh-keyscan %s > /root/.ssh/known_hosts`, host)})
 	}
 
+	cloneURLSecret := d.SetSecret("git-clone-url", cloneURL)
 	container = container.
-		WithExec(cloneArgs)
+		WithSecretVariable("GIT_CLONE_URL", cloneURLSecret).
+		WithExec([]string{"/bin/sh", "-c", strings.Join(cloneArgs, " ")})
 
+	ref := "main"
+	if opts.Ref != "" {
+		ref = opts.Ref
+	}
+
+	// TODO: this section really needs to be its own function with unit tests, or an interface or something.
+	var (
+		checkouts    = strings.Split(ref, " ")
+		checkoutArgs = []string{fmt.Sprintf(`if git -C src checkout %[1]s; then echo "checked out %[1]s";`, checkouts[0])}
+	)
+
+	if len(checkouts) > 1 {
+		// In cases where there's only 2 elements in the list this value will be empty.
+		middle := checkouts[1 : len(checkouts)-1]
+		for _, v := range middle {
+			checkoutArgs = append(checkoutArgs, fmt.Sprintf(`elif git -C src checkout %[1]s; then echo "checked out %[1]s";`, v))
+		}
+
+		last := checkouts[len(checkouts)-1]
+		checkoutArgs = append(checkoutArgs, fmt.Sprintf(`else git -C src checkout %s;`, last))
+	}
+
+	checkoutArgs = append(checkoutArgs, "fi")
+
+	container = container.WithExec([]string{"/bin/sh", "-c", strings.Join(checkoutArgs, " ")})
 	return container, nil
 }
 
 // Clone returns the directory with the cloned repository ('url') and checked out ref ('ref').
 func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
 	container, err := CloneContainer(d, &GitCloneOptions{
-		URL:   url,
-		Ref:   ref,
-		Depth: 1,
+		URL: url,
+		Ref: ref,
+		//Depth: 1,
 	})
 
 	if err != nil {
