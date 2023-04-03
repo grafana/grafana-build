@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/grafana/grafana-build/pipelines"
+	"github.com/urfave/cli/v2"
 )
 
 var FlagUnit = &cli.BoolFlag{
