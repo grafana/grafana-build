@@ -5,19 +5,13 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math/rand"
 	"os"
-	"time"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 var app = &cli.App{
 	Flags: []cli.Flag{
