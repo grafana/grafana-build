@@ -10,9 +10,8 @@ import (
 
 var IntegrationDatabases = []string{"sqlite", "mysql", "postgres"}
 
-// GrafanabackendTests runs the Grafana backend test containers for short (unit) and integration tests.
+// GrafanaBackendTests runs the Grafana backend test containers for short (unit) and integration tests.
 func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-
 	db := args.Context.String("database")
 
 	var r = []*dagger.Container{}
@@ -32,7 +31,7 @@ func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArg
 	return containers.Run(ctx, r)
 }
 
-// GrafanabackendTestIntegration runs the Grafana backend test containers for short (unit) and integration tests.
+// GrafanaBackendTestIntegration runs the Grafana backend test containers for short (unit) and integration tests.
 func GrafanaBackendTestIntegration(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	c := d.Pipeline("integration tests", dagger.PipelineOpts{
 		Description: "Runs backend integration tests",
