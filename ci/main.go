@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -18,8 +19,13 @@ func init() {
 	log.SetOutput(os.Stderr)
 }
 
+var containerOpts = dagger.ContainerOpts{Platform: "linux/amd64"}
+
 func mainAction(cctx *cli.Context) (rerr error) {
 	ctx := cctx.Context
+	useHostCache := cctx.Bool("use-host-cache")
+	doPublishTechdocs := cctx.Bool("publish-techdocs")
+
 	dc, err := dagger.Connect(ctx, dagger.WithLogOutput(log.Default().Writer()))
 	if err != nil {
 		return err
@@ -35,7 +41,7 @@ func mainAction(cctx *cli.Context) (rerr error) {
 	}
 
 	workDir := dc.Host().Directory(".")
-	goContainer := dc.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
+	goContainer := dc.Container(containerOpts).
 		From("golang:1.20.2")
 
 	// If the gopath is set, mount the pkg folder from there so that we can re-use as much as possible from the system's caching:
@@ -44,10 +50,10 @@ func mainAction(cctx *cli.Context) (rerr error) {
 		return fmt.Errorf("failed to determine GOPATH: %w", err)
 	}
 	goPath := strings.TrimSpace(string(rawGoPath))
-	if goPath != "" {
+	if goPath != "" && useHostCache {
 		log.Print("Mounting GOPATH/pkg from host system")
-		hostGoPath := dc.Host().Directory(goPath)
-		goContainer = goContainer.WithMountedDirectory("/go/pkg", hostGoPath.Directory("pkg"))
+		hostGoPkgPath := dc.Host().Directory(filepath.Join(goPath, "pkg"))
+		goContainer = goContainer.WithMountedDirectory("/go/pkg", hostGoPkgPath)
 	} else {
 		log.Print("Mounting cache volume as /go/pkg")
 		goCache := dc.CacheVolume("ci-go")
@@ -62,6 +68,13 @@ func mainAction(cctx *cli.Context) (rerr error) {
 		ExitCode(ctx); err != nil {
 		return fmt.Errorf("tests failed: %w", err)
 	}
+
+	if doPublishTechdocs {
+		log.Print("Publishing techdocs")
+		if err := buildTechDocs(ctx, dc); err != nil {
+			return fmt.Errorf("building techdocs failed: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -75,6 +88,16 @@ func main() {
 				Name:   "main",
 				Usage:  "Execute the whole CI pipeline",
 				Action: mainAction,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "use-host-cache",
+						Usage: "Try to use host-level caching",
+					},
+					&cli.BoolFlag{
+						Name:  "publish-techdocs",
+						Usage: "Publish techdocs to Backstage",
+					},
+				},
 			},
 			{
 				Name:   "lint",
