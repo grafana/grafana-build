@@ -5,14 +5,33 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var TestBackendUnit = &cli.Command{
-	Name:   "test",
-	Action: PipelineAction(pipelines.GrafanaBackendTests),
+var FlagUnit = &cli.BoolFlag{
+	Name:  "unit",
+	Usage: "Run the backend unit tests",
+	Value: true,
 }
 
-var TestBackendIntegration = &cli.Command{
-	Name:   "test-integration",
-	Action: PipelineAction(pipelines.GrafanaBackendTestIntegration),
+var FlagIntegration = &cli.BoolFlag{
+	Name:  "integration",
+	Usage: "Run the backend integration tests",
+	Value: false,
+}
+
+var FlagDatabase = &ChoiceFlag{
+	Name:    "database",
+	Usage:   "Which database to use, only valid when --integration=true",
+	Choices: pipelines.IntegrationDatabases,
+	Value:   "sqlite",
+}
+
+var TestBackend = &cli.Command{
+	Name:   "test",
+	Action: PipelineAction(pipelines.GrafanaBackendTests),
+	Flags: []cli.Flag{
+		FlagUnit,
+		FlagIntegration,
+		FlagDatabase,
+	},
 }
 
 var BuildBackend = &cli.Command{
@@ -23,4 +42,4 @@ var BuildBackend = &cli.Command{
 	},
 }
 
-var BackendCommands = []*cli.Command{TestBackendUnit, TestBackendIntegration, BuildBackend}
+var BackendCommands = []*cli.Command{TestBackend, BuildBackend}
