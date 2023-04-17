@@ -27,7 +27,7 @@ var PackagedPaths = []string{
 // TarFileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
 func TarFilename(args PipelineArgs, distro executil.Distribution) string {
 	name := "grafana"
-	if args.Enterprise {
+	if args.BuildEnterprise {
 		name = "grafana-enterprise"
 	}
 	var (
