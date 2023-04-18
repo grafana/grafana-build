@@ -40,14 +40,10 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 	}
 
 	// For now, if we're not building for Linux, then we're going to be using rfratto/viceroy.
-	builder := GolangContainer(d, platform, GoImage)
+	builder := GrafanaContainerWithMounts(d, platform, GoImage, dir, nil)
 	if os != "linux" {
 		builder = ViceroyContainer(d, distro, platform, ViceroyImage)
 	}
-
-	builder = builder.WithMountedDirectory("/src", dir).
-		WithWorkdir("/src").
-		WithExec([]string{"make", "gen-go"})
 
 	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
 	if os != "linux" {
