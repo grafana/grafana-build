@@ -2,17 +2,18 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/grafana/grafana-build/pipelines"
 )
 
 // lookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
-func lookupGitHubToken(c *cli.Context) (string, error) {
+func lookupGitHubToken(ctx context.Context, c pipelines.CLIContext) (string, error) {
 	log.Print("Looking for a GitHub token")
 	token := c.String("github-token")
 	if token != "" {
@@ -35,7 +36,7 @@ func lookupGitHubToken(c *cli.Context) (string, error) {
 	}
 
 	//nolint:gosec
-	cmd := exec.CommandContext(c.Context, ghPath, "auth", "token")
+	cmd := exec.CommandContext(ctx, ghPath, "auth", "token")
 	cmd.Stdout = &data
 	cmd.Stderr = &errData
 

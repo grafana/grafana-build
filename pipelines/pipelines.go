@@ -3,24 +3,122 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
+	"log"
 
 	"dagger.io/dagger"
-	"github.com/urfave/cli/v2"
+	"github.com/grafana/grafana-build/containers"
 )
+
+type CLIContext interface {
+	Bool(string) bool
+	String(string) string
+	Set(string, string) error
+	StringSlice(string) []string
+	Path(string) string
+}
 
 type PipelineArgs struct {
 	// These arguments are ones that are available at the global level.
-	Grafana         *dagger.Directory
-	Verbose         bool
-	Ref             string
-	BuildGrafana    bool
+
+	Verbose      bool
+	BuildGrafana bool
+	// GrafanaDir is the path to the Grafana source tree.
+	GrafanaDir      string
+	GrafanaRef      string
 	BuildEnterprise bool
 	EnterpriseRef   string
-	Version         string
-	BuildID         string
+	// EnterpriseDir is the path to the Grafana Enterprise source tree.
+	EnterpriseDir string
+	BuildID       string
 
 	// Context is available for all sub-commands that define their own flags.
-	Context *cli.Context
+	Context CLIContext
+
+	// ProvidedVersion will be set by the '--version' flag if provided, and returned in the 'Version' function.
+	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
+	ProvidedVersion string
 }
 
 type PipelineFunc func(context.Context, *dagger.Client, PipelineArgs) error
+
+func (p *PipelineArgs) Version(ctx context.Context) (string, error) {
+	return "", nil
+}
+
+func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
+	// 1. Determine whether we should clone Grafana / Enterprise
+	// 2. Authenticate with GitHub (if necessary)
+	// 3. Get the Grafana source tree either locally or from a container where it was cloned
+	// 4. Do the same for Enterprise (if necessary) and `build.sh`.
+	// 5. Return the directory
+
+	// Determine if we need to git authenticate, and then do it
+	var (
+		cloneGrafana    bool
+		cloneEnterprise bool
+	)
+
+	// If GrafanaDir was not provided, then it will need to be cloned.
+	if p.GrafanaDir == "" {
+		// Grafana will clone from git, needs auth
+		cloneGrafana = true
+	}
+
+	if p.BuildEnterprise && p.EnterpriseDir == "" {
+		// Enterprise will clone from git, needs auth
+		cloneEnterprise = true
+	}
+
+	if cloneGrafana || cloneEnterprise {
+		// This is where Kevin is stopping.
+		// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+		log.Println("Aquiring github token")
+		token, err := lookupGitHubToken(ctx, c)
+		if err != nil {
+			return pipelines.PipelineArgs{}, err
+		}
+		if token == "" {
+			return pipelines.PipelineArgs{}, fmt.Errorf("Unable to aquire github token")
+		}
+		c.Set("github-token", token)
+	}
+
+	// Start by gathering grafana code, either locally or from git
+	if grafanaDir != "" {
+		log.Printf("Mounting local directory %s", grafanaDir)
+		src, err = containers.MountLocalDir(client, grafanaDir)
+		if err != nil {
+			return pipelines.PipelineArgs{}, err
+		}
+	} else {
+		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", ref)
+		src, err = containers.Clone(client, "https://github.com/grafana/grafana.git", ref)
+		if err != nil {
+			return pipelines.PipelineArgs{}, err
+		}
+	}
+
+	// If the enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
+	if enterprise {
+		log.Println("We will build the enterprise version of Grafana")
+
+		if enterpriseDir != "" {
+			log.Printf("Mounting local enterprise directory %s", enterpriseDir)
+			enterpriseSrcDir, err := containers.MountLocalDir(client, enterpriseDir)
+			if err != nil {
+				return pipelines.PipelineArgs{}, err
+			}
+			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
+		} else {
+			log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", enterpriseRef)
+			enterpriseSrcDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", enterpriseRef)
+			if err != nil {
+				return pipelines.PipelineArgs{}, err
+			}
+			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
+		}
+	}
+	//return pipelines.PipelineArgs{}, fmt.Errorf("this is the end my friend")
+	return nil
+}

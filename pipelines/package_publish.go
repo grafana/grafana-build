@@ -11,6 +11,11 @@ import (
 
 // PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
 func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
+	version, err := args.Version(ctx)
+	if err != nil {
+		return err
+	}
+
 	packages, err := PackageFiles(ctx, d, args)
 	if err != nil {
 		return err
@@ -37,8 +42,9 @@ func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) er
 	}
 
 	for distro, targz := range packages {
-		dst := strings.Join([]string{args.Context.Path("destination"), TarFilename(args, distro)}, "/")
-		log.Println("Writing package", TarFilename(args, distro), "to", dst)
+		fn := TarFilename(version, args.BuildID, args.BuildEnterprise, distro)
+		dst := strings.Join([]string{args.Context.Path("destination"), fn}, "/")
+		log.Println("Writing package", fn, "to", dst)
 		uploader, err := containers.GCSUploadFile(d, containers.GoogleCloudImage, auth, targz, dst)
 		if err != nil {
 			return err
