@@ -91,20 +91,14 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 		checkoutArgs = []string{fmt.Sprintf(`if git -C src checkout %[1]s; then echo "checked out %[1]s";`, checkouts[0])}
 	)
 
-	if len(checkouts) > 1 {
-		// In cases where there's only 2 elements in the list this value will be empty.
-		middle := checkouts[1 : len(checkouts)-1]
-		for _, v := range middle {
-			checkoutArgs = append(checkoutArgs, fmt.Sprintf(`elif git -C src checkout %[1]s; then echo "checked out %[1]s";`, v))
-		}
-
-		last := checkouts[len(checkouts)-1]
-		checkoutArgs = append(checkoutArgs, fmt.Sprintf(`else git -C src checkout %s;`, last))
+	for _, v := range checkouts[1:] {
+		checkoutArgs = append(checkoutArgs, fmt.Sprintf(`elif git -C src checkout %[1]s; then echo "checked out %[1]s";`, v))
 	}
 
-	checkoutArgs = append(checkoutArgs, "fi")
+	checkoutArgs = append(checkoutArgs, "else exit 3; fi")
 
 	container = container.WithExec([]string{"/bin/sh", "-c", strings.Join(checkoutArgs, " ")})
+	log.Println(strings.Join(checkoutArgs, " "))
 	return container, nil
 }
 
@@ -118,6 +112,10 @@ func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
+		return nil, fmt.Errorf("%d: %w", code, err)
 	}
 
 	return container.Directory("src"), nil
@@ -134,6 +132,11 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 	if err != nil {
 		return nil, err
 	}
+
+	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
+		return nil, fmt.Errorf("%d: %w", code, err)
+	}
+
 	return container.Directory("src"), nil
 }
 
@@ -149,11 +152,11 @@ func CloneWithSSHAuth(d *dagger.Client, sshKeyPath, url, ref string) (*dagger.Di
 	if err != nil {
 		return nil, err
 	}
-	entries, err := container.Directory("src").Entries(context.Background())
-	log.Println(entries, err)
-	log.Println(entries, err)
-	log.Println(entries, err)
-	log.Println(entries, err)
+
+	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
+		return nil, fmt.Errorf("%d: %w", code, err)
+	}
+
 	return container.Directory("src"), nil
 }
 
