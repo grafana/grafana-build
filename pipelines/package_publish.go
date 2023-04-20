@@ -10,13 +10,13 @@ import (
 )
 
 // PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
-func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
+func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
 	version, err := args.Version(ctx)
 	if err != nil {
 		return err
 	}
 
-	packages, err := PackageFiles(ctx, d, args)
+	packages, err := PackageFiles(ctx, d, src, args)
 	if err != nil {
 		return err
 	}

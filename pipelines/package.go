@@ -46,15 +46,8 @@ func TarFilename(version, buildID string, isEnterprise bool, distro executil.Dis
 }
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
-func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
-	var (
-		src, err = args.Grafana(ctx, d)
-		distros  = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
-	)
-	if err != nil {
-		return nil, err
-	}
-
+func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
+	distros := executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	version, err := args.Version(ctx)
 	if err != nil {
 		return nil, err
@@ -104,13 +97,13 @@ func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map
 }
 
 // Package builds and packages Grafana into a tar.gz for each distribution provided.
-func Package(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
+func Package(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
 	version, err := args.Version(ctx)
 	if err != nil {
 		return err
 	}
 
-	packages, err := PackageFiles(ctx, d, args)
+	packages, err := PackageFiles(ctx, d, src, args)
 	if err != nil {
 		return err
 	}

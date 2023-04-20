@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -20,7 +21,6 @@ type CLIContext interface {
 
 type PipelineArgs struct {
 	// These arguments are ones that are available at the global level.
-
 	Verbose      bool
 	BuildGrafana bool
 	// GrafanaDir is the path to the Grafana source tree.
@@ -41,7 +41,71 @@ type PipelineArgs struct {
 	ProvidedVersion string
 }
 
-type PipelineFunc func(context.Context, *dagger.Client, PipelineArgs) error
+// PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
+func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, error) {
+	var (
+		verbose       = c.Bool("v")
+		version       = c.String("version")
+		grafana       = c.Bool("grafana")
+		grafanaDir    = c.String("grafana-dir")
+		ref           = c.String("grafana-ref")
+		enterprise    = c.Bool("enterprise")
+		enterpriseDir = c.String("enterprise-dir")
+		enterpriseRef = c.String("enterprise-ref")
+		buildID       = c.String("build-id")
+		gitHubToken   = c.String("github-token")
+	)
+
+	if buildID == "" {
+		buildID = randomString(12)
+	}
+
+	// If the user has provided any ref except the default, then
+	// we can safely assume they want to compile enterprise.
+	// If they've explicitely set the enterprise flag to emptystring then we can assume they want it to be false.
+	if enterpriseRef == "" {
+		enterprise = false
+	} else if enterpriseRef != "main" {
+		enterprise = true
+	}
+
+	// If the user has set the Enterprise Directory, then
+	// we can safely assume that they want to compile enterprise.
+	if enterpriseDir != "" {
+		if _, err := os.Stat(enterpriseDir); err != nil {
+			return PipelineArgs{}, fmt.Errorf("stat enterprise dir '%s': %w", enterpriseDir, err)
+		}
+		enterprise = true
+	}
+
+	//if version == "" {
+	//	log.Println("Version not provided; getting version from package.json...")
+	//	v, err := containers.GetPackageJSONVersion(ctx, client, src)
+	//	if err != nil {
+	//		return PipelineArgs{}, err
+	//	}
+
+	//	version = v
+	//	log.Println("Got version", v)
+	//}
+
+	return PipelineArgs{
+		BuildID:         buildID,
+		Verbose:         verbose,
+		ProvidedVersion: version,
+		BuildEnterprise: enterprise,
+		BuildGrafana:    grafana,
+		GrafanaDir:      grafanaDir,
+		GrafanaRef:      ref,
+		EnterpriseDir:   enterpriseDir,
+		EnterpriseRef:   enterpriseRef,
+		Context:         c,
+		GitHubToken:     gitHubToken,
+		//Grafana:         src,
+	}, nil
+}
+
+type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
 
 func (p *PipelineArgs) Version(ctx context.Context) (string, error) {
 	return p.ProvidedVersion, nil
@@ -58,8 +122,6 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 	var (
 		cloneGrafana    bool
 		cloneEnterprise bool
-		src             *dagger.Directory
-		err             error
 	)
 
 	// If GrafanaDir was not provided, then it will need to be cloned.
@@ -73,6 +135,8 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 		cloneEnterprise = true
 	}
 
+	ght := p.GitHubToken
+
 	if cloneEnterprise && p.GitHubToken == "" {
 		// If GitHubToken was not set from flag
 		log.Println("Aquiring github token")
@@ -81,46 +145,59 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 			return nil, err
 		}
 		if token == "" {
-			return nil, fmt.Errorf("Unable to aquire github token")
+			return nil, fmt.Errorf("unable to aquire github token")
 		}
-		p.GitHubToken = token
+		ght = token
 	}
 
-	// Start by gathering grafana code, either locally or from git
-	if cloneGrafana {
-		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", p.GrafanaRef)
-		src, err = containers.Clone(client, "https://github.com/grafana/grafana.git", p.GrafanaRef)
+	log.Printf("Mounting local directory %s", p.GrafanaDir)
+
+	var (
+		src *dagger.Directory
+	)
+
+	if !cloneGrafana {
+		grafanaSrc, err := containers.MountLocalDir(client, p.GrafanaDir)
 		if err != nil {
 			return nil, err
 		}
+
+		src = grafanaSrc
 	} else {
-		log.Printf("Mounting local directory %s", p.GrafanaDir)
-		src, err = containers.MountLocalDir(client, p.GrafanaDir)
+		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", p.GrafanaRef)
+		grafanaSrc, err := containers.Clone(client, "https://github.com/grafana/grafana.git", p.GrafanaRef)
 		if err != nil {
 			return nil, err
 		}
+		src = grafanaSrc
 	}
 
 	// If the enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
-	if p.BuildEnterprise {
-		log.Println("We will build the enterprise version of Grafana")
-
-		if p.EnterpriseDir != "" {
-			log.Printf("Mounting local enterprise directory %s", p.EnterpriseDir)
-			enterpriseSrcDir, err := containers.MountLocalDir(client, p.EnterpriseDir)
-			if err != nil {
-				return nil, err
-			}
-			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
-		} else {
-			log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", p.EnterpriseRef)
-			enterpriseSrcDir, err := containers.CloneWithGitHubToken(client, p.GitHubToken, "https://github.com/grafana/grafana-enterprise.git", p.EnterpriseRef)
-			if err != nil {
-				return nil, err
-			}
-			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
-		}
+	if !p.BuildEnterprise {
+		return src, nil
 	}
-	// return src, fmt.Errorf("this is the end my friend")
-	return src, nil
+
+	log.Println("We will build the enterprise version of Grafana")
+	var (
+		enterpriseDir *dagger.Directory
+	)
+
+	if p.EnterpriseDir != "" {
+		enterpriseSrcDir, err := containers.MountLocalDir(client, p.EnterpriseDir)
+		if err != nil {
+			return nil, err
+		}
+
+		enterpriseDir = enterpriseSrcDir
+	} else {
+		log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", p.EnterpriseRef)
+		enterpriseSrcDir, err := containers.CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana-enterprise.git", p.EnterpriseRef)
+		if err != nil {
+			return nil, err
+		}
+
+		enterpriseDir = enterpriseSrcDir
+	}
+
+	return containers.InitializeEnterprise(client, src, enterpriseDir), nil
 }

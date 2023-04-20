@@ -85,12 +85,17 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 			return err
 		}
 
-		args, err := PipelineArgsFromContext(c.Context, c)
+		args, err := pipelines.PipelineArgsFromContext(c.Context, c)
 		if err != nil {
 			return err
 		}
 
-		return pf(c.Context, client, args)
+		grafanaDir, err := args.Grafana(ctx, client)
+		if err != nil {
+			return err
+		}
+
+		return pf(c.Context, client, grafanaDir, args)
 	}
 }
 

@@ -1,10 +1,13 @@
-package main
+package pipelines_test
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/grafana/grafana-build/pipelines"
 )
 
 type TestCLIContext struct {
@@ -16,6 +19,7 @@ func (t *TestCLIContext) Bool(key string) bool {
 }
 
 func (t *TestCLIContext) String(key string) string {
+	log.Println("getting key", key)
 	return t.Data[key].(string)
 }
 
@@ -49,10 +53,11 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		"enterprise-dir": enterpriseDir,
 		"enterprise-ref": "1234",
 		"build-id":       "build-1234",
+		"github-token":   "",
 	}
 
 	t.Run("It should return a PipelineArgs object if there are no errors", func(t *testing.T) {
-		args, err := PipelineArgsFromContext(context.Background(), &TestCLIContext{
+		args, err := pipelines.PipelineArgsFromContext(context.Background(), &TestCLIContext{
 			Data: validData,
 		})
 		if err != nil {
@@ -95,7 +100,7 @@ func TestPipelineArgsFromContext(t *testing.T) {
 	t.Run("If no build ID is provided, a random 12-character string should be given", func(t *testing.T) {
 		data := validData
 		data["build-id"] = ""
-		args, err := PipelineArgsFromContext(context.Background(), &TestCLIContext{
+		args, err := pipelines.PipelineArgsFromContext(context.Background(), &TestCLIContext{
 			Data: data,
 		})
 		if err != nil {
@@ -115,7 +120,7 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		data["enterprise"] = false
 		data["enterprise-ref"] = "ref-1234"
 
-		args, err := PipelineArgsFromContext(context.Background(), &TestCLIContext{
+		args, err := pipelines.PipelineArgsFromContext(context.Background(), &TestCLIContext{
 			Data: data,
 		})
 		if err != nil {
@@ -133,7 +138,7 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		data["enterprise-ref"] = ""
 		data["enterprise-dir"] = filepath.Join(enterpriseDir, "does-not-exist")
 
-		_, err := PipelineArgsFromContext(context.Background(), &TestCLIContext{
+		_, err := pipelines.PipelineArgsFromContext(context.Background(), &TestCLIContext{
 			Data: data,
 		})
 		if err == nil {
