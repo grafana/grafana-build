@@ -75,11 +75,10 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 	}
 
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
-	srcDir, err := args.Grafana(ctx, d)
 	for k, backend := range backends {
 		packager := d.Container().
 			From(containers.BusyboxImage).
-			WithMountedDirectory("/src", srcDir).
+			WithMountedDirectory("/src", src).
 			WithMountedDirectory("/src/bin", backend).
 			WithMountedDirectory("/src/public", frontend).
 			WithWorkdir("/src")

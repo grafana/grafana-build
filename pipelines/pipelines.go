@@ -78,17 +78,6 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 		enterprise = true
 	}
 
-	//if version == "" {
-	//	log.Println("Version not provided; getting version from package.json...")
-	//	v, err := containers.GetPackageJSONVersion(ctx, client, src)
-	//	if err != nil {
-	//		return PipelineArgs{}, err
-	//	}
-
-	//	version = v
-	//	log.Println("Got version", v)
-	//}
-
 	return PipelineArgs{
 		BuildID:         buildID,
 		Verbose:         verbose,
@@ -108,6 +97,20 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
 
 func (p *PipelineArgs) Version(ctx context.Context) (string, error) {
+	// If ProvidedVersion is set, we should use that.
+	// If it's not set, then use the containers.GetPackageJSONVersion function to get the version and return that
+
+	// old implementation:
+	//if version == "" {
+	//	log.Println("Version not provided; getting version from package.json...")
+	//	v, err := containers.GetPackageJSONVersion(ctx, client, src)
+	//	if err != nil {
+	//		return PipelineArgs{}, err
+	//	}
+
+	//	version = v
+	//	log.Println("Got version", v)
+	//}
 	return p.ProvidedVersion, nil
 }
 
