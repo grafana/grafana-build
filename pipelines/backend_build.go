@@ -67,9 +67,10 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, args PipelineArg
 		distros[i] = executil.Distribution(v)
 	}
 
+	srcDir, err := args.Grafana(ctx, d)
 	dirs := make([]*dagger.Directory, len(distroList))
 	for i, distro := range distros {
-		container, err := GrafanaBackendBuildDirectory(ctx, d, args.Grafana(d), distro, version)
+		container, err := GrafanaBackendBuildDirectory(ctx, d, srcDir, distro, version)
 		if err != nil {
 			return err
 		}

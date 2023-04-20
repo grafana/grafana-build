@@ -48,9 +48,12 @@ func TarFilename(version, buildID string, isEnterprise bool, distro executil.Dis
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
 func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
 	var (
-		src     = args.Grafana(d)
-		distros = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
+		src, err = args.Grafana(ctx, d)
+		distros  = executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	version, err := args.Version(ctx)
 	if err != nil {
@@ -79,10 +82,11 @@ func PackageFiles(ctx context.Context, d *dagger.Client, args PipelineArgs) (map
 	}
 
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
+	srcDir, err := args.Grafana(ctx, d)
 	for k, backend := range backends {
 		packager := d.Container().
 			From(containers.BusyboxImage).
-			WithMountedDirectory("/src", args.Grafana(d)).
+			WithMountedDirectory("/src", srcDir).
 			WithMountedDirectory("/src/bin", backend).
 			WithMountedDirectory("/src/public", frontend).
 			WithWorkdir("/src")

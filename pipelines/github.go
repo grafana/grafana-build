@@ -1,4 +1,4 @@
-package main
+package pipelines
 
 import (
 	"bytes"
@@ -8,20 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/grafana/grafana-build/pipelines"
 )
 
-// lookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
-func lookupGitHubToken(ctx context.Context, c pipelines.CLIContext) (string, error) {
+// LookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
+func LookupGitHubToken(ctx context.Context) (string, error) {
 	log.Print("Looking for a GitHub token")
-	token := c.String("github-token")
-	if token != "" {
-		log.Print("Using GitHub token provided via flag")
-		return token, nil
-	}
+
 	// First try: Check if it's in the environment. This can override everything!
-	token = os.Getenv("GITHUB_TOKEN")
+	token := os.Getenv("GITHUB_TOKEN")
 	if token != "" {
 		log.Print("Using GitHub token provided via environment variable")
 		return token, nil

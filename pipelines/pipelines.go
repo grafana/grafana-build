@@ -31,6 +31,7 @@ type PipelineArgs struct {
 	// EnterpriseDir is the path to the Grafana Enterprise source tree.
 	EnterpriseDir string
 	BuildID       string
+	GitHubToken   string
 
 	// Context is available for all sub-commands that define their own flags.
 	Context CLIContext
@@ -43,7 +44,7 @@ type PipelineArgs struct {
 type PipelineFunc func(context.Context, *dagger.Client, PipelineArgs) error
 
 func (p *PipelineArgs) Version(ctx context.Context) (string, error) {
-	return "", nil
+	return p.ProvidedVersion, nil
 }
 
 func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
@@ -57,6 +58,8 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 	var (
 		cloneGrafana    bool
 		cloneEnterprise bool
+		src             *dagger.Directory
+		err             error
 	)
 
 	// If GrafanaDir was not provided, then it will need to be cloned.
@@ -70,55 +73,54 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 		cloneEnterprise = true
 	}
 
-	if cloneGrafana || cloneEnterprise {
-		// This is where Kevin is stopping.
-		// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+	if cloneEnterprise && p.GitHubToken == "" {
+		// If GitHubToken was not set from flag
 		log.Println("Aquiring github token")
-		token, err := lookupGitHubToken(ctx, c)
+		token, err := LookupGitHubToken(ctx)
 		if err != nil {
-			return pipelines.PipelineArgs{}, err
+			return nil, err
 		}
 		if token == "" {
-			return pipelines.PipelineArgs{}, fmt.Errorf("Unable to aquire github token")
+			return nil, fmt.Errorf("Unable to aquire github token")
 		}
-		c.Set("github-token", token)
+		p.GitHubToken = token
 	}
 
 	// Start by gathering grafana code, either locally or from git
-	if grafanaDir != "" {
-		log.Printf("Mounting local directory %s", grafanaDir)
-		src, err = containers.MountLocalDir(client, grafanaDir)
+	if cloneGrafana {
+		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", p.GrafanaRef)
+		src, err = containers.Clone(client, "https://github.com/grafana/grafana.git", p.GrafanaRef)
 		if err != nil {
-			return pipelines.PipelineArgs{}, err
+			return nil, err
 		}
 	} else {
-		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", ref)
-		src, err = containers.Clone(client, "https://github.com/grafana/grafana.git", ref)
+		log.Printf("Mounting local directory %s", p.GrafanaDir)
+		src, err = containers.MountLocalDir(client, p.GrafanaDir)
 		if err != nil {
-			return pipelines.PipelineArgs{}, err
+			return nil, err
 		}
 	}
 
 	// If the enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
-	if enterprise {
+	if p.BuildEnterprise {
 		log.Println("We will build the enterprise version of Grafana")
 
-		if enterpriseDir != "" {
-			log.Printf("Mounting local enterprise directory %s", enterpriseDir)
-			enterpriseSrcDir, err := containers.MountLocalDir(client, enterpriseDir)
+		if p.EnterpriseDir != "" {
+			log.Printf("Mounting local enterprise directory %s", p.EnterpriseDir)
+			enterpriseSrcDir, err := containers.MountLocalDir(client, p.EnterpriseDir)
 			if err != nil {
-				return pipelines.PipelineArgs{}, err
+				return nil, err
 			}
 			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
 		} else {
-			log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", enterpriseRef)
-			enterpriseSrcDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", enterpriseRef)
+			log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", p.EnterpriseRef)
+			enterpriseSrcDir, err := containers.CloneWithGitHubToken(client, p.GitHubToken, "https://github.com/grafana/grafana-enterprise.git", p.EnterpriseRef)
 			if err != nil {
-				return pipelines.PipelineArgs{}, err
+				return nil, err
 			}
 			src = containers.InitializeEnterprise(client, src, enterpriseSrcDir)
 		}
 	}
-	//return pipelines.PipelineArgs{}, fmt.Errorf("this is the end my friend")
-	return nil
+	// return src, fmt.Errorf("this is the end my friend")
+	return src, nil
 }

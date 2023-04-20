@@ -14,7 +14,10 @@ var IntegrationDatabases = []string{"sqlite", "mysql", "postgres"}
 func GrafanaBackendTests(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	db := args.Context.String("database")
 
-	grafanaDir := args.Grafana(d)
+	grafanaDir, err := args.Grafana(ctx, d)
+	if err != nil {
+		return err
+	}
 
 	var r = []*dagger.Container{}
 	c := d.Pipeline("backend tests", dagger.PipelineOpts{
@@ -39,8 +42,13 @@ func GrafanaBackendTestIntegration(ctx context.Context, d *dagger.Client, args P
 		Description: "Runs backend integration tests",
 	})
 
+	srcDir, err := args.Grafana(ctx, d)
+	if err != nil {
+		return err
+	}
+
 	r := []*dagger.Container{
-		containers.BackendTestIntegration(c, args.Grafana(d)),
+		containers.BackendTestIntegration(c, srcDir),
 	}
 
 	return containers.Run(ctx, r)

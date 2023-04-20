@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/grafana/grafana-build/pipelines"
 )
@@ -20,6 +18,7 @@ func PipelineArgsFromContext(ctx context.Context, c pipelines.CLIContext) (pipel
 		enterpriseDir = c.String("enterprise-dir")
 		enterpriseRef = c.String("enterprise-ref")
 		buildID       = c.String("build-id")
+		gitHubToken   = c.String("github-token")
 	)
 
 	if buildID == "" {
@@ -38,24 +37,19 @@ func PipelineArgsFromContext(ctx context.Context, c pipelines.CLIContext) (pipel
 	// If the user has set the Enterprise Directory, then
 	// we can safely assume that they want to compile enterprise.
 	if enterpriseDir != "" {
-		_, err := os.Stat(enterpriseDir)
-		if err != nil {
-			return pipelines.PipelineArgs{}, fmt.Errorf("--enterprise-dir %s does not exist", enterpriseDir)
-		}
-
 		enterprise = true
 	}
 
-	// if version == "" {
-	// 	log.Println("Version not provided; getting version from package.json...")
-	// 	v, err := containers.GetPackageJSONVersion(ctx, client, src)
-	// 	if err != nil {
-	// 		return pipelines.PipelineArgs{}, err
-	// 	}
+	//if version == "" {
+	//	log.Println("Version not provided; getting version from package.json...")
+	//	v, err := containers.GetPackageJSONVersion(ctx, client, src)
+	//	if err != nil {
+	//		return pipelines.PipelineArgs{}, err
+	//	}
 
-	// 	version = v
-	// 	log.Println("Got version", v)
-	// }
+	//	version = v
+	//	log.Println("Got version", v)
+	//}
 
 	return pipelines.PipelineArgs{
 		BuildID:         buildID,
@@ -68,6 +62,7 @@ func PipelineArgsFromContext(ctx context.Context, c pipelines.CLIContext) (pipel
 		EnterpriseDir:   enterpriseDir,
 		EnterpriseRef:   enterpriseRef,
 		Context:         c,
+		GitHubToken:     gitHubToken,
 		//Grafana:         src,
 	}, nil
 }
