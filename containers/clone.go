@@ -142,12 +142,10 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 }
 
 func MountLocalDir(d *dagger.Client, localPath string) (*dagger.Directory, error) {
-	_, err := os.Stat(localPath)
-	if err != nil {
+	if _, err := os.Stat(localPath); err != nil {
 		return nil, err
 	}
-	src := d.Host().Directory(localPath)
-	return src, nil
+	return d.Host().Directory(localPath), nil
 }
 
 // CloneWithSSHAuth returns the directory with the cloned repository ('url') and checked out ref ('ref').
