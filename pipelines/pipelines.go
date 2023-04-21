@@ -62,7 +62,7 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 
 	// If the user has provided any ref except the default, then
 	// we can safely assume they want to compile enterprise.
-	// If they've explicitely set the enterprise flag to emptystring then we can assume they want it to be false.
+	// If they've explicitly set the enterprise flag to emptystring then we can assume they want it to be false.
 	if enterpriseRef == "" {
 		enterprise = false
 	} else if enterpriseRef != "main" {
@@ -141,13 +141,13 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 
 	if cloneEnterprise && p.GitHubToken == "" {
 		// If GitHubToken was not set from flag
-		log.Println("Aquiring github token")
+		log.Println("Acquiring github token")
 		token, err := LookupGitHubToken(ctx)
 		if err != nil {
 			return nil, err
 		}
 		if token == "" {
-			return nil, fmt.Errorf("unable to aquire github token")
+			return nil, fmt.Errorf("unable to acquire github token")
 		}
 		ght = token
 	}
