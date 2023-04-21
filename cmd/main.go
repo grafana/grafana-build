@@ -1,14 +1,10 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"io/fs"
 	"log"
 	"os"
 
 	"dagger.io/dagger"
-	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
@@ -16,42 +12,54 @@ import (
 var app = &cli.App{
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
-			Name:    "verbose",
-			Aliases: []string{"v"},
-			Value:   false,
+			Name:     "grafana",
+			Usage:    "If set, initialize Grafana",
+			Required: false,
+			Value:    true,
 		},
-		&cli.BoolFlag{
-			Name:  "enterprise",
-			Usage: "If set, attempt to clone and initialize Grafana Enterprise",
+		&cli.StringFlag{
+			Name:     "grafana-dir",
+			Usage:    "Local Grafana dir to use, instead of git clone",
+			Required: false,
 		},
 		&cli.StringFlag{
 			Name:     "grafana-ref",
+			Usage:    "Grafana ref to clone, not valid if --grafana-dir is set",
 			Required: false,
 			Value:    "main",
+		},
+		&cli.BoolFlag{
+			Name:  "enterprise",
+			Usage: "If set, initialize Grafana Enterprise",
+			Value: false,
+		},
+		&cli.StringFlag{
+			Name:     "enterprise-dir",
+			Usage:    "Local Grafana Enterprise dir to use, instead of git clone",
+			Required: false,
 		},
 		&cli.StringFlag{
 			Name:     "enterprise-ref",
+			Usage:    "Grafana Enterprise ref to clone, not valid if --enterprise-dir is set",
 			Required: false,
 			Value:    "main",
 		},
 		&cli.StringFlag{
-			Name:     "github-token",
+			Name:     "build-id",
+			Usage:    "Build ID to use, by default will be what is defined in package.json",
 			Required: false,
 		},
 		&cli.StringFlag{
-			Name:     "build-id",
+			Name:     "github-token",
+			Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
 			Required: false,
 		},
-	},
-	Before: func(cctx *cli.Context) error {
-		token, err := lookupGitHubToken(cctx)
-		if err != nil {
-			return fmt.Errorf("failed to find a GitHub access token: %w", err)
-		}
-		if token == "" {
-			return fmt.Errorf("could not find a GitHub token in the environment")
-		}
-		return cctx.Set("github-token", token)
+		&cli.BoolFlag{
+			Name:    "verbose",
+			Aliases: []string{"v"},
+			Usage:   "Increase log verbosity",
+			Value:   false,
+		},
 	},
 	Commands: []*cli.Command{
 		{
@@ -61,84 +69,6 @@ var app = &cli.App{
 		},
 		PackageCommand,
 	},
-}
-
-func PipelineArgsFromContext(c *cli.Context, client *dagger.Client) (pipelines.PipelineArgs, error) {
-	var (
-		verbose       = c.Bool("v")
-		version       = c.String("version")
-		ref           = c.String("grafana-ref")
-		enterprise    = c.Bool("enterprise")
-		enterpriseRef = c.String("enterprise-ref")
-		buildID       = c.String("build-id")
-		src           *dagger.Directory
-	)
-
-	if buildID == "" {
-		buildID = randomString(12)
-	}
-
-	path := c.Args().Get(0)
-	if path == "" {
-		path = ".grafana"
-	}
-
-	f, err := os.Stat(path)
-	// It's okay if the folder doesn't exist; if it doesn't, we'll just clone the repo.
-	// Other errors though it's worth just returning on.
-	if err != nil {
-		// If there was some error other than the directory not existing, then we likely need to return that.
-		if !errors.Is(err, fs.ErrNotExist) {
-			return pipelines.PipelineArgs{}, err
-		}
-
-		// If the folder doesn't exist, then we want to clone Grafana.
-		srcDir, err := containers.Clone(client, "https://github.com/grafana/grafana.git", ref)
-		if err != nil {
-			return pipelines.PipelineArgs{}, err
-		}
-
-		// If the 'enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
-		if enterprise {
-			enterpriseDir, err := containers.CloneWithGitHubToken(client, c.String("github-token"), "https://github.com/grafana/grafana-enterprise.git", enterpriseRef)
-			if err != nil {
-				return pipelines.PipelineArgs{}, err
-			}
-
-			srcDir = containers.InitializeEnterprise(client, srcDir, enterpriseDir)
-		}
-
-		// Set the source directory to the result of the git clone.
-		src = srcDir
-	} else {
-		// If it does exist but it's not a directory then we should throw an error.
-		if !f.IsDir() {
-			return pipelines.PipelineArgs{}, errors.New("path provided is not a directory")
-		}
-
-		// Set the source directory to be the path provided.
-		src = client.Host().Directory(path)
-	}
-
-	if version == "" {
-		log.Println("Version not provided; getting version from package.json...")
-		v, err := containers.GetPackageJSONVersion(c.Context, client, src)
-		if err != nil {
-			return pipelines.PipelineArgs{}, err
-		}
-
-		version = v
-		log.Println("Got version", v)
-	}
-
-	return pipelines.PipelineArgs{
-		BuildID:    buildID,
-		Verbose:    verbose,
-		Version:    version,
-		Enterprise: enterprise,
-		Context:    c,
-		Grafana:    src,
-	}, nil
 }
 
 func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
@@ -155,12 +85,23 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 			return err
 		}
 
-		args, err := PipelineArgsFromContext(c, client)
+		args, err := pipelines.PipelineArgsFromContext(c.Context, c)
 		if err != nil {
 			return err
 		}
 
-		return pf(c.Context, client, args)
+		grafanaDir, err := args.Grafana(ctx, client)
+		if err != nil {
+			return err
+		}
+
+		v, err := args.DetectVersion(ctx, client, grafanaDir)
+		if err != nil {
+			return err
+		}
+		args.Version = v
+
+		return pf(c.Context, client, grafanaDir, args)
 	}
 }
 

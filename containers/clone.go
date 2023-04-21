@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -138,6 +139,13 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 	}
 
 	return container.Directory("src"), nil
+}
+
+func MountLocalDir(d *dagger.Client, localPath string) (*dagger.Directory, error) {
+	if _, err := os.Stat(localPath); err != nil {
+		return nil, err
+	}
+	return d.Host().Directory(localPath), nil
 }
 
 // CloneWithSSHAuth returns the directory with the cloned repository ('url') and checked out ref ('ref').

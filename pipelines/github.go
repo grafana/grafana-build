@@ -1,26 +1,21 @@
-package main
+package pipelines
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/urfave/cli/v2"
 )
 
-// lookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
-func lookupGitHubToken(c *cli.Context) (string, error) {
+// LookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
+func LookupGitHubToken(ctx context.Context) (string, error) {
 	log.Print("Looking for a GitHub token")
-	token := c.String("github-token")
-	if token != "" {
-		log.Print("Using GitHub token provided via flag")
-		return token, nil
-	}
+
 	// First try: Check if it's in the environment. This can override everything!
-	token = os.Getenv("GITHUB_TOKEN")
+	token := os.Getenv("GITHUB_TOKEN")
 	if token != "" {
 		log.Print("Using GitHub token provided via environment variable")
 		return token, nil
@@ -35,7 +30,7 @@ func lookupGitHubToken(c *cli.Context) (string, error) {
 	}
 
 	//nolint:gosec
-	cmd := exec.CommandContext(c.Context, ghPath, "auth", "token")
+	cmd := exec.CommandContext(ctx, ghPath, "auth", "token")
 	cmd.Stdout = &data
 	cmd.Stderr = &errData
 
