@@ -95,6 +95,12 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 			return err
 		}
 
+		v, err := args.DetectVersion(ctx, client, grafanaDir)
+		if err != nil {
+			return err
+		}
+		args.Version = v
+
 		return pf(c.Context, client, grafanaDir, args)
 	}
 }

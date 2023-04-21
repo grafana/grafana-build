@@ -68,7 +68,7 @@ func TestPipelineArgsFromContext(t *testing.T) {
 			t.Error("args.Verbose should be true")
 		}
 
-		if args.ProvidedVersion != "v1.0.0" {
+		if args.Version != "v1.0.0" {
 			t.Error("args.Version should be v1.0.0")
 		}
 

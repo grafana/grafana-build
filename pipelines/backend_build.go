@@ -53,11 +53,6 @@ func GrafanaBackendBuildDirectories(ctx context.Context, d *dagger.Client, src *
 
 // GrafanaBackendBuild builds all of the distributions in the '--distros' argument and places them in the 'bin' directory of the PWD.
 func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	version, err := args.Version(ctx)
-	if err != nil {
-		return err
-	}
-
 	var (
 		distroList = args.Context.StringSlice("distro")
 		distros    = make([]executil.Distribution, len(distroList))
@@ -69,7 +64,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 
 	dirs := make([]*dagger.Directory, len(distroList))
 	for i, distro := range distros {
-		container, err := GrafanaBackendBuildDirectory(ctx, d, src, distro, version)
+		container, err := GrafanaBackendBuildDirectory(ctx, d, src, distro, args.Version)
 		if err != nil {
 			return err
 		}

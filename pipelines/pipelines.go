@@ -36,9 +36,9 @@ type PipelineArgs struct {
 	// Context is available for all sub-commands that define their own flags.
 	Context CLIContext
 
-	// ProvidedVersion will be set by the '--version' flag if provided, and returned in the 'Version' function.
+	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
-	ProvidedVersion string
+	Version string
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -81,7 +81,7 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 	return PipelineArgs{
 		BuildID:         buildID,
 		Verbose:         verbose,
-		ProvidedVersion: version,
+		Version:         version,
 		BuildEnterprise: enterprise,
 		BuildGrafana:    grafana,
 		GrafanaDir:      grafanaDir,
@@ -90,28 +90,27 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 		EnterpriseRef:   enterpriseRef,
 		Context:         c,
 		GitHubToken:     gitHubToken,
-		//Grafana:         src,
 	}, nil
 }
 
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
 
-func (p *PipelineArgs) Version(ctx context.Context) (string, error) {
-	// If ProvidedVersion is set, we should use that.
+func (p *PipelineArgs) DetectVersion(ctx context.Context, client *dagger.Client, grafanaDir *dagger.Directory) (string, error) {
+	// If Version is set, we should use that.
 	// If it's not set, then use the containers.GetPackageJSONVersion function to get the version and return that
 
-	// old implementation:
-	//if version == "" {
-	//	log.Println("Version not provided; getting version from package.json...")
-	//	v, err := containers.GetPackageJSONVersion(ctx, client, src)
-	//	if err != nil {
-	//		return PipelineArgs{}, err
-	//	}
+	if p.Version != "" {
+		return p.Version, nil
+	}
 
-	//	version = v
-	//	log.Println("Got version", v)
-	//}
-	return p.ProvidedVersion, nil
+	log.Println("Version not provided; getting version from package.json...")
+	v, err := containers.GetPackageJSONVersion(ctx, client, grafanaDir)
+	if err != nil {
+		return "", err
+	}
+
+	log.Println("Got version", v)
+	return v, nil
 }
 
 func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
@@ -153,13 +152,12 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 		ght = token
 	}
 
-	log.Printf("Mounting local directory %s", p.GrafanaDir)
-
 	var (
 		src *dagger.Directory
 	)
 
 	if !cloneGrafana {
+		log.Printf("Mounting local directory %s", p.GrafanaDir)
 		grafanaSrc, err := containers.MountLocalDir(client, p.GrafanaDir)
 		if err != nil {
 			return nil, err
@@ -186,6 +184,7 @@ func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dag
 	)
 
 	if p.EnterpriseDir != "" {
+		log.Printf("Mounting local enterprise directory %s", p.EnterpriseDir)
 		enterpriseSrcDir, err := containers.MountLocalDir(client, p.EnterpriseDir)
 		if err != nil {
 			return nil, err

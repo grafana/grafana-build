@@ -48,12 +48,8 @@ func TarFilename(version, buildID string, isEnterprise bool, distro executil.Dis
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
 func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
 	distros := executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
-	version, err := args.Version(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	backends, err := GrafanaBackendBuildDirectories(ctx, d, src, distros, version)
+	backends, err := GrafanaBackendBuildDirectories(ctx, d, src, distros, args.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +82,8 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 		for _, v := range plugins {
 			packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
 		}
-		name := TarFilename(version, args.BuildID, args.BuildEnterprise, k)
-		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", version)}).
+		name := TarFilename(args.Version, args.BuildID, args.BuildEnterprise, k)
+		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", args.Version)}).
 			WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
 		packages[k] = packager.File(name)
 	}
@@ -97,18 +93,13 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 
 // Package builds and packages Grafana into a tar.gz for each distribution provided.
 func Package(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	version, err := args.Version(ctx)
-	if err != nil {
-		return err
-	}
-
 	packages, err := PackageFiles(ctx, d, src, args)
 	if err != nil {
 		return err
 	}
 
 	for k, file := range packages {
-		name := TarFilename(version, args.BuildID, args.BuildEnterprise, k)
+		name := TarFilename(args.Version, args.BuildID, args.BuildEnterprise, k)
 		if _, err := file.Export(ctx, name); err != nil {
 			return err
 		}
