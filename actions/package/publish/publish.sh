@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 go run ./cmd \
-  --build-id=${DRONE_BUILD_ID} \
+  --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   package \
