@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 go run ./cmd \
   --build-id=${DRONE_BUILD_ID} \
