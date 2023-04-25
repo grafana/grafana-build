@@ -22,6 +22,10 @@ var PackagedPaths = []string{
 	"README.md",
 	"VERSION",
 	"docs/sources/",
+	"packaging/deb",
+	"packaging/rpm",
+	"packaging/wrappers",
+	"packaging/autocomplete",
 }
 
 // TarFileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
