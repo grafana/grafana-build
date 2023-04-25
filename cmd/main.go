@@ -54,6 +54,7 @@ var app = &cli.App{
 			Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
 			Required: false,
 		},
+		FlagVersion,
 		&cli.BoolFlag{
 			Name:    "verbose",
 			Aliases: []string{"v"},
