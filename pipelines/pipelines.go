@@ -39,6 +39,16 @@ type PipelineArgs struct {
 	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
 	Version string
+
+	// PublishOpts will be populated if the WithPublishOpts wrapper is set on the CLI action and the command accepts PublishFlags.
+	// This is set for pipelines that publish artifacts.
+	// This could be nil.
+	PublishOpts *containers.PublishOpts
+
+	// PackageInputOpts will be populated if the WithPackageInputOpts wrapper is set on the CLI action and the command accepts the PackageInputFlags.
+	// This is set for pipelines that accept a package as input.
+	// This could be nil.
+	PackageInputOpts *containers.PackageInputOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -79,17 +89,19 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 	}
 
 	return PipelineArgs{
-		BuildID:         buildID,
-		Verbose:         verbose,
-		Version:         version,
-		BuildEnterprise: enterprise,
-		BuildGrafana:    grafana,
-		GrafanaDir:      grafanaDir,
-		GrafanaRef:      ref,
-		EnterpriseDir:   enterpriseDir,
-		EnterpriseRef:   enterpriseRef,
-		Context:         c,
-		GitHubToken:     gitHubToken,
+		BuildID:          buildID,
+		Verbose:          verbose,
+		Version:          version,
+		BuildEnterprise:  enterprise,
+		BuildGrafana:     grafana,
+		GrafanaDir:       grafanaDir,
+		GrafanaRef:       ref,
+		EnterpriseDir:    enterpriseDir,
+		EnterpriseRef:    enterpriseRef,
+		Context:          c,
+		GitHubToken:      gitHubToken,
+		PublishOpts:      GetPublishOpts(c),
+		PackageInputOpts: GetPackageInputOpts(c),
 	}, nil
 }
 
