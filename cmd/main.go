@@ -10,65 +10,12 @@ import (
 )
 
 var app = &cli.App{
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:     "grafana",
-			Usage:    "If set, initialize Grafana",
-			Required: false,
-			Value:    true,
-		},
-		&cli.StringFlag{
-			Name:     "grafana-dir",
-			Usage:    "Local Grafana dir to use, instead of git clone",
-			Required: false,
-		},
-		&cli.StringFlag{
-			Name:     "grafana-ref",
-			Usage:    "Grafana ref to clone, not valid if --grafana-dir is set",
-			Required: false,
-			Value:    "main",
-		},
-		&cli.BoolFlag{
-			Name:  "enterprise",
-			Usage: "If set, initialize Grafana Enterprise",
-			Value: false,
-		},
-		&cli.StringFlag{
-			Name:     "enterprise-dir",
-			Usage:    "Local Grafana Enterprise dir to use, instead of git clone",
-			Required: false,
-		},
-		&cli.StringFlag{
-			Name:     "enterprise-ref",
-			Usage:    "Grafana Enterprise ref to clone, not valid if --enterprise-dir is set",
-			Required: false,
-			Value:    "main",
-		},
-		&cli.StringFlag{
-			Name:     "build-id",
-			Usage:    "Build ID to use, by default will be what is defined in package.json",
-			Required: false,
-		},
-		&cli.StringFlag{
-			Name:     "github-token",
-			Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
-			Required: false,
-		},
-		FlagVersion,
-		&cli.BoolFlag{
-			Name:    "verbose",
-			Aliases: []string{"v"},
-			Usage:   "Increase log verbosity",
-			Value:   false,
-		},
-	},
 	Commands: []*cli.Command{
-		{
-			Name:        "backend",
-			Usage:       "Grafana Backend (Golang) operations",
-			Subcommands: BackendCommands,
-		},
+		BackendCommands,
 		PackageCommand,
+		DebCommand,
+		//RPMCommand,
+		//MSICommand,
 	},
 }
 

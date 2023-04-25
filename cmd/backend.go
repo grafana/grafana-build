@@ -24,22 +24,32 @@ var FlagDatabase = &ChoiceFlag{
 	Value:   "sqlite",
 }
 
+var BackendTestFlags = []cli.Flag{
+	FlagUnit,
+	FlagIntegration,
+	FlagDatabase,
+}
+
 var TestBackend = &cli.Command{
 	Name:   "test",
 	Action: PipelineAction(pipelines.GrafanaBackendTests),
-	Flags: []cli.Flag{
-		FlagUnit,
-		FlagIntegration,
-		FlagDatabase,
-	},
+	Flags: JoinFlagsWithDefault(
+		GrafanaFlags,
+		BackendTestFlags,
+	),
 }
 
 var BuildBackend = &cli.Command{
 	Name:   "build",
 	Action: PipelineAction(pipelines.GrafanaBackendBuild),
-	Flags: []cli.Flag{
-		FlagDistros,
-	},
+	Flags: JoinFlagsWithDefault(
+		GrafanaFlags,
+		PackageFlags,
+	),
 }
 
-var BackendCommands = []*cli.Command{TestBackend, BuildBackend}
+var BackendCommands = &cli.Command{
+	Name:        "backend",
+	Usage:       "Grafana Backend (Golang) operations",
+	Subcommands: []*cli.Command{TestBackend, BuildBackend},
+}
