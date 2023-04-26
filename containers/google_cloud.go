@@ -91,3 +91,43 @@ func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *
 	container = container.WithSecretVariable("GCS_DESTINATION", secret)
 	return container.WithExec([]string{"/bin/sh", "-c", "gsutil cp /src/file ${GCS_DESTINATION}"}), nil
 }
+
+func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url string) (*dagger.File, error) {
+	var (
+		container = d.Container().From(image)
+		err       error
+	)
+
+	container, err = auth.Authenticate(d, container)
+	if err != nil {
+		return nil, err
+	}
+	secret := d.SetSecret("gcs-download-url", url)
+	file := container.WithSecretVariable("GCS_DOWNLOAD_URL", secret).
+		WithExec([]string{"/bin/sh", "-c", "gsutil cp ${GCS_DOWNLOAD_URL} /src/file"}).
+		File("/src/file")
+
+	return file, nil
+}
+
+func GCSAuth(d *dagger.Client, opts *GCSOpts) GCPAuthenticator {
+	var auth GCPAuthenticator = &GCPInheritedAuth{}
+	// The order of operations:
+	// 1. Try to use base64 key.
+	// 2. Try to use gcp-service-account-key (path to a file).
+	// 3. Try mounting $XDG_CONFIG_HOME/gcloud
+	if key := opts.ServiceAccountKeyBase64; key != "" {
+		secret := d.SetSecret("gcp-sa-key-base64", key)
+		// Write key to a file in an alpine container...
+		file := d.Container().From("alpine").
+			WithSecretVariable("GCP_SERVICE_ACCOUNT_KEY_BASE64", secret).
+			WithExec([]string{"/bin/sh", "-c", "echo $GCP_SERVICE_ACCOUNT_KEY_BASE64 | base64 -d > /key.json"}).
+			File("/key.json")
+
+		auth = NewGCPServiceAccountWithFile(file)
+	} else if key := opts.ServiceAccountKey; key != "" {
+		auth = NewGCPServiceAccount(key)
+	}
+
+	return auth
+}

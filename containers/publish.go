@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 
@@ -32,7 +31,7 @@ type PublishOpts struct {
 var ErrorUnrecognizedScheme = errors.New("unrecognized scheme")
 
 func publishLocalFile(ctx context.Context, file *dagger.File, dst string) error {
-	if _, err := file.Export(ctx, strings.TrimPrefix(dst, "file://")); err != nil {
+	if _, err := file.Export(ctx, dst); err != nil {
 		return err
 	}
 
@@ -40,26 +39,7 @@ func publishLocalFile(ctx context.Context, file *dagger.File, dst string) error 
 }
 
 func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) error {
-	var auth GCPAuthenticator = &GCPInheritedAuth{}
-	// The order of operations:
-	// 1. Try to use base64 key.
-	// 2. Try to use gcp-service-account-key (path to a file).
-	// 3. Try mounting $XDG_CONFIG_HOME/gcloud
-	if key := opts.GCSOpts.ServiceAccountKeyBase64; key != "" {
-		log.Println("Handling GCP authentication using Service account key from base64...")
-		secret := d.SetSecret("gcp-sa-key-base64", key)
-		// Write key to a file in an alpine container...
-		file := d.Container().From("alpine").
-			WithSecretVariable("GCP_SERVICE_ACCOUNT_KEY_BASE64", secret).
-			WithExec([]string{"/bin/sh", "-c", "echo $GCP_SERVICE_ACCOUNT_KEY_BASE64 | base64 -d > /key.json"}).
-			File("/key.json")
-
-		auth = NewGCPServiceAccountWithFile(file)
-	} else if key := opts.GCSOpts.ServiceAccountKey; key != "" {
-		log.Println("Handling GCP authentication using Service account key from file...")
-		auth = NewGCPServiceAccount(key)
-	}
-
+	auth := GCSAuth(d, opts.GCSOpts)
 	uploader, err := GCSUploadFile(d, GoogleCloudImage, auth, file, destination)
 	if err != nil {
 		return err
@@ -73,23 +53,20 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 }
 
 func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) error {
-	u, err := url.Parse(opts.Destination)
+	u, err := url.Parse(destination)
 	if err != nil {
 		return err
 	}
 
 	switch u.Scheme {
 	case "file", "fs":
-		return publishLocalFile(ctx, file, destination)
+		dst := strings.TrimPrefix(u.String(), u.Scheme+"://")
+		return publishLocalFile(ctx, file, dst)
 	case "gs":
 		return publishGCSFile(ctx, d, file, opts, destination)
 	}
 
 	return fmt.Errorf("%w: '%s'", ErrorUnrecognizedScheme, u.Scheme)
-}
-
-func PublishFiles(ctx context.Context, files []*dagger.File, opts *PublishOpts) error {
-	return nil
 }
 
 func PublishDirectory(ctx context.Context, dir *dagger.Directory, opts *PublishOpts) error {

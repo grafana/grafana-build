@@ -17,8 +17,15 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	}
 
 	for distro, targz := range packages {
-		fn := TarFilename(args.Version, args.BuildID, args.BuildEnterprise, distro)
-		dst := strings.Join([]string{args.Context.Path("destination"), fn}, "/")
+		opts := TarFileOpts{
+			IsEnterprise: args.BuildEnterprise,
+			Version:      args.Version,
+			BuildID:      args.BuildID,
+			Distro:       distro,
+		}
+
+		fn := TarFilename(opts)
+		dst := strings.Join([]string{args.PublishOpts.Destination, fn}, "/")
 		log.Println("Writing package", fn, "to", dst)
 		if err := containers.PublishFile(ctx, d, targz, args.PublishOpts, dst); err != nil {
 			return err
