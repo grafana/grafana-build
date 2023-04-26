@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -26,27 +25,6 @@ var PackagedPaths = []string{
 	"packaging/rpm",
 	"packaging/wrappers",
 	"packaging/autocomplete",
-}
-
-// TarFileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
-func TarFilename(version, buildID string, isEnterprise bool, distro executil.Distribution) string {
-	name := "grafana"
-	if isEnterprise {
-		name = "grafana-enterprise"
-	}
-	var (
-		// This should return something like "linux", "arm"
-		os, arch = executil.OSAndArch(distro)
-		// If applicable this will be set to something like "7" (for arm7)
-		archv = executil.ArchVersion(distro)
-	)
-	if archv != "" {
-		arch = strings.Join([]string{arch, archv}, "-")
-	}
-
-	p := []string{name, version, os, arch, buildID}
-
-	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
@@ -86,7 +64,14 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 		for _, v := range plugins {
 			packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
 		}
-		name := TarFilename(args.Version, args.BuildID, args.BuildEnterprise, k)
+		opts := TarFileOpts{
+			Version:      args.Version,
+			BuildID:      args.BuildID,
+			IsEnterprise: args.BuildEnterprise,
+			Distro:       k,
+		}
+
+		name := TarFilename(opts)
 		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", args.Version)}).
 			WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
 		packages[k] = packager.File(name)
@@ -103,7 +88,13 @@ func Package(ctx context.Context, d *dagger.Client, src *dagger.Directory, args 
 	}
 
 	for k, file := range packages {
-		name := TarFilename(args.Version, args.BuildID, args.BuildEnterprise, k)
+		opts := TarFileOpts{
+			Version:      args.Version,
+			BuildID:      args.BuildID,
+			IsEnterprise: args.BuildEnterprise,
+			Distro:       k,
+		}
+		name := TarFilename(opts)
 		if _, err := file.Export(ctx, name); err != nil {
 			return err
 		}

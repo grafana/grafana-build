@@ -53,6 +53,29 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 	}
 }
 
+func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		var (
+			ctx  = c.Context
+			opts = []dagger.ClientOpt{}
+		)
+		if c.Bool("verbose") {
+			opts = append(opts, dagger.WithLogOutput(os.Stderr))
+		}
+		client, err := dagger.Connect(ctx, opts...)
+		if err != nil {
+			return err
+		}
+
+		args, err := pipelines.PipelineArgsFromContext(c.Context, c)
+		if err != nil {
+			return err
+		}
+
+		return pf(c.Context, client, args)
+	}
+}
+
 func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)

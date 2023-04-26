@@ -14,6 +14,6 @@ func GetPublishOpts(c CLIContext) *containers.PublishOpts {
 
 func GetPackageInputOpts(c CLIContext) *containers.PackageInputOpts {
 	return &containers.PackageInputOpts{
-		Package: c.String("package"),
+		Packages: c.StringSlice("package"),
 	}
 }

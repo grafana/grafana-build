@@ -34,6 +34,9 @@ func (t *TestCLIContext) Set(key string, val string) error {
 }
 
 func (t *TestCLIContext) StringSlice(key string) []string {
+	if _, ok := t.Data[key]; !ok {
+		return nil
+	}
 	return t.Data[key].([]string)
 }
 

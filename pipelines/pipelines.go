@@ -106,6 +106,7 @@ func PipelineArgsFromContext(ctx context.Context, c CLIContext) (PipelineArgs, e
 }
 
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
+type PipelineFuncWithPackageInput func(context.Context, *dagger.Client, PipelineArgs) error
 
 func (p *PipelineArgs) DetectVersion(ctx context.Context, client *dagger.Client, grafanaDir *dagger.Directory) (string, error) {
 	// If Version is set, we should use that.
@@ -125,6 +126,8 @@ func (p *PipelineArgs) DetectVersion(ctx context.Context, client *dagger.Client,
 	return v, nil
 }
 
+// Grafana will attempt to mount or clone Grafana based on the arguments provided. If, for example, the grafana-dir argument was supplied, then this function will mount that directory.
+// If it was not set then it will attempt to clone.
 func (p *PipelineArgs) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
 	// 1. Determine whether we should clone Grafana / Enterprise
 	// 2. Authenticate with GitHub (if necessary)
