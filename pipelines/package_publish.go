@@ -19,7 +19,6 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	skipOss := args.BuildEnterprise && !args.BuildGrafana
 	isEnterpriseBuild := slices.Unique([]bool{args.BuildEnterprise, skipOss})
 	for _, isEnterprise := range isEnterpriseBuild {
-		args.BuildEnterprise = isEnterprise
 		packages, err := PackageFiles(ctx, d, src, args)
 		if err != nil {
 			return err
@@ -27,7 +26,7 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 
 		for distro, targz := range packages {
 			opts := TarFileOpts{
-				IsEnterprise: args.BuildEnterprise,
+				IsEnterprise: isEnterprise,
 				Version:      args.Version,
 				BuildID:      args.BuildID,
 				Distro:       distro,
