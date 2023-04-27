@@ -7,6 +7,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/executil"
 	"github.com/grafana/grafana-build/slices"
 )
 
@@ -18,8 +19,16 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	// if -- enterprise is not used it always returns []bool{false}
 	skipOss := args.BuildEnterprise && !args.BuildGrafana
 	isEnterpriseBuild := slices.Unique([]bool{args.BuildEnterprise, skipOss})
+	distros := executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
 	for _, isEnterprise := range isEnterpriseBuild {
-		packages, err := PackageFiles(ctx, d, src, args)
+		opts := PackageOpts{
+			Src:          src,
+			Version:      args.Version,
+			BuildID:      args.BuildID,
+			Distros:      distros,
+			IsEnterprise: isEnterprise,
+		}
+		packages, err := PackageFiles(ctx, d, opts)
 		if err != nil {
 			return err
 		}
