@@ -21,6 +21,7 @@ type GCSOpts struct {
 type PublishOpts struct {
 	// Destination is any URL to publish an artifact(s) to.
 	// Examples:
+	// * '/tmp/package.tar.gz'
 	// * 'file:///tmp/package.tar.gz'
 	// * 'gcs://bucket/package.tar.gz'
 	Destination string
@@ -52,10 +53,13 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 	return nil
 }
 
+// PublishFile publishes the *dagger.File to the specified location. If the destination involves a remote URL or authentication in some way, that information should be populated in the
+// `opts *PublishOpts` argument.
 func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) error {
 	u, err := url.Parse(destination)
 	if err != nil {
-		return err
+		// If the destination URL is not a URL then we can assume that it's just a filepath.
+		return publishLocalFile(ctx, file, destination)
 	}
 
 	switch u.Scheme {
