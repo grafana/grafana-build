@@ -27,6 +27,7 @@ var DefaultBuildOpts = func(distro executil.Distribution, buildinfo *BuildInfo) 
 	}
 }
 
+// BuildOptsStaticARM builds Grafana statically for the armv6/v7 architectures (not armhf/arm64)
 func BuildOptsStaticARM(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
 	var (
 		os, arch = executil.OSAndArch(distro)

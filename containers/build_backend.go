@@ -3,6 +3,7 @@ package containers
 import (
 	"log"
 	"path"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
@@ -29,20 +30,16 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		opts     = goBuildOptsFunc(distro, buildinfo)
 		os, arch = executil.OSAndArch(distro)
 		env      = executil.GoBuildEnv(opts)
-		platform = dagger.Platform("linux/amd64")
 	)
 
-	switch arch {
-	case "arm64":
-		platform = dagger.Platform("linux/arm64")
-	case "arm":
-		platform = dagger.Platform("linux/arm")
-	}
-
 	// For now, if we're not building for Linux, then we're going to be using rfratto/viceroy.
-	builder := GolangContainer(d, platform, GoImage)
-	if os != "linux" {
-		builder = ViceroyContainer(d, distro, platform, ViceroyImage)
+	builder := GolangContainer(d, GoImage)
+
+	// amd64 linux just needs a native go build using the golang container without setting CC and such.
+	isAMD64Linux := os == "linux" && strings.Contains(arch, "amd64")
+
+	if !isAMD64Linux {
+		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
 	builder = builder.WithMountedDirectory("/src", dir).
@@ -50,7 +47,7 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		WithExec([]string{"make", "gen-go"})
 
 	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
-	if os != "linux" {
+	if !isAMD64Linux {
 		builder = WithViceroyEnv(builder, opts)
 	}
 
@@ -64,7 +61,7 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		opts.Output = path.Join("bin", string(distro), v)
 
 		cmd := executil.GoBuildCmd(opts)
-		log.Printf("Building '%s' on platform: '%+v'", v, platform)
+		log.Printf("Building '%s' for %s", v, distro)
 		log.Printf("Building '%s' with env: '%+v'", v, env)
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
 		builder = builder.WithExec([]string{"env"})

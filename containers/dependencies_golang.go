@@ -9,7 +9,7 @@ func WithCachedGoDependencies(container *dagger.Container, dir *dagger.Directory
 }
 
 func DownloadGolangDependencies(d *dagger.Client, gomod, gosum *dagger.File) *dagger.Directory {
-	container := GolangContainer(d, "", GoImage).
+	container := GolangContainer(d, GoImage).
 		WithWorkdir("/src").
 		WithMountedFile("/src/go.mod", gomod).
 		WithMountedFile("/src/go.sum", gosum).
