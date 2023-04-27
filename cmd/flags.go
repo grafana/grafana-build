@@ -19,11 +19,10 @@ var PackageInputFlags = []cli.Flag{
 // Anything that creates an artifact should have the option to specify a local folder destination or a remote destination.
 var PublishFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:     "destination",
-		Usage:    "full URL to upload the artifacts to (examples: 'file://package.tar.gz', 'file:///tmp/package.tar.gz', 'gs://bucket/grafana/')",
-		Aliases:  []string{"d"},
-		Value:    "file://dist",
-		Required: true,
+		Name:    "destination",
+		Usage:   "full URL to upload the artifacts to (examples: '/tmp/package.tar.gz', 'file://package.tar.gz', 'file:///tmp/package.tar.gz', 'gs://bucket/grafana/')",
+		Aliases: []string{"d"},
+		Value:   "file://dist",
 	},
 	&cli.StringFlag{
 		Name:     "gcp-service-account-key-base64",

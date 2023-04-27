@@ -1,5 +1,63 @@
 package containers
 
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"path/filepath"
+	"strings"
+
+	"dagger.io/dagger"
+)
+
 type PackageInputOpts struct {
-	Package string
+	Packages []string
+	GCSOpts  *GCSOpts
+}
+
+// GetPackage uses the PackageInputOpts to get a Grafana package, either from the local filesystem (if the package is of type 'file://...')
+// or Google Cloud Storage if the package is a 'gs://' URL.
+func GetPackages(ctx context.Context, d *dagger.Client, opts *PackageInputOpts) ([]*dagger.File, error) {
+	files := make([]*dagger.File, len(opts.Packages))
+	for i, pkg := range opts.Packages {
+		u, err := url.Parse(pkg)
+		if err != nil {
+			return nil, err
+		}
+
+		var file *dagger.File
+		switch u.Scheme {
+		case "file", "fs":
+			p := strings.TrimPrefix(u.String(), u.Scheme+"://")
+			f, err := getLocalPackage(ctx, d, p)
+			if err != nil {
+				return nil, err
+			}
+
+			file = f
+		case "gs":
+			f, err := getGCSPackage(ctx, d, opts.GCSOpts, u.String())
+			if err != nil {
+				return nil, err
+			}
+
+			file = f
+		default:
+			return nil, fmt.Errorf("%w: %s", ErrorUnrecognizedScheme, u.Scheme)
+		}
+
+		files[i] = file
+	}
+
+	return files, nil
+}
+
+func getLocalPackage(ctx context.Context, d *dagger.Client, file string) (*dagger.File, error) {
+	// pending https://github.com/dagger/dagger/issues/4745
+	return d.Host().Directory(filepath.Dir(file)).File(filepath.Base(file)), nil
+}
+
+func getGCSPackage(ctx context.Context, d *dagger.Client, opts *GCSOpts, gcsURL string) (*dagger.File, error) {
+	auth := GCSAuth(d, opts)
+	return GCSDownloadFile(d, GoogleCloudImage, auth, gcsURL)
 }

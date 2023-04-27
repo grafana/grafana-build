@@ -7,7 +7,7 @@ import (
 
 var DebCommand = &cli.Command{
 	Name:   "deb",
-	Action: PipelineAction(pipelines.Deb),
+	Action: PipelineActionWithPackageInput(pipelines.Deb),
 	Usage:  "Using a grafana.tar.gz as input (ideally one built using the 'package' command), create a .deb and checksum",
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
