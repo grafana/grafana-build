@@ -2,7 +2,6 @@
 
 go run ./cmd \
   package \
-  publish \
   --distro=${DISTROS} \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \

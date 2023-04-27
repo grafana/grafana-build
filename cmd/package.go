@@ -6,25 +6,12 @@ import (
 )
 
 var PackageCommand = &cli.Command{
-	Name: "package",
-	Subcommands: []*cli.Command{
-		{
-			Name:   "build",
-			Usage:  "Creates a grafana.tar.gz in the current working directory",
-			Action: PipelineAction(pipelines.Package),
-			Flags: JoinFlagsWithDefault(
-				GrafanaFlags,
-				PackageFlags,
-			),
-		},
-		{
-			Name:   "publish",
-			Action: PipelineAction(pipelines.PublishPackage),
-			Flags: JoinFlagsWithDefault(
-				GrafanaFlags,
-				PackageFlags,
-				PublishFlags,
-			),
-		},
-	},
+	Name:        "package",
+	Action:      PipelineAction(pipelines.PublishPackage),
+	Description: "Creates a grafana.tar.gz for the given distributions (--distro) placed in the destination directory (--destination)",
+	Flags: JoinFlagsWithDefault(
+		GrafanaFlags,
+		PackageFlags,
+		PublishFlags,
+	),
 }
