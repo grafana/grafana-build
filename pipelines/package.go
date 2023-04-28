@@ -27,27 +27,33 @@ var PackagedPaths = []string{
 	"packaging/autocomplete",
 }
 
-// PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
-func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) (map[executil.Distribution]*dagger.File, error) {
-	distros := executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
+type PackageOpts struct {
+	Src          *dagger.Directory
+	Version      string
+	BuildID      string
+	Distros      []executil.Distribution
+	IsEnterprise bool
+}
 
-	backends, err := GrafanaBackendBuildDirectories(ctx, d, src, distros, args.Version)
+// PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
+func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[executil.Distribution]*dagger.File, error) {
+	backends, err := GrafanaBackendBuildDirectories(ctx, d, opts.Src, opts.Distros, opts.Version)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the node version from .nvmrc...
-	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	nodeVersion, err := containers.NodeVersion(d, opts.Src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
-	frontend, err := GrafanaFrontendBuildDirectory(ctx, d, src, nodeVersion)
+	frontend, err := GrafanaFrontendBuildDirectory(ctx, d, opts.Src, nodeVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	plugins, err := containers.BuildPlugins(ctx, d, src, "plugins-bundled/internal", nodeVersion)
+	plugins, err := containers.BuildPlugins(ctx, d, opts.Src, "plugins-bundled/internal", nodeVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +62,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 	for k, backend := range backends {
 		packager := d.Container().
 			From(containers.BusyboxImage).
-			WithMountedDirectory("/src", src).
+			WithMountedDirectory("/src", opts.Src).
 			WithMountedDirectory("/src/bin", backend).
 			WithMountedDirectory("/src/public", frontend).
 			WithWorkdir("/src")
@@ -65,14 +71,14 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 			packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
 		}
 		opts := TarFileOpts{
-			Version:      args.Version,
-			BuildID:      args.BuildID,
-			IsEnterprise: args.BuildEnterprise,
+			Version:      opts.Version,
+			BuildID:      opts.BuildID,
+			IsEnterprise: opts.IsEnterprise,
 			Distro:       k,
 		}
 
 		name := TarFilename(opts)
-		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", args.Version)}).
+		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", opts.Version)}).
 			WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
 		packages[k] = packager.File(name)
 	}
@@ -81,17 +87,17 @@ func PackageFiles(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 }
 
 // Package builds and packages Grafana into a tar.gz for each distribution provided.
-func Package(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	packages, err := PackageFiles(ctx, d, src, args)
+func Package(ctx context.Context, d *dagger.Client, opts PackageOpts) error {
+	packages, err := PackageFiles(ctx, d, opts)
 	if err != nil {
 		return err
 	}
 
 	for k, file := range packages {
 		opts := TarFileOpts{
-			Version:      args.Version,
-			BuildID:      args.BuildID,
-			IsEnterprise: args.BuildEnterprise,
+			Version:      opts.Version,
+			BuildID:      opts.BuildID,
+			IsEnterprise: opts.IsEnterprise,
 			Distro:       k,
 		}
 		name := TarFilename(opts)
