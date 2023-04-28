@@ -42,6 +42,7 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "grafana",
 		Usage:    "If set, initialize Grafana",
 		Required: false,
+		Value:    true,
 	},
 	&cli.StringFlag{
 		Name:     "grafana-dir",
