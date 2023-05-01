@@ -3,6 +3,7 @@ package containers
 import (
 	"log"
 	"path"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
@@ -48,22 +49,24 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 	}
 
 	var (
-		opts  = goBuildOptsFunc(distro, buildinfo)
-		os, _ = executil.OSAndArch(distro)
-		env   = executil.GoBuildEnv(opts)
+		opts = goBuildOptsFunc(distro, buildinfo)
+		env  = executil.GoBuildEnv(opts)
 	)
 
 	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
 
-	if os != "linux" {
+	// We are doing a "cross build" or cross compilation if the requested platform does not match the platform we're building for.
+	isCrossBuild := !strings.Contains(string(distro), string(platform))
+	if isCrossBuild {
 		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
 	builder = builder.WithMountedDirectory("/src", dir).
-		WithWorkdir("/src")
+		WithWorkdir("/src").
+		WithExec([]string{"make", "gen-go"})
 
-	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
-	if os != "linux" {
+	// Adding env after the previous 'WithExec' ensures that when cross-building we still use the selected platform for 'make gen-go'.
+	if isCrossBuild {
 		builder = WithViceroyEnv(builder, opts)
 	}
 
