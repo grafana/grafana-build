@@ -3,7 +3,6 @@ package containers
 import (
 	"log"
 	"path"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
@@ -49,25 +48,22 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 	}
 
 	var (
-		opts     = goBuildOptsFunc(distro, buildinfo)
-		os, arch = executil.OSAndArch(distro)
-		env      = executil.GoBuildEnv(opts)
+		opts  = goBuildOptsFunc(distro, buildinfo)
+		os, _ = executil.OSAndArch(distro)
+		env   = executil.GoBuildEnv(opts)
 	)
 
 	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
 
-	// amd64 linux just needs a native go build using the golang container without setting CC and such.
-	isAMD64Linux := os == "linux" && strings.Contains(arch, "amd64")
-	if !isAMD64Linux {
+	if os != "linux" {
 		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
 	builder = builder.WithMountedDirectory("/src", dir).
-		WithWorkdir("/src").
-		WithExec([]string{"make", "gen-go"})
+		WithWorkdir("/src")
 
 	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
-	if !isAMD64Linux {
+	if os != "linux" {
 		builder = WithViceroyEnv(builder, opts)
 	}
 
