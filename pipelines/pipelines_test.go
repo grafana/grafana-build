@@ -74,32 +74,32 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		if args.Verbose != true {
 			t.Error("args.Verbose should be true")
 		}
-
-		if args.Version != "v1.0.0" {
+		opts := args.GrafanaOpts
+		if opts.Version != "v1.0.0" {
 			t.Error("args.Version should be v1.0.0")
 		}
 
-		if args.BuildGrafana != true {
+		if opts.BuildGrafana != true {
 			t.Error("args.BuildGrafana should be true")
 		}
 
-		if args.GrafanaDir != "/grafana" {
+		if opts.GrafanaDir != "/grafana" {
 			t.Error("args.GrafanaDir should be /grafana")
 		}
 
-		if args.GrafanaRef != "asdf" {
+		if opts.GrafanaRef != "asdf" {
 			t.Error("args.GrafanaRef should be asdf")
 		}
 
-		if args.BuildEnterprise != true {
+		if opts.BuildEnterprise != true {
 			t.Error("args.Enterprise should be true")
 		}
 
-		if args.EnterpriseDir != enterpriseDir {
+		if opts.EnterpriseDir != enterpriseDir {
 			t.Errorf("args.EnterpriseDir should be %s", enterpriseDir)
 		}
 
-		if args.EnterpriseRef != "1234" {
+		if opts.EnterpriseRef != "1234" {
 			t.Error("args.EnterpriseRef should be 1234")
 		}
 	})
@@ -113,11 +113,11 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		if args.BuildID == "" {
+		opts := args.GrafanaOpts
+		if opts.BuildID == "" {
 			t.Fatal("BuildID should not be empty")
 		}
-		if len(args.BuildID) != 12 {
+		if len(opts.BuildID) != 12 {
 			t.Fatal("BuildID should be a 12-character string")
 		}
 	})
@@ -133,8 +133,8 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		if args.BuildEnterprise != true {
+		opts := args.GrafanaOpts
+		if opts.BuildEnterprise != true {
 			t.Fatal("args.BuildEnterprise should be true")
 		}
 	})

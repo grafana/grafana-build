@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/cliutil"
 )
 
 // GCSOpts are options used when uploading artifacts to Google Cloud Storage.
@@ -27,6 +28,16 @@ type PublishOpts struct {
 	Destination string
 
 	GCSOpts *GCSOpts
+}
+
+func PublishOptsFromFlags(c cliutil.CLIContext) *PublishOpts {
+	return &PublishOpts{
+		Destination: c.String("destination"),
+		GCSOpts: &GCSOpts{
+			ServiceAccountKeyBase64: c.String("gcp-service-account-key-base64"),
+			ServiceAccountKey:       c.String("gcp-service-account-key"),
+		},
+	}
 }
 
 var ErrorUnrecognizedScheme = errors.New("unrecognized scheme")

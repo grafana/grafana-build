@@ -90,20 +90,25 @@ var GrafanaFlags = []cli.Flag{
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
 	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'.",
-	Value: cli.NewStringSlice("linux/amd64", "linux/arm64"),
+	Value: cli.NewStringSlice(DefaultDistros...),
 }
 
 // PackageFlags are flags that are used when building packages or similar artifacts (like binaries) for different distributions
 // from the grafana source code.
 var PackageFlags = []cli.Flag{
 	FlagDistros,
+	&cli.StringFlag{
+		Name:  "platform",
+		Usage: "The buildkit / dagger platform to run containers when building the backend",
+		Value: DefaultPlatform,
+	},
 }
 
 var DefaultFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:    "verbose",
 		Aliases: []string{"v"},
-		Usage:   "Increase log verbosity. WARNING: This setting could potentially log sensitive data.",
+		Usage:   "Increase log verbosity. WARNING: This setting could potentially log sensitive data",
 		Value:   false,
 	},
 }

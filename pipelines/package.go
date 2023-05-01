@@ -29,6 +29,7 @@ var PackagedPaths = []string{
 
 type PackageOpts struct {
 	Src          *dagger.Directory
+	Platform     dagger.Platform
 	Version      string
 	BuildID      string
 	Distros      []executil.Distribution
@@ -37,7 +38,7 @@ type PackageOpts struct {
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
 func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[executil.Distribution]*dagger.File, error) {
-	backends, err := GrafanaBackendBuildDirectories(ctx, d, opts.Src, opts.Distros, opts.Version)
+	backends, err := GrafanaBackendBuildDirectories(ctx, d, opts.Src, opts.Distros, opts.Platform, opts.Version)
 	if err != nil {
 		return nil, err
 	}

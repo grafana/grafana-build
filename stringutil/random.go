@@ -1,4 +1,4 @@
-package pipelines
+package stringutil
 
 import (
 	"math/rand"
@@ -7,7 +7,7 @@ import (
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func randomString(n int) string {
+func RandomString(n int) string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]rune, n)
 	for i := range b {

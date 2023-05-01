@@ -7,26 +7,27 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/executil"
 	"github.com/grafana/grafana-build/slices"
 )
 
 // PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
 func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
+	opts := args.GrafanaOpts
 	// This bool slice stores the values of args.BuildEnterprise for each build
 	// --enterprise: []bool{true}
 	// --enterprise --grafana: []bool{true, false}
 	// if -- enterprise is not used it always returns []bool{false}
-	skipOss := args.BuildEnterprise && !args.BuildGrafana
-	isEnterpriseBuild := slices.Unique([]bool{args.BuildEnterprise, skipOss})
-	distros := executil.DistrosFromStringSlice(args.Context.StringSlice("distro"))
+	skipOss := opts.BuildEnterprise && !opts.BuildGrafana
+	isEnterpriseBuild := slices.Unique([]bool{opts.BuildEnterprise, skipOss})
+	distros := args.PackageOpts.Distros
 	for _, isEnterprise := range isEnterpriseBuild {
 		opts := PackageOpts{
 			Src:          src,
-			Version:      args.Version,
-			BuildID:      args.BuildID,
+			Version:      opts.Version,
+			BuildID:      opts.BuildID,
 			Distros:      distros,
 			IsEnterprise: isEnterprise,
+			Platform:     args.PackageOpts.Platform,
 		}
 		packages, err := PackageFiles(ctx, d, opts)
 		if err != nil {
@@ -36,8 +37,8 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 		for distro, targz := range packages {
 			opts := TarFileOpts{
 				IsEnterprise: isEnterprise,
-				Version:      args.Version,
-				BuildID:      args.BuildID,
+				Version:      opts.Version,
+				BuildID:      opts.BuildID,
 				Distro:       distro,
 			}
 

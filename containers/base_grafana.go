@@ -10,8 +10,8 @@ import (
 // * 'make' is installed.
 // * the wire dependency graph has been generated (using 'make gen-go')
 // * schemas have been generated (using 'make gen-cue')
-func GrafanaContainer(d *dagger.Client, base string, grafana *dagger.Directory) *dagger.Container {
-	return GolangContainer(d, base).
+func GrafanaContainer(d *dagger.Client, platform dagger.Platform, base string, grafana *dagger.Directory) *dagger.Container {
+	return GolangContainer(d, platform, base).
 		WithMountedDirectory("/src", grafana).
 		WithWorkdir("/src").
 		WithEnvVariable("CODEGEN_VERIFY", "1").
