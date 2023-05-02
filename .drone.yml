@@ -7,12 +7,16 @@ steps:
   image: plugins/docker
   settings:
     repo: grafana/grafana-build
+    username:
+      from_secret: docker_password
+    password:
+      from_secret: docker_username
 
 trigger:
   branch:
   - add-dockerfile
 ---
 kind: signature
-hmac: 82a3df1a026b3f44df11ea2fbc9b5f695580c200cc121dddf04e2728fe5c9606
+hmac: f8759a5967c52ed6df022fe1b61268f95e900cca850a332297fa6297c98a3f43
 
 ...
