@@ -5,12 +5,14 @@ name: main
 steps:
 - name: docker
   image: plugins/docker
+  settings:
+    repo: grafana/grafana-build
 
 trigger:
   branch:
   - add-dockerfile
 ---
 kind: signature
-hmac: da20d7d36f60fa2ab67b1c89e055d3c58a1e6898c0a9189b656abaaf22808533
+hmac: 82a3df1a026b3f44df11ea2fbc9b5f695580c200cc121dddf04e2728fe5c9606
 
 ...
