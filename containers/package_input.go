@@ -8,11 +8,18 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/cliutil"
 )
 
 type PackageInputOpts struct {
 	Packages []string
 	GCSOpts  *GCSOpts
+}
+
+func PackageInputOptsFromFlags(c cliutil.CLIContext) *PackageInputOpts {
+	return &PackageInputOpts{
+		Packages: c.StringSlice("package"),
+	}
 }
 
 // GetPackage uses the PackageInputOpts to get a Grafana package, either from the local filesystem (if the package is of type 'file://...')

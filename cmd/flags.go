@@ -97,13 +97,18 @@ var FlagDistros = &cli.StringSliceFlag{
 // from the grafana source code.
 var PackageFlags = []cli.Flag{
 	FlagDistros,
+	&cli.StringFlag{
+		Name:  "platform",
+		Usage: "The buildkit / dagger platform to run containers when building the backend",
+		Value: DefaultPlatform,
+	},
 }
 
 var DefaultFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:    "verbose",
 		Aliases: []string{"v"},
-		Usage:   "Increase log verbosity. WARNING: This setting could potentially log sensitive data.",
+		Usage:   "Increase log verbosity. WARNING: This setting could potentially log sensitive data",
 		Value:   false,
 	},
 }

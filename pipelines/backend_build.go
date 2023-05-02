@@ -10,14 +10,15 @@ import (
 	"github.com/grafana/grafana-build/executil"
 )
 
-func GrafanaBackendBuildDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, distro executil.Distribution, version string) (*dagger.Directory, error) {
+// GrafanaBackendBuildDirectory returns a directory with the compiled backend binaries for the given distribution.
+func GrafanaBackendBuildDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, distro executil.Distribution, platform dagger.Platform, version string) (*dagger.Directory, error) {
 	if distro == "" {
 		return nil, fmt.Errorf("not a valid distribution")
 	}
 
 	var (
 		cacheKey = "go-mod-" + version
-		cacheDir = containers.DownloadGolangDependencies(d, src.File("go.mod"), src.File("go.sum"))
+		cacheDir = containers.DownloadGolangDependencies(d, platform, src.File("go.mod"), src.File("go.sum"))
 		cache    = d.CacheVolume(cacheKey)
 	)
 
@@ -26,14 +27,17 @@ func GrafanaBackendBuildDirectory(ctx context.Context, d *dagger.Client, src *da
 		return nil, err
 	}
 
-	container := containers.WithCachedGoDependencies(containers.CompileBackendBuilder(d, distro, src, buildinfo), cacheDir, cache)
+	container := containers.WithCachedGoDependencies(
+		containers.CompileBackendBuilder(d, distro, platform, src, buildinfo),
+		cacheDir, cache,
+	)
 
 	return containers.BackendBinDir(container, distro), nil
 }
 
 // GrafanaBackendBuildDirectories builds multiple distributions and returns the directories for each one.
 // The returned map of directories will be keyed by the distribution that the directory corresponds to.
-func GrafanaBackendBuildDirectories(ctx context.Context, d *dagger.Client, src *dagger.Directory, distros []executil.Distribution, version string) (map[executil.Distribution]*dagger.Directory, error) {
+func GrafanaBackendBuildDirectories(ctx context.Context, d *dagger.Client, src *dagger.Directory, distros []executil.Distribution, platform dagger.Platform, version string) (map[executil.Distribution]*dagger.Directory, error) {
 	if distros == nil {
 		return nil, fmt.Errorf("distribution list can not be nil")
 	}
@@ -45,7 +49,7 @@ func GrafanaBackendBuildDirectories(ctx context.Context, d *dagger.Client, src *
 
 	dirs := make(map[executil.Distribution]*dagger.Directory, len(distros))
 	for _, distro := range distros {
-		dirs[distro] = containers.CompileBackend(d, distro, src, buildinfo)
+		dirs[distro] = containers.CompileBackend(d, distro, platform, src, buildinfo)
 	}
 
 	return dirs, nil
@@ -64,7 +68,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 
 	dirs := make([]*dagger.Directory, len(distroList))
 	for i, distro := range distros {
-		container, err := GrafanaBackendBuildDirectory(ctx, d, src, distro, args.Version)
+		container, err := GrafanaBackendBuildDirectory(ctx, d, src, distro, args.PackageOpts.Platform, args.GrafanaOpts.Version)
 		if err != nil {
 			return err
 		}
