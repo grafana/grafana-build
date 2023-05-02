@@ -3,7 +3,6 @@ package pipelines
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -50,17 +49,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	}
 
 	nodeCache := d.CacheVolume("node")
-	nodeModules := containers.NodeModules(d, opts.Src, nodeCache, nodeVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	frontend, err := GrafanaFrontendBuildDirectory(ctx, d, opts.Src, nodeModules, nodeVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	plugins, err := containers.BuildPlugins(ctx, d, opts.Src, "plugins-bundled/internal", nodeModules, nodeVersion)
+	frontend := containers.CompileFrontend(d, opts.Src, nodeCache, nodeVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +63,6 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			WithMountedDirectory("/src/public", frontend).
 			WithWorkdir("/src")
 
-		for _, v := range plugins {
-			packager = packager.WithMountedDirectory(path.Join("/src/plugins-bundled/internal", v.Name), v.Directory)
-		}
 		opts := TarFileOpts{
 			Version:      opts.Version,
 			BuildID:      opts.BuildID,
