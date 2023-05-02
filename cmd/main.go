@@ -38,16 +38,16 @@ func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
 			return err
 		}
 
-		grafanaDir, err := args.Grafana(ctx, client)
+		grafanaDir, err := args.GrafanaOpts.Grafana(ctx, client)
 		if err != nil {
 			return err
 		}
 
-		v, err := args.DetectVersion(ctx, client, grafanaDir)
+		v, err := args.GrafanaOpts.DetectVersion(ctx, client, grafanaDir)
 		if err != nil {
 			return err
 		}
-		args.Version = v
+		args.GrafanaOpts.Version = v
 
 		return pf(c.Context, client, grafanaDir, args)
 	}

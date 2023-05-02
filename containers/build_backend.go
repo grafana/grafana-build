@@ -3,6 +3,7 @@ package containers
 import (
 	"log"
 	"path"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
@@ -16,8 +17,30 @@ var GrafanaCommands = []string{
 	"grafana-cli",
 }
 
-func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
-	log.Println("Creating Grafana backend build container for", distro)
+// BuilderPlatform returns the most optimal dagger.Platform for building the provided distribution.
+// if 'platform' is 'amd64', then we can always use the 'amd64' platform.
+// if 'platform' is 'arm64' and 'distro' is 'arm64', then we can use the 'arm64' platform. On Docker for Mac, this should be the most optimal for performance.
+// if 'platform' is 'arm64' but 'distro' is 'amd64', we have to rely on buildkit's platform emulation. This will be very slow and really shouldn't be used.
+// if 'platform' is 'arm64' but 'distro' is 'arm', then ... TBD?
+func BuilderPlatform(distro executil.Distribution, platform dagger.Platform) dagger.Platform {
+	_, arch := executil.OSAndArch(distro)
+	switch arch {
+	// If the distro's arch is arm64 then we use whatever platform is explicitly requested
+	case "arm64":
+		return platform
+	// If the distro's arch is amd64, then we always use an amd64 platform
+	case "amd64":
+		return dagger.Platform("linux/amd64")
+	default:
+		return dagger.Platform("linux/amd64")
+	}
+}
+
+// CompileBackendBuilder returns the container that is completely set up to build Grafana for the given distribution.
+// * dir refers to the source tree of Grafana'; this could be a freshly cloned copy of Grafana.
+// * buildinfo will be added as build flags to the 'go build' command.
+func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platform dagger.Platform, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
+	log.Println("Creating Grafana backend build container for", distro, "on platform", platform)
 
 	// These options determine the CLI arguments and environment variables passed to the go build command.
 	goBuildOptsFunc, ok := DistributionGoOpts[distro]
@@ -26,31 +49,24 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 	}
 
 	var (
-		opts     = goBuildOptsFunc(distro, buildinfo)
-		os, arch = executil.OSAndArch(distro)
-		env      = executil.GoBuildEnv(opts)
-		platform = dagger.Platform("linux/amd64")
+		opts = goBuildOptsFunc(distro, buildinfo)
+		env  = executil.GoBuildEnv(opts)
 	)
 
-	switch arch {
-	case "arm64":
-		platform = dagger.Platform("linux/arm64")
-	case "arm":
-		platform = dagger.Platform("linux/arm")
-	}
+	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
 
-	// For now, if we're not building for Linux, then we're going to be using rfratto/viceroy.
-	builder := GolangContainer(d, platform, GoImage)
-	if os != "linux" {
-		builder = ViceroyContainer(d, distro, platform, ViceroyImage)
+	// We are doing a "cross build" or cross compilation if the requested platform does not match the platform we're building for.
+	isCrossBuild := !strings.Contains(string(distro), string(platform))
+	if isCrossBuild {
+		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
 	builder = builder.WithMountedDirectory("/src", dir).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go"})
 
-	// Fix: Avoid setting CC, GOOS, GOARCH when cross-compiling before `make gen-go` has been ran.
-	if os != "linux" {
+	// Adding env after the previous 'WithExec' ensures that when cross-building we still use the selected platform for 'make gen-go'.
+	if isCrossBuild {
 		builder = WithViceroyEnv(builder, opts)
 	}
 
@@ -64,7 +80,7 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, dir *
 		opts.Output = path.Join("bin", string(distro), v)
 
 		cmd := executil.GoBuildCmd(opts)
-		log.Printf("Building '%s' on platform: '%+v'", v, platform)
+		log.Printf("Building '%s' for %s", v, distro)
 		log.Printf("Building '%s' with env: '%+v'", v, env)
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
 		builder = builder.WithExec([]string{"env"})
@@ -88,8 +104,8 @@ type CompileConfig struct {
 
 // CompileBackend returns a reference to a dagger directory that contains a usable Grafana binary from the cloned source code at 'grafanaPath'.
 // The returned directory can be exported, which will cause the container to execute the build, or can be mounted into other containers.
-func CompileBackend(d *dagger.Client, distro executil.Distribution, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Directory {
-	container := CompileBackendBuilder(d, distro, dir, buildinfo)
+func CompileBackend(d *dagger.Client, distro executil.Distribution, platform dagger.Platform, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Directory {
+	container := CompileBackendBuilder(d, distro, platform, dir, buildinfo)
 	return BackendBinDir(container, distro)
 }
 
