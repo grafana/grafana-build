@@ -8,5 +8,6 @@ import (
 )
 
 func GrafanaFrontendBuildDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, nodeVersion string) (*dagger.Directory, error) {
-	return containers.CompileFrontend(d, src, nodeVersion), nil
+	modules := containers.YarnInstall(d, src, nodeVersion)
+	return containers.CompileFrontend(d, src, modules, nodeVersion), nil
 }
