@@ -48,12 +48,18 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
-	frontend, err := GrafanaFrontendBuildDirectory(ctx, d, opts.Src, nodeVersion)
+	nodeCache := d.CacheVolume("node")
+	nodeModules := containers.NodeModules(d, opts.Src, nodeCache, nodeVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	plugins, err := containers.BuildPlugins(ctx, d, opts.Src, "plugins-bundled/internal", nodeVersion)
+	frontend, err := GrafanaFrontendBuildDirectory(ctx, d, opts.Src, nodeModules, nodeVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	plugins, err := containers.BuildPlugins(ctx, d, opts.Src, "plugins-bundled/internal", nodeModules, nodeVersion)
 	if err != nil {
 		return nil, err
 	}
