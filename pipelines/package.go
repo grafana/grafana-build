@@ -48,7 +48,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
-	nodeCache := d.CacheVolume("node")
+	nodeCache := d.CacheVolume("yarn")
 	frontend := containers.CompileFrontend(d, opts.Src, nodeCache, nodeVersion)
 	if err != nil {
 		return nil, err
