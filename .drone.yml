@@ -8,15 +8,15 @@ steps:
   settings:
     repo: grafana/grafana-build
     username:
-      from_secret: docker_password
+      from_secret: dockerhub_username
     password:
-      from_secret: docker_username
+      from_secret: dockerhub_password
 
 trigger:
   branch:
   - add-dockerfile
 ---
 kind: signature
-hmac: f8759a5967c52ed6df022fe1b61268f95e900cca850a332297fa6297c98a3f43
+hmac: 4d22825cd382b5e710694884cc6b13e5917a74641bbfff001c9ce3cd654a4ef5
 
 ...
