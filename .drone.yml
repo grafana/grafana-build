@@ -1,0 +1,16 @@
+---
+kind: pipeline
+name: main
+
+steps:
+- name: docker
+  image: plugins/docker
+
+trigger:
+  branch:
+  - add-dockerfile
+---
+kind: signature
+hmac: da20d7d36f60fa2ab67b1c89e055d3c58a1e6898c0a9189b656abaaf22808533
+
+...
