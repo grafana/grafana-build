@@ -67,9 +67,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--depends=%s", d))
 		}
 
-		for _, a := range opts.ExtraArgs {
-			fpmArgs = append(fpmArgs, a)
-		}
+		fpmArgs = append(fpmArgs, opts.ExtraArgs...)
 
 		if arch := executil.PackageArch(tarOpts.Distro); arch != "" {
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
