@@ -1,0 +1,37 @@
+---
+kind: pipeline
+name: main
+
+steps:
+- name: docker
+  image: plugins/docker
+  settings:
+    repo: grafana/grafana-build
+    tags:
+    - latest
+    - main
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
+
+trigger:
+  branch:
+  - main
+---
+get:
+  name: username
+  path: infra/data/ci/docker_hub
+kind: secret
+name: dockerhub_username
+---
+get:
+  name: password
+  path: infra/data/ci/docker_hub
+kind: secret
+name: dockerhub_password
+---
+kind: signature
+hmac: 8b68c82818e209297353405cffa76b85880a18b354ee177ad4b505941199188a
+
+...
