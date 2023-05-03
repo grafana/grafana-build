@@ -154,7 +154,7 @@ func ArchVersion(d Distribution) string {
 	return p[2]
 }
 
-func DebianArch(d Distribution) string {
+func PackageArch(d Distribution) string {
 	_, arch := OSAndArch(d)
 
 	switch arch {

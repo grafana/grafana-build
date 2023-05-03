@@ -14,7 +14,7 @@ var app = &cli.App{
 		BackendCommands,
 		PackageCommand,
 		DebCommand,
-		//RPMCommand,
+		RPMCommand,
 		//MSICommand,
 	},
 }
