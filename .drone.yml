@@ -17,7 +17,7 @@ steps:
 
 trigger:
   branch:
-  - add-dockerfile
+  - main
 ---
 get:
   name: username
@@ -32,6 +32,6 @@ kind: secret
 name: dockerhub_password
 ---
 kind: signature
-hmac: cceb836b0ef26bb8adc063aa5cb9fe7a12b561a5c4ca4d32db4e1081ee215bba
+hmac: 8b68c82818e209297353405cffa76b85880a18b354ee177ad4b505941199188a
 
 ...
