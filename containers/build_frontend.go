@@ -12,12 +12,14 @@ func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
 		WithExec([]string{"cat", ".nvmrc"})
 }
 
-func CompileFrontend(d *dagger.Client, src *dagger.Directory, nodeVersion string) *dagger.Directory {
+func CompileFrontend(d *dagger.Client, src *dagger.Directory, nodeCache *dagger.CacheVolume, nodeVersion string) *dagger.Directory {
 	// Get the node version from the 'src' directories '.nvmrc' file.
 	return NodeContainer(d, NodeImage(nodeVersion)).
+		WithMountedCache("/src/.yarn/cache", nodeCache).
 		WithDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "build"}).
+		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
 		Directory("public/")
 }
