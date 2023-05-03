@@ -16,7 +16,19 @@ trigger:
   branch:
   - add-dockerfile
 ---
+get:
+  name: username
+  path: infra/data/ci/docker_hub
+kind: secret
+name: dockerhub_username
+---
+get:
+  name: password
+  path: infra/data/ci/docker_hub
+kind: secret
+name: dockerhub_password
+---
 kind: signature
-hmac: 4d22825cd382b5e710694884cc6b13e5917a74641bbfff001c9ce3cd654a4ef5
+hmac: 5a94b0edceb24bf766739b544b9b021c6e63a2c37eeb702749cae1004feba985
 
 ...
