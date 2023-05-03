@@ -42,8 +42,6 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 				"--chdir=/pkg",
 				fmt.Sprintf("--output-type=%s", opts.PackageType),
 				"--vendor=\"Grafana Labs\"",
-				"--name=grafana",
-				"--description=Grafana",
 				"--url=https://grafana.com",
 				"--maintainer=contact@grafana.com",
 				fmt.Sprintf("--version=%s", tarOpts.Version),
@@ -73,7 +71,13 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
 		}
 
-		if !tarOpts.IsEnterprise {
+		if tarOpts.IsEnterprise {
+			fpmArgs = append(fpmArgs, "--name=grafana-enterprise")
+			fpmArgs = append(fpmArgs, "--description=\"Grafana Enterprise\"")
+			fpmArgs = append(fpmArgs, "--conflicts=grafana")
+		} else {
+			fpmArgs = append(fpmArgs, "--name=grafana")
+			fpmArgs = append(fpmArgs, "--description=Grafana")
 			fpmArgs = append(fpmArgs, "--license=agpl3")
 		}
 
@@ -81,7 +85,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		fpmArgs = append(fpmArgs, ".")
 
 		var (
-			// fpm is going to create us a deb package that is going to essentially rsync the folders from the package into the filesystem.
+			// fpm is going to create us a package that is going to essentially rsync the folders from the package into the filesystem.
 			// These paths are the paths where grafana package contents will be placed.
 			packagePaths = []string{
 				"/pkg/usr/sbin",
