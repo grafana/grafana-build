@@ -93,6 +93,25 @@ var FlagDistros = &cli.StringSliceFlag{
 	Value: cli.NewStringSlice(DefaultDistros...),
 }
 
+var SignFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "gpg-private-key",
+		Usage: "Private key for GPG signing",
+	},
+	&cli.StringFlag{
+		Name:  "gpg-public-key",
+		Usage: "Public key for GPG signing",
+	},
+	&cli.StringFlag{
+		Name:  "gpg-passphrase",
+		Usage: "Key passphrase for GPG signing",
+	},
+	&cli.BoolFlag{
+		Name:  "sign",
+		Usage: "Enable GPG signing of RPM packages",
+	},
+}
+
 // PackageFlags are flags that are used when building packages or similar artifacts (like binaries) for different distributions
 // from the grafana source code.
 var PackageFlags = []cli.Flag{

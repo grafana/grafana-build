@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/containers"
 )
 
 // Deb uses the grafana package given by the '--package' argument and creates a .deb installer.
@@ -27,5 +28,6 @@ func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"--deb-no-default-config-files",
 		},
 		EnvFolder: "/pkg/etc/default",
+		Container: containers.FPMContainer(d),
 	})
 }
