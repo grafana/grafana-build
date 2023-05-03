@@ -7,6 +7,9 @@ steps:
   image: plugins/docker
   settings:
     repo: grafana/grafana-build
+    tags:
+    - latest
+    - main
     username:
       from_secret: dockerhub_username
     password:
@@ -29,6 +32,6 @@ kind: secret
 name: dockerhub_password
 ---
 kind: signature
-hmac: 5a94b0edceb24bf766739b544b9b021c6e63a2c37eeb702749cae1004feba985
+hmac: cceb836b0ef26bb8adc063aa5cb9fe7a12b561a5c4ca4d32db4e1081ee215bba
 
 ...
