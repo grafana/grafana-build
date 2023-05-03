@@ -2,7 +2,8 @@
 
 go run ./cmd \
   package \
-  --distro=${DISTROS} \
+  --distro=linux/amd64 \
+  --distro=linux/arm64 \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
