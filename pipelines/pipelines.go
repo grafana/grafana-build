@@ -33,8 +33,8 @@ type PipelineArgs struct {
 	// This is set for pipelines that accept a package as input.
 	PackageInputOpts *containers.PackageInputOpts
 
-	// SignOpts will be populated if the SignFlags are enabled on the current sub-command.
-	SignOpts *containers.SignOpts
+	// GPGOpts will be populated if the GPGFlags are enabled on the current sub-command.
+	GPGOpts *containers.GPGOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -46,7 +46,7 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		return PipelineArgs{}, err
 	}
 
-	signOpts, err := containers.SignOptsFromFlags(c)
+	GPGOpts, err := containers.GPGOptsFromFlags(c)
 	if err != nil {
 		return PipelineArgs{}, err
 	}
@@ -55,7 +55,7 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		Context:          c,
 		Verbose:          verbose,
 		GrafanaOpts:      grafanaOpts,
-		SignOpts:         signOpts,
+		GPGOpts:          GPGOpts,
 		PackageOpts:      containers.PackageOptsFromFlags(c),
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),

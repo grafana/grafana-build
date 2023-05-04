@@ -12,6 +12,6 @@ var RPMCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
-		SignFlags,
+		GPGFlags,
 	),
 }

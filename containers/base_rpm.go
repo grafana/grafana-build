@@ -14,7 +14,7 @@ const RPMMacros = `
 	%{?_gpg_digest_algo:--digest-algo %{_gpg_digest_algo}} %{__plaintext_filename}
 `
 
-func RPMContainer(d *dagger.Client, opts *SignOpts) *dagger.Container {
+func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 	container := FPMContainer(d).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-yq", "rpm"})

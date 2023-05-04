@@ -93,7 +93,7 @@ var FlagDistros = &cli.StringSliceFlag{
 	Value: cli.NewStringSlice(DefaultDistros...),
 }
 
-var SignFlags = []cli.Flag{
+var GPGFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "gpg-private-key",
 		Usage: "Private key for GPG signing",

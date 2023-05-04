@@ -6,14 +6,14 @@ import (
 	"github.com/grafana/grafana-build/cliutil"
 )
 
-type SignOpts struct {
+type GPGOpts struct {
 	Sign          bool
 	GPGPrivateKey string
 	GPGPublicKey  string
 	GPGPassphrase string
 }
 
-func SignOptsFromFlags(c cliutil.CLIContext) (*SignOpts, error) {
+func GPGOptsFromFlags(c cliutil.CLIContext) (*GPGOpts, error) {
 	gpgPrivateKey, err := base64.StdEncoding.DecodeString(c.String("gpg-private-key"))
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func SignOptsFromFlags(c cliutil.CLIContext) (*SignOpts, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &SignOpts{
+	return &GPGOpts{
 		Sign:          c.Bool("sign"),
 		GPGPrivateKey: string(gpgPrivateKey),
 		GPGPublicKey:  string(gpgPublicKey),

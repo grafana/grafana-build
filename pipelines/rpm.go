@@ -30,7 +30,7 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"--rpm-digest=sha256",
 		},
 		EnvFolder: "/pkg/etc/sysconfig",
-		RPMSign:   args.SignOpts.Sign,
-		Container: containers.RPMContainer(d, args.SignOpts),
+		RPMSign:   args.GPGOpts.Sign,
+		Container: containers.RPMContainer(d, args.GPGOpts),
 	})
 }
