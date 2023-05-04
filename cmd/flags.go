@@ -95,16 +95,16 @@ var FlagDistros = &cli.StringSliceFlag{
 
 var GPGFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  "gpg-private-key",
-		Usage: "Private key for GPG signing",
+		Name:  "gpg-private-key-base64",
+		Usage: "Provides a private key encoded in base64 to use to for GPG signing",
 	},
 	&cli.StringFlag{
-		Name:  "gpg-public-key",
-		Usage: "Public key for GPG signing",
+		Name:  "gpg-public-key-base64",
+		Usage: "Provides a public key encoded in base64 to use to for GPG signing",
 	},
 	&cli.StringFlag{
-		Name:  "gpg-passphrase",
-		Usage: "Key passphrase for GPG signing",
+		Name:  "gpg-passphrase-base64",
+		Usage: "Provides a private key passphrase encoded in base64 to use to for GPG signing",
 	},
 	&cli.BoolFlag{
 		Name:  "sign",
