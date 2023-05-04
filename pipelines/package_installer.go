@@ -12,14 +12,15 @@ import (
 )
 
 type InstallerOpts struct {
-	PackageType     string
-	ConfigFiles     [][]string
-	AfterInstall    string
-	BeforeRemove    string
-	Depends         []string
-	EnvFolder       string
-	ExtraArgs       []string
-	AptDependencies []string
+	PackageType  string
+	ConfigFiles  [][]string
+	AfterInstall string
+	BeforeRemove string
+	Depends      []string
+	EnvFolder    string
+	ExtraArgs    []string
+	RPMSign      bool
+	Container    *dagger.Container
 }
 
 // Uses the grafana package given by the '--package' argument and creates a installer.
@@ -102,7 +103,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			}
 		)
 
-		container := containers.FPMContainer(d).
+		container := opts.Container.
 			WithEnvVariable("CACHE", "1").
 			WithFile("/src/grafana.tar.gz", packages[i]).
 			WithExec([]string{"tar", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
@@ -116,14 +117,14 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			container = container.WithExec(append([]string{"cp", "-r"}, conf...))
 		}
 
-		if len(opts.AptDependencies) > 0 {
-			container = container.WithExec([]string{"apt-get", "update"})
-			for _, dep := range opts.AptDependencies {
-				container = container.WithExec([]string{"apt-get", "install", "-yq", dep})
-			}
-		}
-
 		container = container.WithExec(fpmArgs)
+
+		if opts.RPMSign {
+			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
+				WithExec([]string{"rpm", "--checksig", "/src/" + name}, dagger.ContainerWithExecOpts{
+					RedirectStdout: "/tmp/checksig",
+				}).WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"})
+		}
 
 		debs[name] = container.File("/src/" + name)
 	}

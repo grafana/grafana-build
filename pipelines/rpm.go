@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/containers"
 )
 
 // RPM uses the grafana package given by the '--package' argument and creates a .rpm installer.
@@ -28,7 +29,8 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",
 			"--rpm-digest=sha256",
 		},
-		EnvFolder:       "/pkg/etc/sysconfig",
-		AptDependencies: []string{"rpm"},
+		EnvFolder: "/pkg/etc/sysconfig",
+		RPMSign:   args.GPGOpts.Sign,
+		Container: containers.RPMContainer(d, args.GPGOpts),
 	})
 }
