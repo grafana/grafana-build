@@ -17,7 +17,7 @@ func TestTarFilename(t *testing.T) {
 			Distro:       distro,
 		}
 
-		expected := "grafana_v1.0.1-test_plan9_amd64_333.tar.gz"
+		expected := "grafana_v1.0.1-test_333_plan9_amd64.tar.gz"
 		if name := pipelines.TarFilename(opts); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
@@ -31,7 +31,7 @@ func TestTarFilename(t *testing.T) {
 			Distro:       distro,
 		}
 
-		expected := "grafana-enterprise_v1.0.1-test_plan9_amd64_333.tar.gz"
+		expected := "grafana-enterprise_v1.0.1-test_333_plan9_amd64.tar.gz"
 		if name := pipelines.TarFilename(opts); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
@@ -45,7 +45,7 @@ func TestTarFilename(t *testing.T) {
 			Distro:       distro,
 		}
 
-		expected := "grafana-enterprise_v1.0.1-test_plan9_arm-6_333.tar.gz"
+		expected := "grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
 		if name := pipelines.TarFilename(opts); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
@@ -54,7 +54,7 @@ func TestTarFilename(t *testing.T) {
 
 func TestOptsFromFile(t *testing.T) {
 	t.Run("It should get the correct tar file opts from a valid name", func(t *testing.T) {
-		name := "grafana-enterprise_v1.0.1-test_plan9_arm-6_333.tar.gz"
+		name := "grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
 		distro := executil.Distribution("plan9/arm/v6")
 		expect := pipelines.TarFileOpts{
 			IsEnterprise: true,
