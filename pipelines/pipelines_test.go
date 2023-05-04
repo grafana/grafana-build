@@ -61,6 +61,7 @@ func TestPipelineArgsFromContext(t *testing.T) {
 		"enterprise-ref": "1234",
 		"build-id":       "build-1234",
 		"github-token":   "",
+		"sign":           false,
 	}
 
 	t.Run("It should return a PipelineArgs object if there are no errors", func(t *testing.T) {
