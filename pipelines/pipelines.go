@@ -46,16 +46,11 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		return PipelineArgs{}, err
 	}
 
-	GPGOpts, err := containers.GPGOptsFromFlags(c)
-	if err != nil {
-		return PipelineArgs{}, err
-	}
-
 	return PipelineArgs{
 		Context:          c,
 		Verbose:          verbose,
 		GrafanaOpts:      grafanaOpts,
-		GPGOpts:          GPGOpts,
+		GPGOpts:          containers.GPGOptsFromFlags(c),
 		PackageOpts:      containers.PackageOptsFromFlags(c),
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
