@@ -40,5 +40,4 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 			Contents:    opts.GPGPassphrase,
 		}).
 		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"})
-	// WithExec([]string{"rpm", "--import", "/root/.rpmdb/pubkeys/grafana.key"})
 }
