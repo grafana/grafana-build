@@ -30,7 +30,7 @@ func TarFilename(opts TarFileOpts) string {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
 
-	p := []string{name, opts.Version, os, arch, opts.BuildID}
+	p := []string{name, opts.Version, opts.BuildID, os, arch}
 
 	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
@@ -44,9 +44,9 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	var (
 		name    = components[0]
 		version = components[1]
-		os      = components[2]
-		arch    = components[3]
-		buildID = components[4]
+		buildID = components[2]
+		os      = components[3]
+		arch    = components[4]
 	)
 	if archv := strings.Split(arch, "-"); len(archv) == 2 {
 		// The reverse operation of removing the 'v' for 'arm' because the golang environment variable
