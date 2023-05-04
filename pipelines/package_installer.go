@@ -120,7 +120,10 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		container = container.WithExec(fpmArgs)
 
 		if opts.RPMSign {
-			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name})
+			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
+				WithExec([]string{"rpm", "--checksig", "/src/" + name}, dagger.ContainerWithExecOpts{
+					RedirectStdout: "/tmp/checksig",
+				}).WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"})
 		}
 
 		debs[name] = container.File("/src/" + name)

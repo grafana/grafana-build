@@ -31,34 +31,6 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		},
 		EnvFolder: "/pkg/etc/sysconfig",
 		RPMSign:   args.SignOpts.Sign,
-		Container: RPMContainer(d, args),
+		Container: containers.RPMContainer(d, args.SignOpts),
 	})
-}
-
-func RPMContainer(d *dagger.Client, args PipelineArgs) *dagger.Container {
-	container := containers.FPMContainer(d).
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-yq", "rpm"})
-	if !args.SignOpts.Sign {
-		return container
-	}
-	return container.
-		WithNewFile("/root/.rpmmacros", dagger.ContainerWithNewFileOpts{
-			Contents: `%_signature gpg
-%_gpg_path /root/.gnupg
-%_gpg_name "Grafana"
-%_gpgbin /usr/bin/gpg
-%__gpg_sign_cmd %{__gpg} gpg --batch --yes --pinentry-mode loopback --no-armor --passphrase-file /root/.rpmdb/passkeys/grafana.key --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} %{__plaintext_filename}`,
-		}).
-		WithExec([]string{"cat", "/root/.rpmmacros"}).
-		WithNewFile("/root/.rpmdb/privkeys/grafana.key", dagger.ContainerWithNewFileOpts{
-			Contents: args.SignOpts.GPGPrivateKey,
-		}).
-		WithNewFile("/root/.rpmdb/pubkeys/grafana.key", dagger.ContainerWithNewFileOpts{
-			Contents: args.SignOpts.GPGPublicKey,
-		}).
-		WithNewFile("/root/.rpmdb/passkeys/grafana.key", dagger.ContainerWithNewFileOpts{
-			Contents: args.SignOpts.GPGPassphrase,
-		}).
-		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"})
 }
