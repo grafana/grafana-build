@@ -1,3 +1,4 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; This script needs to:
 ; * Add FirewallException to Grafana at TCP port 3000 for 'grafana\bin\grafana-server.exe`
 ; * Show the following pages in order:
@@ -37,6 +38,9 @@
 ;
 ;           	 * Key="AppExit"
 ;           	 *    Type="string" Value="Restart"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+!include MUI2.nsh
 
 ; The license page shows the GNU AGPLv3 license that the user agrees to by installing Grafana.
 Page license
