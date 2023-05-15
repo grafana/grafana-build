@@ -7,7 +7,7 @@ RequestExecutionLevel admin
 
 InstallDir $PROGRAMFILES64\GrafanaLabs\Grafana
 
-Outfile "Install Grafana.exe"
+Outfile "${APPNAME_SLUG}-setup.exe"
 Name "${APPNAME}"
 
 # Branding / theming
