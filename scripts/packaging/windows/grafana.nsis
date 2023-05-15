@@ -1,6 +1,5 @@
 Unicode true
 
-!define APPNAME "Grafana"
 !define HELPURL "https://github.com/grafana/grafana"
 !define ABOUTURL "https://grafana.com/grafana/"
 
