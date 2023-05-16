@@ -11,8 +11,8 @@ Dagger allows us to develop a CI pipeline using Go. More importantly, Dagger all
 ### 1. Short feedback loop
 
 The importance of having a shorter feedback loop can not be understated. Without being able to easily develop, test, and receive feedback from a CI pipeline it becomes easier to expand CI pipelines to meet new requirements rather than maintain existing ones, introducing "sprawl".
-should
-Grafana's build & release process as it exists today has reached a point where it's no longer easy to develop on. If we want to test a change, we have to put it into a sandbox environment and explicitly disable all the steps we don't want to test or even "fake" certain event-triggers in order to get somehow rapid feedback. This also leads to a lot of risk when rolling out such a change as the test-environment will usually only barely resemble any production setup.
+
+Grafana's build & release process as it exists today has reached a point where trvial changes require a non-trivial amount of work and a high amount of risk. If we want to test a change, we have to put it into a sandbox environment and explicitly disable all the steps we don't want to test or even "fake" certain event-triggers in order to get somehow rapid feedback. This also leads to a lot of risk when rolling out such a change as the test-environment will usually only barely resemble any production setup.
 
 Dagger will allow us to consistently run and improve existing CI pipelines. The current feedback loop is long; it requires changes to be made, committed, and then ran by the CI server. In many situations, these changes may not even be properly ran by the server until the right event happens.
 
