@@ -14,7 +14,7 @@ The importance of having a shorter feedback loop can not be understated. Without
 
 Grafana's build & release process as it exists today has reached a point where trvial changes require a non-trivial amount of work and a high amount of risk. If we want to test a change, we have to put it into a sandbox environment and explicitly disable all the steps we don't want to test or even "fake" certain event-triggers in order to get somehow rapid feedback. This also leads to a lot of risk when rolling out such a change as the test-environment will usually only barely resemble any production setup.
 
-Dagger will allow us to consistently run and improve existing CI pipelines. The current feedback loop is long; it requires changes to be made, committed, and then ran by the CI server. In many situations, these changes may not even be properly ran by the server until the right event happens.
+Dagger will allow us to consistently run and improve existing CI pipelines. The current feedback loop is long; it requires changes to be made, committed, and then ran by the CI server. In many situations, these changes may not even be properly ran by the server until the right event happens, like when we tag or promote a commit, which is a fairly "permanent" action with many side-effects.
 
 With Dagger the feedback loop is significantly shorter. Instead of requiring a commit, developers can make a small change, run the entire pipeline locally, and see what happens and adjust appropriately. With Dagger's caching, which behaves similarly to Docker / BuildKit's caching, unnecessary tasks don't get repeated, increasing the feedback loop even more.
 
