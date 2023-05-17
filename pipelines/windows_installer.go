@@ -49,6 +49,19 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	if err != nil {
 		return err
 	}
+
+	// Close and remove the file whenever this function is done.
+	defer func() {
+		n := f.Name()
+		if err := f.Close(); err != nil {
+			log.Println("Error closing", n, "error:", err)
+			return
+		}
+		if err := os.Remove(n); err != nil {
+			log.Println("Error removing file", n, "error:", err)
+		}
+	}()
+
 	if err := tarfs.Write(f, grafanabuild.WindowsPackaging); err != nil {
 		return err
 	}
