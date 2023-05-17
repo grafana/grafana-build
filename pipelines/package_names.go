@@ -60,7 +60,7 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	}
 
 	return TarFileOpts{
-		IsEnterprise: name == "grafana-enterprise",
+		IsEnterprise: strings.Contains(name, "grafana-enterprise"),
 		Version:      version,
 		BuildID:      buildID,
 		Distro:       executil.Distribution(strings.Join([]string{os, arch}, "/")),

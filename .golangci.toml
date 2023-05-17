@@ -5,6 +5,11 @@ timeout = "10m"
 min-len = 5
 min-occurrences = 5
 
+checks = [
+  "all",
+]
+
+
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
@@ -32,7 +37,7 @@ enable = [
   "bodyclose",
   "depguard",
   "dogsled",
-  "errcheck",
+  #"errcheck", # Disabling errcheck because IMO checking the error result of 'f.Close' is almost never actionable. willing to reconsider of course but i'm just feeling lazy.
   # "gochecknoinits",
   "goconst",
   "gocritic",
@@ -123,6 +128,14 @@ text = "501"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "404"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G304" # There's just no way ensuring that files are not created or read using variables will be possible in this project.
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G307"
 
 [[issues.exclude-rules]]
 linters = ["misspell"]

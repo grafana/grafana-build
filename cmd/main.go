@@ -15,7 +15,7 @@ var app = &cli.App{
 		PackageCommand,
 		DebCommand,
 		RPMCommand,
-		//MSICommand,
+		WindowsInstallerCommand,
 	},
 }
 
