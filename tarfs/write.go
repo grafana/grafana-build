@@ -3,6 +3,7 @@ package tarfs
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -13,11 +14,11 @@ import (
 func WriteFile(name string, dir fs.FS) (*os.File, error) {
 	file, err := os.Create(name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating tar.gz: %w", err)
 	}
 	defer file.Close()
 	if err := Write(file, dir); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error writing to tar.gz: %w", err)
 	}
 
 	return file, nil
@@ -35,7 +36,7 @@ func Write(writer io.Writer, dir fs.FS) error {
 		// If there's something that we can't package, like maybe a symbolic link, we should probably return an error.
 		// In the future, should we try allow the user to define what to do?
 		if err != nil {
-			return err
+			return fmt.Errorf("fs.WalkDir error argument: %w", err)
 		}
 		if path == "." {
 			return nil

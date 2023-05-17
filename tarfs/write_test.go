@@ -48,10 +48,6 @@ func TestWrite(t *testing.T) {
 			t.Fatalf("did not expect error from fs.Stat (%s): %s", path, err)
 		}
 
-		// if info.IsDir() {
-		// 	return nil
-		// }
-
 		h, err := tr.Next()
 		if err != nil {
 			t.Fatalf("did not expect error from getting next file header (%s): %s / %t", path, err, errors.Is(err, io.EOF))
