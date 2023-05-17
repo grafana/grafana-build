@@ -15,6 +15,10 @@ type TestCLIContext struct {
 }
 
 func (t *TestCLIContext) Bool(key string) bool {
+	if _, ok := t.Data[key]; !ok {
+		return false
+	}
+
 	return t.Data[key].(bool)
 }
 
