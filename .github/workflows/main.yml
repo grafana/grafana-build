@@ -8,6 +8,7 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
+    environment: main
     permissions:
       id-token: write
       contents: read
@@ -22,8 +23,8 @@ jobs:
       uses: google-github-actions/auth@v1
       with:
         token_format: access_token
-        workload_identity_provider: projects/518247705518/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
-        service_account: github-actions@grafana-backstage-375210.iam.gserviceaccount.com
+        workload_identity_provider: ${{ secrets.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         access_token_lifetime: 300s
         export_environment_variables: true
         create_credentials_file: true
