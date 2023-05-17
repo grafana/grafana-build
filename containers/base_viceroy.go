@@ -16,7 +16,9 @@ const (
 // ViceroyContainer returns a dagger container with everything set up that is needed to build Grafana's Go backend
 // with CGO using Viceroy, which makes setting up the C compiler toolchain easier.
 func ViceroyContainer(d *dagger.Client, distro executil.Distribution, base string) *dagger.Container {
-	opts := dagger.ContainerOpts{}
+	opts := dagger.ContainerOpts{
+		Platform: "linux/amd64",
+	}
 
 	// Instead of directly using the `arch` variable here to substitute in the GoURL, we have to be careful with the Go releases.
 	// Supported releases (in the names):
