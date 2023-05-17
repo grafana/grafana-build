@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -27,12 +28,16 @@ type PublishOpts struct {
 	// * 'gcs://bucket/package.tar.gz'
 	Destination string
 
+	// Checksum defines if the PublishFile function should also produce / publish a checksum of the given `*dagger.File'
+	Checksum bool
+
 	GCSOpts *GCSOpts
 }
 
 func PublishOptsFromFlags(c cliutil.CLIContext) *PublishOpts {
 	return &PublishOpts{
 		Destination: c.String("destination"),
+		Checksum:    c.Bool("checksum"),
 		GCSOpts: &GCSOpts{
 			ServiceAccountKeyBase64: c.String("gcp-service-account-key-base64"),
 			ServiceAccountKey:       c.String("gcp-service-account-key"),
@@ -67,21 +72,47 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 // PublishFile publishes the *dagger.File to the specified location. If the destination involves a remote URL or authentication in some way, that information should be populated in the
 // `opts *PublishOpts` argument.
 func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) error {
-	u, err := url.Parse(destination)
-	if err != nil {
-		// If the destination URL is not a URL then we can assume that it's just a filepath.
-		return publishLocalFile(ctx, file, destination)
+	// a map of 'destination' to 'file'
+	files := map[string]*dagger.File{
+		destination: file,
+	}
+	if opts.Checksum {
+		name := destination + ".sha256"
+		log.Println("Checksum is enabled, creating checksum", name)
+		files[name] = d.Container().
+			From("busybox").
+			WithMountedFile("/src/file", file).
+			WithExec([]string{"/bin/sh", "-c", "sha256sum /src/file | awk '{print $1}' > /src/file.sha256"}).
+			File("/src/file.sha256")
 	}
 
-	switch u.Scheme {
-	case "file", "fs":
-		dst := strings.TrimPrefix(u.String(), u.Scheme+"://")
-		return publishLocalFile(ctx, file, dst)
-	case "gs":
-		return publishGCSFile(ctx, d, file, opts, destination)
+	for dst, f := range files {
+		log.Println("Publishing", dst)
+		u, err := url.Parse(dst)
+		if err != nil {
+			// If the destination URL is not a URL then we can assume that it's just a filepath.
+			if err := publishLocalFile(ctx, f, dst); err != nil {
+				return err
+			}
+			continue
+		}
+
+		switch u.Scheme {
+		case "file", "fs":
+			dst := strings.TrimPrefix(u.String(), u.Scheme+"://")
+			if err := publishLocalFile(ctx, f, dst); err != nil {
+				return err
+			}
+		case "gs":
+			if err := publishGCSFile(ctx, d, f, opts, dst); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("%w: '%s'", ErrorUnrecognizedScheme, u.Scheme)
+		}
 	}
 
-	return fmt.Errorf("%w: '%s'", ErrorUnrecognizedScheme, u.Scheme)
+	return nil
 }
 
 func PublishDirectory(ctx context.Context, dir *dagger.Directory, opts *PublishOpts) error {
