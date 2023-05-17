@@ -3,6 +3,7 @@ package tarfs_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -53,7 +54,7 @@ func TestWrite(t *testing.T) {
 
 		h, err := tr.Next()
 		if err != nil {
-			t.Fatalf("did not expect error from getting next file header (%s): %s / %t", path, err, err == io.EOF)
+			t.Fatalf("did not expect error from getting next file header (%s): %s / %t", path, err, errors.Is(err, io.EOF))
 		}
 
 		if h.Name != path {

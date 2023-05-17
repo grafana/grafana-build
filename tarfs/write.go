@@ -65,7 +65,9 @@ func Write(writer io.Writer, dir fs.FS) error {
 			if _, err := io.Copy(tw, file); err != nil {
 				return err
 			}
-			file.Close()
+			if err := file.Close(); err != nil {
+				return err
+			}
 		}
 
 		return nil

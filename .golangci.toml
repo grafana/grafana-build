@@ -5,6 +5,14 @@ timeout = "10m"
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.gosec]
+checks = [
+  "all",
+  "-G304", # There's just no way ensuring that files are not created or read using variables will be possible in this project.
+  "-G307", # useless
+]
+
+
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
