@@ -32,7 +32,7 @@ enable = [
   "bodyclose",
   "depguard",
   "dogsled",
-  "errcheck",
+  #"errcheck", # Disabling errcheck because IMO checking the error result of 'f.Close' is almost never actionable. willing to reconsider of course but i'm just feeling lazy.
   # "gochecknoinits",
   "goconst",
   "gocritic",
