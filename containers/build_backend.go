@@ -36,6 +36,16 @@ func BuilderPlatform(distro executil.Distribution, platform dagger.Platform) dag
 	}
 }
 
+func binaryName(command string, distro executil.Distribution) string {
+	os, _ := executil.OSAndArch(distro)
+
+	if os == "windows" {
+		return command + ".exe"
+	}
+
+	return command
+}
+
 // CompileBackendBuilder returns the container that is completely set up to build Grafana for the given distribution.
 // * dir refers to the source tree of Grafana'; this could be a freshly cloned copy of Grafana.
 // * buildinfo will be added as build flags to the 'go build' command.
@@ -77,7 +87,7 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 	for _, v := range GrafanaCommands {
 		opts := opts
 		opts.Main = path.Join("pkg", "cmd", v)
-		opts.Output = path.Join("bin", string(distro), v)
+		opts.Output = path.Join("bin", string(distro), binaryName(v, distro))
 
 		cmd := executil.GoBuildCmd(opts)
 		log.Printf("Building '%s' for %s", v, distro)
