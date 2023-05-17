@@ -8,6 +8,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - index.md
+  - "Why Dagger?": why-dagger.md
   - "Guides":
     - guides/building.md
   - "Meta":
