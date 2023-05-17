@@ -35,7 +35,7 @@ func TestWrite(t *testing.T) {
 	defer gz.Close()
 	tr := tar.NewReader(gz)
 
-	fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			t.Fatalf("did not expect un-walkable path (%s): %s", path, err)
 		}
@@ -61,5 +61,7 @@ func TestWrite(t *testing.T) {
 			t.Fatalf("Expected file '%s' in archive, but got '%s'", path, h.Name)
 		}
 		return nil
-	})
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
