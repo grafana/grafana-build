@@ -72,8 +72,9 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
 		}
 
-		if tarOpts.IsEnterprise {
-			fpmArgs = append(fpmArgs, "--name=grafana-enterprise")
+		// Honestly we don't care about making fpm installers for non-enterprise or non-grafana flavors of grafana
+		if tarOpts.Edition == "enterprise" {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--name=grafana-%s", tarOpts.Edition))
 			fpmArgs = append(fpmArgs, "--description=\"Grafana Enterprise\"")
 			fpmArgs = append(fpmArgs, "--conflicts=grafana")
 		} else {

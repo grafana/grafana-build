@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"fmt"
 	"log"
 	"path"
 	"strings"
@@ -38,7 +39,6 @@ func BuilderPlatform(distro executil.Distribution, platform dagger.Platform) dag
 
 func binaryName(command string, distro executil.Distribution) string {
 	os, _ := executil.OSAndArch(distro)
-
 	if os == "windows" {
 		return command + ".exe"
 	}
@@ -46,10 +46,27 @@ func binaryName(command string, distro executil.Distribution) string {
 	return command
 }
 
+// CompileBackendOpts is similar to pipelines.CompileGrafanaOpts, but with more options specific to the backend compilation.
+// CompileBackendOpts defines the options that are required to build the Grafana backend for a single distribution.
+type CompileBackendOpts struct {
+	Distribution executil.Distribution
+	Platform     dagger.Platform
+	Source       *dagger.Directory
+	BuildInfo    *BuildInfo
+	Env          map[string]string
+	GoTags       []string
+}
+
 // CompileBackendBuilder returns the container that is completely set up to build Grafana for the given distribution.
 // * dir refers to the source tree of Grafana'; this could be a freshly cloned copy of Grafana.
 // * buildinfo will be added as build flags to the 'go build' command.
-func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platform dagger.Platform, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Container {
+func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.Container {
+	var (
+		distro    = opts.Distribution
+		platform  = opts.Platform
+		src       = opts.Source
+		buildinfo = opts.BuildInfo
+	)
 	log.Println("Creating Grafana backend build container for", distro, "on platform", platform)
 
 	// These options determine the CLI arguments and environment variables passed to the go build command.
@@ -59,8 +76,8 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 	}
 
 	var (
-		opts = goBuildOptsFunc(distro, buildinfo)
-		env  = executil.GoBuildEnv(opts)
+		goBuildOpts = goBuildOptsFunc(distro, buildinfo)
+		env         = executil.GoBuildEnv(goBuildOpts)
 	)
 
 	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
@@ -71,25 +88,37 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
-	builder = builder.WithMountedDirectory("/src", dir).
+	genGoArgs := []string{"make", "gen-go"}
+
+	// This would give something like "make gen-go WIRE_TAG=minimal" if an env 'WIRE_TAG' was set to 'minimal'.
+	// This is a workaround to our current Makefile not allowing overriding via environment variables.
+	for k, v := range opts.Env {
+		genGoArgs = append(genGoArgs, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// Ensure that we set the user provided `opts.Env` when running make gen-go.
+	builder = builder.WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithExec([]string{"make", "gen-go"})
+		WithExec(genGoArgs)
 
 	// Adding env after the previous 'WithExec' ensures that when cross-building we still use the selected platform for 'make gen-go'.
 	if isCrossBuild {
-		builder = WithViceroyEnv(builder, opts)
+		builder = WithViceroyEnv(builder, goBuildOpts)
 	}
 
-	for k, v := range env {
-		builder = builder.WithEnvVariable(k, v)
-	}
+	// Add the Go environment variables first, and then we can add the user-provided environment variables.
+	// That way the user-provided ones can override the default ones.
+	builder = WithEnv(builder, env)
+	// TODO: we are doing this twice; once before make gen-go, and then again after. Would be nice if we only had to do this once.
+	builder = WithEnv(builder, opts.Env)
 
 	for _, v := range GrafanaCommands {
-		opts := opts
-		opts.Main = path.Join("pkg", "cmd", v)
-		opts.Output = path.Join("bin", string(distro), binaryName(v, distro))
+		o := goBuildOpts
+		o.Main = path.Join("pkg", "cmd", v)
+		o.Output = path.Join("bin", string(distro), binaryName(v, distro))
+		o.Tags = opts.GoTags
 
-		cmd := executil.GoBuildCmd(opts)
+		cmd := executil.GoBuildCmd(o)
 		log.Printf("Building '%s' for %s", v, distro)
 		log.Printf("Building '%s' with env: '%+v'", v, env)
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
@@ -100,23 +129,11 @@ func CompileBackendBuilder(d *dagger.Client, distro executil.Distribution, platf
 	return builder
 }
 
-type CompileConfig struct {
-	// GrafanaPath is the relative or absolute path to the root of the Grafana source tree.
-	// If empty, then GrafanaPath is assumed to be $PWD.
-	GrafanaPath string
-
-	// Version is injected into the binary at build-time using the ldflags compilation argument.
-	Version string
-
-	// Distributions are the different os/architecture combinations of binaries that are compiled
-	Distributions []executil.Distribution
-}
-
 // CompileBackend returns a reference to a dagger directory that contains a usable Grafana binary from the cloned source code at 'grafanaPath'.
 // The returned directory can be exported, which will cause the container to execute the build, or can be mounted into other containers.
-func CompileBackend(d *dagger.Client, distro executil.Distribution, platform dagger.Platform, dir *dagger.Directory, buildinfo *BuildInfo) *dagger.Directory {
-	container := CompileBackendBuilder(d, distro, platform, dir, buildinfo)
-	return BackendBinDir(container, distro)
+func CompileBackend(d *dagger.Client, opts *CompileBackendOpts) *dagger.Directory {
+	container := CompileBackendBuilder(d, opts)
+	return BackendBinDir(container, opts.Distribution)
 }
 
 func BackendBinDir(container *dagger.Container, distro executil.Distribution) *dagger.Directory {

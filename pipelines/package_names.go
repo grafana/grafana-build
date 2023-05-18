@@ -8,18 +8,20 @@ import (
 )
 
 type TarFileOpts struct {
-	Version      string
-	BuildID      string
-	IsEnterprise bool
-	Distro       executil.Distribution
+	Version string
+	BuildID string
+	// Edition is the flavor text after "grafana-", like "enterprise".
+	Edition string
+	Distro  executil.Distribution
 }
 
 // TarFilename returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
 func TarFilename(opts TarFileOpts) string {
 	name := "grafana"
-	if opts.IsEnterprise {
-		name = "grafana-enterprise"
+	if opts.Edition != "" {
+		name = fmt.Sprintf("grafana-%s", opts.Edition)
 	}
+
 	var (
 		// This should return something like "linux", "arm"
 		os, arch = executil.OSAndArch(opts.Distro)
@@ -58,11 +60,15 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		// arm-7 should become arm/v7
 		arch = strings.Join([]string{archv[0], archv[1]}, "/")
 	}
+	edition := ""
+	if n := strings.Split(name, "-"); len(n) != 1 {
+		edition = n[1]
+	}
 
 	return TarFileOpts{
-		IsEnterprise: strings.Contains(name, "grafana-enterprise"),
-		Version:      version,
-		BuildID:      buildID,
-		Distro:       executil.Distribution(strings.Join([]string{os, arch}, "/")),
+		Edition: edition,
+		Version: version,
+		BuildID: buildID,
+		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
 	}
 }

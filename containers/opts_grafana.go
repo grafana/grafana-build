@@ -27,6 +27,8 @@ type GrafanaOpts struct {
 	EnterpriseDir string
 	BuildID       string
 	GitHubToken   string
+	Env           map[string]string
+	GoTags        []string
 
 	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
@@ -44,6 +46,7 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		enterpriseRef = c.String("enterprise-ref")
 		buildID       = c.String("build-id")
 		gitHubToken   = c.String("github-token")
+		goTags        = c.StringSlice("go-tags")
 	)
 
 	if buildID == "" {
@@ -67,7 +70,14 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		}
 		enterprise = true
 	}
-
+	env := map[string]string{}
+	for _, v := range c.StringSlice("env") {
+		if p := strings.Split(v, "="); len(p) > 1 {
+			key := p[0]
+			value := strings.Join(p[1:], "=")
+			env[key] = value
+		}
+	}
 	return &GrafanaOpts{
 		BuildID:         buildID,
 		Version:         version,
@@ -78,6 +88,8 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		EnterpriseDir:   enterpriseDir,
 		EnterpriseRef:   enterpriseRef,
 		GitHubToken:     gitHubToken,
+		Env:             env,
+		GoTags:          goTags,
 	}, nil
 }
 
