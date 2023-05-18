@@ -21,13 +21,26 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	isEnterpriseBuild := slices.Unique([]bool{opts.BuildEnterprise, skipOss})
 	distros := args.PackageOpts.Distros
 	for _, isEnterprise := range isEnterpriseBuild {
+		edition := ""
+		if isEnterprise {
+			edition = "enterprise"
+		}
+		// If the user has manually set the edition flag, then override it with their selection.
+		if e := args.PackageOpts.Edition; e != "" {
+			edition = e
+		}
+
 		opts := PackageOpts{
-			Src:          src,
-			Version:      opts.Version,
-			BuildID:      opts.BuildID,
-			Distros:      distros,
-			IsEnterprise: isEnterprise,
-			Platform:     args.PackageOpts.Platform,
+			GrafanaCompileOpts: &GrafanaCompileOpts{
+				Source:   src,
+				Version:  opts.Version,
+				Platform: args.PackageOpts.Platform,
+				Env:      args.GrafanaOpts.Env,
+				GoTags:   args.GrafanaOpts.GoTags,
+			},
+			BuildID:       opts.BuildID,
+			Distributions: distros,
+			Edition:       edition,
 		}
 		packages, err := PackageFiles(ctx, d, opts)
 		if err != nil {
@@ -36,10 +49,10 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 
 		for distro, targz := range packages {
 			opts := TarFileOpts{
-				IsEnterprise: isEnterprise,
-				Version:      opts.Version,
-				BuildID:      opts.BuildID,
-				Distro:       distro,
+				Edition: opts.Edition,
+				Version: opts.Version,
+				BuildID: opts.BuildID,
+				Distro:  distro,
 			}
 
 			fn := TarFilename(opts)

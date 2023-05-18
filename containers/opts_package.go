@@ -9,6 +9,7 @@ import (
 type PackageOpts struct {
 	Distros  []executil.Distribution
 	Platform dagger.Platform
+	Edition  string
 }
 
 func PackageOptsFromFlags(c cliutil.CLIContext) *PackageOpts {
@@ -21,5 +22,6 @@ func PackageOptsFromFlags(c cliutil.CLIContext) *PackageOpts {
 	return &PackageOpts{
 		Distros:  distros,
 		Platform: dagger.Platform(c.String("platform")),
+		Edition:  c.String("edition"),
 	}
 }

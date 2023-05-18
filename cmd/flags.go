@@ -85,6 +85,15 @@ var GrafanaFlags = []cli.Flag{
 		Name:  "version",
 		Usage: "Explicit version number. If this is not set then one with will auto-detected based on the source repository",
 	},
+	&cli.StringSliceFlag{
+		Name:    "env",
+		Aliases: []string{"e"},
+		Usage:   "Set a build-time environment variable using the same syntax as 'docker run'. Example: `--env=GOOS=linux --env=GOARCH=amd64`",
+	},
+	&cli.StringSliceFlag{
+		Name:  "go-tags",
+		Usage: "Sets the go `-tags` flag when compiling the backend",
+	},
 }
 
 var FlagDistros = &cli.StringSliceFlag{
@@ -120,6 +129,10 @@ var PackageFlags = []cli.Flag{
 		Name:  "platform",
 		Usage: "The buildkit / dagger platform to run containers when building the backend",
 		Value: DefaultPlatform,
+	},
+	&cli.StringFlag{
+		Name:  "edition",
+		Usage: "Simply alters the naming of the '.tar.gz' package. The string set will override the '-{flavor}' part of the package name",
 	},
 }
 
