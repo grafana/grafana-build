@@ -74,7 +74,7 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	for i, v := range args.PackageInputOpts.Packages {
 		var (
 			taropts = TarOptsFromFileName(v)
-			name    = filepath.Base(strings.TrimPrefix(strings.ReplaceAll(v, ".tar.gz", fmt.Sprintf(".%s", "exe")), "file://"))
+			name    = DestinationName(v, "exe")
 			targz   = packages[i]
 		)
 		log.Println("Taropts from file name", v, taropts)
@@ -111,7 +111,6 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 			WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 			WithExec([]string{"tar", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 			WithWorkdir("/src").
-			WithExec([]string{"ls", "-al"}).
 			WithExec(nsisArgs).
 			File("/src/grafana-setup.exe")
 

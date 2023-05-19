@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -15,6 +16,7 @@ var app = &cli.App{
 		PackageCommand,
 		DebCommand,
 		RPMCommand,
+		CDNCommand,
 		WindowsInstallerCommand,
 	},
 }
@@ -70,6 +72,10 @@ func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) c
 		args, err := pipelines.PipelineArgsFromContext(c.Context, c)
 		if err != nil {
 			return err
+		}
+
+		if len(args.PackageInputOpts.Packages) == 0 {
+			return errors.New("expected at least one package from a '--package' flag")
 		}
 
 		return pf(c.Context, client, args)
