@@ -10,5 +10,6 @@ func InitializeEnterprise(d *dagger.Client, grafana *dagger.Directory, enterpris
 		WithDirectory("/src/grafana-enterprise", enterprise).
 		WithWorkdir("/src/grafana-enterprise").
 		WithExec([]string{"/bin/sh", "build.sh"}).
+		WithExec([]string{"cp", "LICENSE", "../grafana"}).
 		Directory("/src/grafana")
 }
