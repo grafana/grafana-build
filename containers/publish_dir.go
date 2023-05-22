@@ -16,7 +16,6 @@ func publishLocalDir(ctx context.Context, dir *dagger.Directory, dst string) err
 	}
 
 	return nil
-
 }
 
 func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory, opts *PublishOpts, dst string) error {
@@ -31,7 +30,6 @@ func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory,
 	}
 
 	return nil
-
 }
 
 // PublishDirectory publishes a directory to the given destination.
