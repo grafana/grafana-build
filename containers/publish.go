@@ -114,7 +114,3 @@ func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts 
 
 	return nil
 }
-
-func PublishDirectory(ctx context.Context, dir *dagger.Directory, opts *PublishOpts) error {
-	return nil
-}

@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana-build/executil"
@@ -71,4 +72,16 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		BuildID: buildID,
 		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
 	}
+}
+
+// DestinationName is derived from the original package name, but with a different extension.
+// For example, if the input package name (original) is grafana_v1.0.0_linux-arm64_1.tar.gz, then
+// derivatives should have the same name, but with a different extension.
+// This function also removes the leading directory and removes the URL scheme prefix.
+func DestinationName(original, extension string) string {
+	if extension == "" {
+		return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", ""), "file://"))
+	}
+
+	return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", fmt.Sprintf(".%s", extension)), "file://"))
 }
