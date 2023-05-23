@@ -21,7 +21,10 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	isEnterpriseBuild := slices.Unique([]bool{opts.BuildEnterprise, skipOss})
 	distros := args.PackageOpts.Distros
 	for _, isEnterprise := range isEnterpriseBuild {
-		edition := ""
+		var (
+			src     = src
+			edition = ""
+		)
 		if isEnterprise {
 			edition = "enterprise"
 			// If the user has manually set the edition flag, then override it with their selection.
@@ -30,6 +33,11 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 			if e := args.PackageOpts.Edition; e != "" {
 				edition = e
 			}
+			s, err := args.GrafanaOpts.Enterprise(ctx, src, d)
+			if err != nil {
+				return err
+			}
+			src = s
 		}
 
 		opts := PackageOpts{
