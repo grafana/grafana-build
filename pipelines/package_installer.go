@@ -107,7 +107,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		container := opts.Container.
 			WithEnvVariable("CACHE", "1").
 			WithFile("/src/grafana.tar.gz", packages[i]).
-			WithExec([]string{"tar", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
+			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
 			WithExec([]string{"ls", "-al", "/src"}).
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
 			// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.

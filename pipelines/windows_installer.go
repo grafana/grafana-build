@@ -69,7 +69,7 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	packaging := d.Host().Directory(filepath.Dir(f.Name())).File(filepath.Base(f.Name()))
 
 	base = base.WithMountedFile("/src/src.tar.gz", packaging).
-		WithExec([]string{"tar", "-xzf", "/src/src.tar.gz", "--strip-components=3", "-C", "/src"})
+		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/src.tar.gz", "--strip-components=3", "-C", "/src"})
 
 	for i, v := range args.PackageInputOpts.Packages {
 		var (

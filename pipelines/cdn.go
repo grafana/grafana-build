@@ -24,7 +24,7 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		public := d.Container().From("busybox").
 			WithFile("/src/grafana.tar.gz", targz).
 			WithExec([]string{"mkdir", "-p", "/src/grafana"}).
-			WithExec([]string{"tar", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
+			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 			WithWorkdir("/src").
 			Directory("/src/grafana/public")
 

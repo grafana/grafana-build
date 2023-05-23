@@ -39,6 +39,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		)
 
 		socket := d.Host().UnixSocket("/var/run/docker.sock")
+
 		// Docker build and give the grafana.tar.gz as a build argument
 		builder := d.Container().From("docker").
 			WithUnixSocket("/var/run/docker.sock", socket).
@@ -46,7 +47,11 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			WithMountedFile("/src/Dockerfile", dockerfile).
 			WithMountedFile("/src/packaging/docker/run.sh", runsh).
 			WithMountedFile("/src/grafana.tar.gz", targz).
-			WithExec([]string{"docker", "buildx", "build", ".", "--build-arg=GRAFANA_TGZ=/src/grafana.tar.gz", "-t", tag})
+			WithExec([]string{"docker", "buildx", "build", ".",
+				"--build-arg=GRAFANA_TGZ=grafana.tar.gz",
+				"--build-arg=GO_SRC=tgz-builder",
+				"--build-arg=JS_SRC=tgz-builder",
+				"-t", tag})
 
 		// if --save was provided then we will publish this to the requested location using PublishFile
 		if opts.Save {

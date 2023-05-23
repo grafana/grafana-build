@@ -3,6 +3,7 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -12,20 +13,29 @@ import (
 // PackagedPaths are paths that are included in the grafana tarball.
 var PackagedPaths = []string{
 	"Dockerfile",
-	"bin/",
-	"conf/",
 	"LICENSE",
 	"NOTICE.md",
-	"plugins-bundled/",
-	"public/",
 	"README.md",
 	"VERSION",
+	"bin/",
+	"conf/",
 	"docs/sources/",
 	"packaging/deb",
 	"packaging/rpm",
 	"packaging/docker",
 	"packaging/wrappers",
 	"packaging/autocomplete",
+	"plugins-bundled/",
+	"public/",
+}
+
+func PathsWithRoot(root string, paths []string) []string {
+	p := make([]string, len(paths))
+	for i, v := range paths {
+		p[i] = path.Join(root, v)
+	}
+
+	return p
 }
 
 // The PackageOpts command requires all of the options to build Grafana, but supports a list of distros instead of just one.
@@ -64,14 +74,20 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	if err != nil {
 		return nil, err
 	}
+	name := "grafana"
+	if edition != "" {
+		name = fmt.Sprintf("%s-%s", name, edition)
+	}
+
+	root := fmt.Sprintf("%s-%s", name, version)
 
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
 	for k, backend := range backends {
 		packager := d.Container().
 			From(containers.BusyboxImage).
-			WithMountedDirectory("/src", src).
-			WithMountedDirectory("/src/bin", backend).
-			WithMountedDirectory("/src/public", frontend).
+			WithMountedDirectory(path.Join("/src", root), src).
+			WithMountedDirectory(path.Join("/src", root, "bin"), backend).
+			WithMountedDirectory(path.Join("/src", root, "public"), frontend).
 			WithWorkdir("/src")
 
 		opts := TarFileOpts{
@@ -82,8 +98,8 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		}
 
 		name := TarFilename(opts)
-		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", opts.Version)}).
-			WithExec(append([]string{"tar", "-czf", name}, PackagedPaths...))
+		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", opts.Version, path.Join(root, "VERSION"))}).
+			WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, PackagedPaths)...))
 		packages[k] = packager.File(name)
 	}
 
