@@ -35,6 +35,9 @@ type PipelineArgs struct {
 
 	// GPGOpts will be populated if the GPGFlags are enabled on the current sub-command.
 	GPGOpts *containers.GPGOpts
+
+	// DockerOpts will be populated if the DockerFlags are enabled on the current sub-command.
+	DockerOpts *containers.DockerOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -54,5 +57,6 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		PackageOpts:      containers.PackageOptsFromFlags(c),
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
+		DockerOpts:       containers.DockerOptsFromFlags(c),
 	}, nil
 }

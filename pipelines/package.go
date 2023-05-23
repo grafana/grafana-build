@@ -11,6 +11,7 @@ import (
 
 // PackagedPaths are paths that are included in the grafana tarball.
 var PackagedPaths = []string{
+	"Dockerfile",
 	"bin/",
 	"conf/",
 	"LICENSE",
@@ -22,6 +23,7 @@ var PackagedPaths = []string{
 	"docs/sources/",
 	"packaging/deb",
 	"packaging/rpm",
+	"packaging/docker",
 	"packaging/wrappers",
 	"packaging/autocomplete",
 }

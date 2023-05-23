@@ -98,6 +98,22 @@ var GrafanaFlags = []cli.Flag{
 	},
 }
 
+// DockerFlags are used when producing docker images.
+var DockerFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "registry",
+		Usage: "Prefix the image name with the registry provided",
+	},
+	&cli.BoolFlag{
+		Name:  "save",
+		Usage: "Use 'docker save' to save the image as a tar archive. If this flag is set then the --destination flag will be used",
+	},
+	&cli.BoolFlag{
+		Name:  "push",
+		Usage: "Assuming the docker config is already set, if this flag is set, then it will push the image after building",
+	},
+}
+
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
 	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'.",
