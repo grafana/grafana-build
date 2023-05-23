@@ -58,6 +58,7 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 
 	container := d.Container().From(GitImage).
+		WithEnvVariable("UNAUTHENTICATED_CLONE_URL", opts.URL).
 		WithEntrypoint([]string{})
 
 	if opts.SSHKeyPath != "" {
@@ -141,7 +142,7 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 	return container.Directory("src"), nil
 }
 
-func MountLocalDir(d *dagger.Client, localPath string) (*dagger.Directory, error) {
+func HostDir(d *dagger.Client, localPath string) (*dagger.Directory, error) {
 	if _, err := os.Stat(localPath); err != nil {
 		return nil, err
 	}
