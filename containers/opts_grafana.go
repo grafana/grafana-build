@@ -110,37 +110,25 @@ func (g *GrafanaOpts) DetectVersion(ctx context.Context, client *dagger.Client, 
 	return v, nil
 }
 
-// Grafana will attempt to mount or clone Grafana based on the arguments provided. If, for example, the grafana-dir argument was supplied, then this function will mount that directory.
-// If it was not set then it will attempt to clone.
-func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
-	// 1. Determine whether we should clone Grafana / Enterprise
-	// 2. Authenticate with GitHub (if necessary)
-	// 3. Get the Grafana source tree either locally or from a container where it was cloned
-	// 4. Do the same for Enterprise (if necessary) and `build.sh`.
-	// 5. Return the directory
+// Entrerprise will attempt to mount or clone Grafana Enterprise based on the arguments provided. If, for example, the enterprise-dir argument was supplied, then this function will mount that directory.
+// If it was not set then it will attempt to clone, optionally using the 'enterprise-ref' argument.
+func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory, client *dagger.Client) (*dagger.Directory, error) {
+	// If GrafanaDir was provided, then we can just use that one.
+	if path := g.EnterpriseDir; path != "" {
+		src, err := HostDir(client, path)
+		if err != nil {
+			return nil, err
+		}
 
-	// Determine if we need to git authenticate, and then do it
-	var (
-		cloneGrafana    bool
-		cloneEnterprise bool
-	)
-
-	// If GrafanaDir was not provided, then it will need to be cloned.
-	if g.GrafanaDir == "" {
-		// Grafana will clone from git, needs auth
-		cloneGrafana = true
+		return InitializeEnterprise(client, grafana, src), nil
 	}
 
-	if g.BuildEnterprise && g.EnterpriseDir == "" {
-		// Enterprise will clone from git, needs auth
-		cloneEnterprise = true
-	}
-
+	// Since GrafanaDir was not provided, we must clone it.
 	ght := g.GitHubToken
 
-	if cloneEnterprise && g.GitHubToken == "" {
-		// If GitHubToken was not set from flag
-		log.Println("Acquiring github token")
+	// If GitHubToken was not set from flag
+	if ght == "" {
+		log.Println("Looking up github token from 'GITHUB_TOKEN' environment variable or '$XDG_HOME/.gh'")
 		token, err := LookupGitHubToken(ctx)
 		if err != nil {
 			return nil, err
@@ -151,56 +139,52 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 		ght = token
 	}
 
-	var (
-		src *dagger.Directory
-	)
-
-	if !cloneGrafana {
-		log.Printf("Mounting local directory %s", g.GrafanaDir)
-		grafanaSrc, err := MountLocalDir(client, g.GrafanaDir)
-		if err != nil {
-			return nil, err
-		}
-
-		src = grafanaSrc
-	} else {
-		log.Printf("Cloning Grafana repo from https://github.com/grafana/grafana.git, ref %s", g.GrafanaRef)
-		grafanaSrc, err := Clone(client, "https://github.com/grafana/grafana.git", g.GrafanaRef)
-		if err != nil {
-			return nil, err
-		}
-		src = grafanaSrc
+	log.Printf("Cloning Grafana Enterprise from https://github.com/grafana/grafana-enterprise.git, ref %s", g.GrafanaRef)
+	src, err := CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana-enterprise.git", g.GrafanaRef)
+	if err != nil {
+		return nil, err
 	}
 
-	// If the enterprise global flag is set, then clone and initialize Grafana Enterprise as well.
-	if !g.BuildEnterprise {
+	return InitializeEnterprise(client, grafana, src), nil
+}
+
+// Grafana will attempt to mount or clone Grafana based on the arguments provided. If, for example, the grafana-dir argument was supplied, then this function will mount that directory.
+// If it was not set then it will attempt to clone, optionally using the 'grafana-ref' argument.
+func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagger.Directory, error) {
+	// If GrafanaDir was provided, then we can just use that one.
+	if path := g.GrafanaDir; path != "" {
+		log.Println("Using local Grafana found at", path)
+		src, err := HostDir(client, path)
+		if err != nil {
+			return nil, err
+		}
+
 		return src, nil
 	}
 
-	log.Println("We will build the enterprise version of Grafana")
-	var (
-		enterpriseDir *dagger.Directory
-	)
+	// Since GrafanaDir was not provided, we must clone it.
+	ght := g.GitHubToken
 
-	if g.EnterpriseDir != "" {
-		log.Printf("Mounting local enterprise directory %s", g.EnterpriseDir)
-		enterpriseSrcDir, err := MountLocalDir(client, g.EnterpriseDir)
+	// If GitHubToken was not set from flag
+	if ght == "" {
+		log.Println("Looking up github token from 'GITHUB_TOKEN' environment variable or '$XDG_HOME/.gh'")
+		token, err := LookupGitHubToken(ctx)
 		if err != nil {
 			return nil, err
 		}
-
-		enterpriseDir = enterpriseSrcDir
-	} else {
-		log.Printf("Cloning Grafana Enterprise repo from https://github.com/grafana/grafana-enterprise.git, ref %s", g.EnterpriseRef)
-		enterpriseSrcDir, err := CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana-enterprise.git", g.EnterpriseRef)
-		if err != nil {
-			return nil, err
+		if token == "" {
+			return nil, fmt.Errorf("unable to acquire github token")
 		}
-
-		enterpriseDir = enterpriseSrcDir
+		ght = token
 	}
 
-	return InitializeEnterprise(client, src, enterpriseDir), nil
+	log.Printf("Cloning Grafana from https://github.com/grafana/grafana.git, ref %s", g.GrafanaRef)
+	src, err := CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana.git", g.GrafanaRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return src, nil
 }
 
 // LookupGitHubToken will try to find a GitHub access token that can then be used for various API calls but also cloning of private repositories.
