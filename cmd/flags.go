@@ -112,6 +112,16 @@ var DockerFlags = []cli.Flag{
 		Name:  "push",
 		Usage: "Assuming the docker config is already set, if this flag is set, then it will push the image after building",
 	},
+	&cli.StringFlag{
+		Name:  "alpine-base",
+		Usage: "The alpine image to use as the base image when building the alpine version of the Grafana docker image",
+		Value: "alpine:latest",
+	},
+	&cli.StringFlag{
+		Name:  "ubuntu-base",
+		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
+		Value: "ubuntu:latest",
+	},
 }
 
 var FlagDistros = &cli.StringSliceFlag{
