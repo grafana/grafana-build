@@ -95,25 +95,25 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 
 			socket := d.Host().UnixSocket("/var/run/docker.sock")
 
-			args := []string{"docker", "buildx", "build", ".",
-				"--build-arg=GRAFANA_TGZ=grafana.tar.gz",
-				fmt.Sprintf("--build-arg=BASE_IMAGE=%s", baseImage),
-				"--build-arg=GO_SRC=tgz-builder",
-				"--build-arg=JS_SRC=tgz-builder",
-			}
-
-			for _, v := range tags {
-				args = append(args, "-t", v)
+			args := []string{"GRAFANA_TGZ=grafana.tar.gz",
+				fmt.Sprintf("BASE_IMAGE=%s", baseImage),
+				"GO_SRC=tgz-builder",
+				"JS_SRC=tgz-builder",
 			}
 
 			// Docker build and give the grafana.tar.gz as a build argument
-			builder := d.Container().From("docker").
-				WithUnixSocket("/var/run/docker.sock", socket).
-				WithWorkdir("/src").
-				WithMountedFile("/src/Dockerfile", dockerfile).
-				WithMountedFile("/src/packaging/docker/run.sh", runsh).
-				WithMountedFile("/src/grafana.tar.gz", targz).
-				WithExec(args)
+			before := func(c *dagger.Container) *dagger.Container {
+				return c.WithMountedFile("/src/Dockerfile", dockerfile).
+					WithMountedFile("/src/packaging/docker/run.sh", runsh).
+					WithMountedFile("/src/grafana.tar.gz", targz)
+			}
+
+			builder := containers.DockerBuild(d, &containers.DockerBuildOpts{
+				Tags:       tags,
+				BuildArgs:  args,
+				UnixSocket: socket,
+				Before:     before,
+			})
 
 			// if --save was provided then we will publish this to the requested location using PublishFile
 			if opts.Save {
