@@ -71,7 +71,7 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 
 // PublishFile publishes the *dagger.File to the specified location. If the destination involves a remote URL or authentication in some way, that information should be populated in the
 // `opts *PublishOpts` argument.
-func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) error {
+func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts *PublishOpts, destination string) ([]string, error) {
 	// a map of 'destination' to 'file'
 	files := map[string]*dagger.File{
 		destination: file,
@@ -92,7 +92,7 @@ func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts 
 		if err != nil {
 			// If the destination URL is not a URL then we can assume that it's just a filepath.
 			if err := publishLocalFile(ctx, f, dst); err != nil {
-				return err
+				return nil, err
 			}
 			continue
 		}
@@ -101,16 +101,22 @@ func PublishFile(ctx context.Context, d *dagger.Client, file *dagger.File, opts 
 		case "file", "fs":
 			dst := strings.TrimPrefix(u.String(), u.Scheme+"://")
 			if err := publishLocalFile(ctx, f, dst); err != nil {
-				return err
+				return nil, err
 			}
 		case "gs":
 			if err := publishGCSFile(ctx, d, f, opts, dst); err != nil {
-				return err
+				return nil, err
 			}
 		default:
-			return fmt.Errorf("%w: '%s'", ErrorUnrecognizedScheme, u.Scheme)
+			return nil, fmt.Errorf("%w: '%s'", ErrorUnrecognizedScheme, u.Scheme)
 		}
 	}
 
-	return nil
+	out := make([]string, len(files))
+	i := 0
+	for k := range files {
+		out[i] = k
+	}
+
+	return out, nil
 }

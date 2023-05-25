@@ -3,6 +3,7 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -131,9 +132,12 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 
 	for k, v := range debs {
 		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		if err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst); err != nil {
+		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
+		if err != nil {
 			return err
 		}
+
+		fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
 	}
 	return nil
 }

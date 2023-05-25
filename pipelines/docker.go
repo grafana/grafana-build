@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"dagger.io/dagger"
@@ -152,9 +153,12 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	// The images will still exist in the docker service though.
 	for k, v := range saved {
 		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		if err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst); err != nil {
+		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
+
+		if err != nil {
 			return err
 		}
+		fmt.Fprintln(os.Stdout, out)
 	}
 
 	return nil

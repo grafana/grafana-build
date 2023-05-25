@@ -2,6 +2,8 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strings"
 
 	"dagger.io/dagger"
@@ -31,9 +33,11 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			// We can't use path.Join here because publishopts.Destination might have a URL scheme which will get santizied, and we can't use filepath.Join because Windows would use \\ filepath separators.
 		dst := strings.Join([]string{args.PublishOpts.Destination, name, "public"}, "/")
 
-		if err := containers.PublishDirectory(ctx, d, public, args.PublishOpts, dst); err != nil {
+		dst, err := containers.PublishDirectory(ctx, d, public, args.PublishOpts, dst)
+		if err != nil {
 			return err
 		}
+		fmt.Fprintln(os.Stdout, dst)
 	}
 	return nil
 }

@@ -120,9 +120,12 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	for k, v := range exes {
 		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
 		log.Println(k, v, dst)
-		if err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst); err != nil {
+		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
+		if err != nil {
 			return err
 		}
+
+		fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
 	}
 
 	return nil

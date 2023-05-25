@@ -2,7 +2,9 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"dagger.io/dagger"
@@ -68,9 +70,12 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 			fn := TarFilename(opts)
 			dst := strings.Join([]string{args.PublishOpts.Destination, fn}, "/")
 			log.Println("Writing package", fn, "to", dst)
-			if err := containers.PublishFile(ctx, d, targz, args.PublishOpts, dst); err != nil {
+			out, err := containers.PublishFile(ctx, d, targz, args.PublishOpts, dst)
+			if err != nil {
 				return err
 			}
+
+			fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
 		}
 	}
 
