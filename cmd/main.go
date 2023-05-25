@@ -11,6 +11,8 @@ import (
 )
 
 var app = &cli.App{
+	Name:  "grafana-build",
+	Usage: "A build tool for Grafana",
 	Commands: []*cli.Command{
 		BackendCommands,
 		PackageCommand,
