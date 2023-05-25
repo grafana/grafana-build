@@ -1,15 +1,13 @@
 package containers
 
 import (
-	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
 	"github.com/grafana/grafana-build/executil"
 )
 
 type PackageOpts struct {
-	Distros  []executil.Distribution
-	Platform dagger.Platform
-	Edition  string
+	Distros []executil.Distribution
+	Edition string
 }
 
 func PackageOptsFromFlags(c cliutil.CLIContext) *PackageOpts {
@@ -20,8 +18,7 @@ func PackageOptsFromFlags(c cliutil.CLIContext) *PackageOpts {
 	}
 
 	return &PackageOpts{
-		Distros:  distros,
-		Platform: dagger.Platform(c.String("platform")),
-		Edition:  c.String("edition"),
+		Distros: distros,
+		Edition: c.String("edition"),
 	}
 }

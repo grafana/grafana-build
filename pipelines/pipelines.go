@@ -16,6 +16,13 @@ type PipelineArgs struct {
 	// These arguments are ones that are available at the global level.
 	Verbose bool
 
+	// Platform, where applicable, specifies what platform (linux/arm64, for example) to run the dagger containers on.
+	// This should really only be used if you know what you're doing. misusing this flag can result in really slow builds.
+	// Some example scenarios where you might want to use this:
+	// * You're on linux/amd64 and you're building a docker image for linux/armv7 or linux/arm64
+	// * You're on linux/arm64 and you're building a package for linux/arm64
+	Platform dagger.Platform
+
 	// Context is available for all sub-commands that define their own flags.
 	Context cliutil.CLIContext
 
@@ -35,12 +42,18 @@ type PipelineArgs struct {
 
 	// GPGOpts will be populated if the GPGFlags are enabled on the current sub-command.
 	GPGOpts *containers.GPGOpts
+
+	// DockerOpts will be populated if the DockerFlags are enabled on the current sub-command.
+	DockerOpts *containers.DockerOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
 func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (PipelineArgs, error) {
-	// Global flags...
-	verbose := c.Bool("v")
+	// Global flags
+	var (
+		verbose  = c.Bool("v")
+		platform = c.String("platform")
+	)
 	grafanaOpts, err := containers.GrafanaOptsFromFlags(ctx, c)
 	if err != nil {
 		return PipelineArgs{}, err
@@ -49,10 +62,12 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 	return PipelineArgs{
 		Context:          c,
 		Verbose:          verbose,
+		Platform:         dagger.Platform(platform),
 		GrafanaOpts:      grafanaOpts,
 		GPGOpts:          containers.GPGOptsFromFlags(c),
 		PackageOpts:      containers.PackageOptsFromFlags(c),
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
+		DockerOpts:       containers.DockerOptsFromFlags(c),
 	}, nil
 }

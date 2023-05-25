@@ -98,6 +98,45 @@ var GrafanaFlags = []cli.Flag{
 	},
 }
 
+// DockerFlags are used when producing docker images.
+var DockerFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "registry",
+		Usage: "Prefix the image name with the registry provided",
+		Value: "docker.io",
+	},
+	&cli.StringFlag{
+		Name:  "alpine-base",
+		Usage: "The alpine image to use as the base image when building the Alpine version of the Grafana docker image",
+		Value: "alpine:latest",
+	},
+	&cli.StringFlag{
+		Name:  "ubuntu-base",
+		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
+		Value: "ubuntu:latest",
+	},
+	&cli.StringFlag{
+		Name:  "alpine-base-armv7",
+		Usage: "The alpine image to use as the base image when building the Alpine (armv7) version of the Grafana docker image",
+		Value: "arm32v7/alpine:latest",
+	},
+	&cli.StringFlag{
+		Name:  "ubuntu-base-armv7",
+		Usage: "The Ubuntu image to use as the base image when building the Ubuntu (armv7) version of the Grafana docker image",
+		Value: "arm32v7/ubuntu:latest",
+	},
+	&cli.StringFlag{
+		Name:  "alpine-base-arm64",
+		Usage: "The alpine image to use as the base image when building the Alpine (arm64) version of the Grafana docker image",
+		Value: "arm64v8/alpine:latest",
+	},
+	&cli.StringFlag{
+		Name:  "ubuntu-base-arm64",
+		Usage: "The Ubuntu image to use as the base image when building the Ubuntu (arm64) version of the Grafana docker image",
+		Value: "arm64v8/ubuntu:latest",
+	},
+}
+
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
 	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'.",
@@ -128,17 +167,17 @@ var GPGFlags = []cli.Flag{
 var PackageFlags = []cli.Flag{
 	FlagDistros,
 	&cli.StringFlag{
-		Name:  "platform",
-		Usage: "The buildkit / dagger platform to run containers when building the backend",
-		Value: DefaultPlatform,
-	},
-	&cli.StringFlag{
 		Name:  "edition",
 		Usage: "Simply alters the naming of the '.tar.gz' package. The string set will override the '-{flavor}' part of the package name",
 	},
 }
 
 var DefaultFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "platform",
+		Usage: "The buildkit / dagger platform to run containers when building the backend",
+		Value: DefaultPlatform,
+	},
 	&cli.BoolFlag{
 		Name:    "verbose",
 		Aliases: []string{"v"},

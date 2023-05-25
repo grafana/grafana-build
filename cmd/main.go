@@ -19,6 +19,7 @@ var app = &cli.App{
 		DebCommand,
 		RPMCommand,
 		CDNCommand,
+		DockerCommand,
 		WindowsInstallerCommand,
 	},
 }

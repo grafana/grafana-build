@@ -1,6 +1,10 @@
 package executil
 
-import "strings"
+import (
+	"strings"
+
+	"dagger.io/dagger"
+)
 
 // Distribution is a string that represents the GOOS and GOARCH environment variables joined by a "/".
 // Optionally, if there is an extra argument specific to that architecture, it will be the last segment of the string.
@@ -167,4 +171,10 @@ func PackageArch(d Distribution) string {
 	}
 
 	return ""
+}
+
+// From the distribution, try to assume the docker platform (used in Docker's --platform argument or the (dagger.ContainerOpts).Platform field
+func Platform(d Distribution) dagger.Platform {
+	// for now let's just try to use the distro name as the platform and see if that works...
+	return dagger.Platform(string(d))
 }

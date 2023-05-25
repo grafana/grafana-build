@@ -14,7 +14,7 @@ var IntegrationDatabases = []string{"sqlite", "mysql", "postgres"}
 func GrafanaBackendTests(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
 	var (
 		db       = args.Context.String("database")
-		platform = args.PackageOpts.Platform
+		platform = args.Platform
 		r        = []*dagger.Container{}
 	)
 
@@ -36,7 +36,7 @@ func GrafanaBackendTests(ctx context.Context, d *dagger.Client, src *dagger.Dire
 
 // GrafanaBackendTestIntegration runs the Grafana backend test containers for short (unit) and integration tests.
 func GrafanaBackendTestIntegration(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	platform := args.PackageOpts.Platform
+	platform := args.Platform
 
 	c := d.Pipeline("integration tests", dagger.PipelineOpts{
 		Description: "Runs backend integration tests",

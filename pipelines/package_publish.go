@@ -44,7 +44,7 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 			GrafanaCompileOpts: &GrafanaCompileOpts{
 				Source:   src,
 				Version:  opts.Version,
-				Platform: args.PackageOpts.Platform,
+				Platform: args.Platform,
 				Env:      args.GrafanaOpts.Env,
 				GoTags:   args.GrafanaOpts.GoTags,
 			},

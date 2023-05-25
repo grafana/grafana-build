@@ -64,7 +64,7 @@ func TestOptsFromFile(t *testing.T) {
 		}
 		got := pipelines.TarOptsFromFileName(name)
 		if got.Edition != expect.Edition {
-			t.Errorf("got.IsEnterprise != expect.IsEnterprise, expected '%s'", expect.Edition)
+			t.Errorf("got.Edition != expect.Edition, expected '%s'", expect.Edition)
 		}
 		if got.Version != expect.Version {
 			t.Errorf("got.Version != expect.Version, expected '%s', got '%s'", expect.Version, got.Version)
