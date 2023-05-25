@@ -130,7 +130,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 		opts := &GrafanaCompileOpts{
 			Source:       src,
 			Distribution: distro,
-			Platform:     args.PackageOpts.Platform,
+			Platform:     args.Platform,
 			Version:      args.GrafanaOpts.Version,
 			Env:          args.GrafanaOpts.Env,
 			GoTags:       args.GrafanaOpts.GoTags,

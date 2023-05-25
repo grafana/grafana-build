@@ -24,12 +24,11 @@ func ImageTag(registry, org, repo, version string) string {
 
 // GrafanaImageTag returns the name of the grafana docker image based on the tar package name.
 // To maintain backwards compatibility, we must keep this the same as it was before.
-func GrafanaImageTags(base BaseImage, opts TarFileOpts) []string {
+func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []string {
 	var (
-		registry = "docker.io"
-		org      = "grafana"
-		repos    = []string{"grafana-image-tags", "grafana-oss-image-tags"}
-		version  = opts.Version
+		org     = "grafana"
+		repos   = []string{"grafana-image-tags", "grafana-oss-image-tags"}
+		version = opts.Version
 
 		edition = opts.Edition
 	)
@@ -60,17 +59,38 @@ func GrafanaImageTags(base BaseImage, opts TarFileOpts) []string {
 	return tags
 }
 
+func GetBaseImage(base BaseImage, distro executil.Distribution, opts *containers.DockerOpts) string {
+	if base == BaseImageUbuntu {
+		switch _, arch := executil.OSAndArch(distro); arch {
+		case "arm64":
+			return opts.UbuntuBaseARM64
+		case "armv7":
+			return opts.UbuntuBaseARMv7
+		default:
+			return opts.UbuntuBase
+		}
+	}
+	switch _, arch := executil.OSAndArch(distro); arch {
+	case "arm64":
+		return opts.AlpineBaseARM64
+	case "armv7":
+		return opts.AlpineBaseARMv7
+	default:
+		return opts.AlpineBase
+	}
+}
+
 // Docker is a pipeline that uses a grafana.tar.gz as input and creates a Docker image using that same Grafana's Dockerfile.
-// Grafana's Dockerfile should support supplying a tar.gz using the
+// Grafana's Dockerfile should support supplying a tar.gz using a --build-arg.
 func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts)
 	if err != nil {
 		return err
 	}
-
 	var (
-		opts  = args.DockerOpts
-		saved = map[string]*dagger.File{}
+		opts        = args.DockerOpts
+		publishOpts = args.PublishOpts
+		saved       = map[string]*dagger.File{}
 	)
 
 	for i, v := range args.PackageInputOpts.Packages {
@@ -85,15 +105,14 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 
 		bases := []BaseImage{BaseImageAlpine, BaseImageUbuntu}
 		for _, base := range bases {
-			tags := GrafanaImageTags(base, tarOpts)
-			log.Println("Building docker images", tags)
-			// a different base image is used for arm versions of Grafana
-			baseImage := args.DockerOpts.AlpineBase
-			if base == BaseImageUbuntu {
-				baseImage = args.DockerOpts.UbuntuBase
-			}
+			var (
+				platform  = executil.Platform(tarOpts.Distro)
+				tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
+				baseImage = GetBaseImage(base, tarOpts.Distro, opts)
+				socket    = d.Host().UnixSocket("/var/run/docker.sock")
+			)
 
-			socket := d.Host().UnixSocket("/var/run/docker.sock")
+			log.Println("Building docker images", tags, "with base image", baseImage, "and platform", platform)
 
 			args := []string{"GRAFANA_TGZ=grafana.tar.gz",
 				fmt.Sprintf("BASE_IMAGE=%s", baseImage),
@@ -113,10 +132,11 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 				BuildArgs:  args,
 				UnixSocket: socket,
 				Before:     before,
+				Platform:   platform,
 			})
 
 			// if --save was provided then we will publish this to the requested location using PublishFile
-			if opts.Save {
+			if publishOpts.Destination != "" {
 				ext := "docker.tar.gz"
 				if base == BaseImageUbuntu {
 					ext = "ubuntu.docker.tar.gz"
@@ -128,9 +148,10 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		}
 	}
 
+	// The map of saved items will be nil if there was no destination set.
+	// The images will still exist in the docker service though.
 	for k, v := range saved {
 		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		log.Println(k, v, dst)
 		if err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst); err != nil {
 			return err
 		}
