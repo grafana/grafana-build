@@ -27,7 +27,7 @@ type DockerBuildOpts struct {
 	// This is where you should add your context using relative paths; the docker context will be provided as '.'
 	Before func(*dagger.Container) *dagger.Container
 
-	// Platform, if set to the non-defualt value, will use buildkit's emulation to build the docker image. This can be useful if building a docker image for a platform that doesn't match the host platform.
+	// Platform, if set to the non-default value, will use buildkit's emulation to build the docker image. This can be useful if building a docker image for a platform that doesn't match the host platform.
 	Platform dagger.Platform
 }
 
