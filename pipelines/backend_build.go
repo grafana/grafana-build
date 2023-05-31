@@ -154,3 +154,16 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 	}
 	return nil
 }
+
+func GenerateBackendDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	opts := &GrafanaCompileOpts{
+		Source: src,
+		// TODO: Take distribution as requested from args
+		Distribution: executil.DistLinuxARM64,
+		Platform:     args.Platform,
+		Version:      args.GrafanaOpts.Version,
+		Env:          args.GrafanaOpts.Env,
+		GoTags:       args.GrafanaOpts.GoTags,
+	}
+	return GrafanaBackendBuildDirectory(ctx, d, opts)
+}

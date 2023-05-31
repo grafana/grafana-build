@@ -127,3 +127,32 @@ func Package(ctx context.Context, d *dagger.Client, opts PackageOpts) error {
 	}
 	return nil
 }
+
+func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	root := "/src/grafana"
+	name := "grafana.tar.gz"
+
+	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
+	}
+
+	nodeCache := d.CacheVolume("yarn")
+	frontend := containers.CompileFrontend(d, src, nodeCache, nodeVersion)
+
+	packager := d.Container().
+		From(containers.BusyboxImage).
+		WithMountedDirectory("/src/grafana", src).
+		WithMountedDirectory("/src/grafana/public", frontend).
+		WithWorkdir("/src")
+
+	for mountPoint, dir := range mounts {
+		packager = packager.WithMountedDirectory(mountPoint, dir)
+	}
+
+	packager = packager.
+		// TODO: Use container.WithNewFile here
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", args.GrafanaOpts.Version, path.Join(root, "VERSION"))}).
+		WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, PackagedPaths)...))
+	return packager.Directory("/src"), nil
+}
