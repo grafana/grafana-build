@@ -11,6 +11,8 @@ nav:
   - "Why Dagger?": why-dagger.md
   - "Guides":
     - guides/building.md
+  - "Design":
+    - design/artifact-dependency-tree.md
   - "Meta":
     - meta/docs.md
 repo_url: https://github.com/grafana/grafana-build
