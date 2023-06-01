@@ -34,7 +34,11 @@ var app = &cli.App{
 	}),
 }
 
-func buildArtifact(ctx context.Context, art string, reg *pipelines.ArtifactDefinitionRegistry, d *dagger.Client, src *dagger.Directory, args pipelines.PipelineArgs) (*dagger.Directory, error) {
+func buildArtifact(ctx context.Context, cache map[string]*dagger.Directory, art string, reg *pipelines.ArtifactDefinitionRegistry, d *dagger.Client, src *dagger.Directory, args pipelines.PipelineArgs) (*dagger.Directory, error) {
+	cached, inCache := cache[art]
+	if inCache {
+		return cached, nil
+	}
 	def, ok := reg.Get(art)
 	if !ok {
 		return nil, fmt.Errorf("could not resolve artifact `%s`", art)
@@ -46,14 +50,19 @@ func buildArtifact(ctx context.Context, art string, reg *pipelines.ArtifactDefin
 			return nil, fmt.Errorf("could not resolve dependency of `%s`: %s", art, v)
 		}
 
-		subOut, err := buildArtifact(ctx, v, reg, d, src, args)
+		subOut, err := buildArtifact(ctx, cache, v, reg, d, src, args)
 		if err != nil {
 			return nil, fmt.Errorf("could not build `%s->%s`: %w", art, v, err)
 		}
 		mounts[k] = subOut
 	}
 
-	return def.Generator(ctx, d, src, args, mounts)
+	result, err := def.Generator(ctx, d, src, args, mounts)
+	if err != nil {
+		return nil, err
+	}
+	cache[art] = result
+	return result, nil
 
 }
 
@@ -70,8 +79,9 @@ func MainCommand(cliCtx *cli.Context) error {
 	}
 	return PipelineAction(func(ctx context.Context, d *dagger.Client, src *dagger.Directory, args pipelines.PipelineArgs) error {
 		results := make(map[string]*dagger.Directory)
+		cache := make(map[string]*dagger.Directory)
 		for _, artifact := range artifacts {
-			dir, err := buildArtifact(ctx, artifact, pipelines.DefaultArtifacts, d, src, args)
+			dir, err := buildArtifact(ctx, cache, artifact, pipelines.DefaultArtifacts, d, src, args)
 			if err != nil {
 				return err
 			}
