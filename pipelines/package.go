@@ -129,8 +129,8 @@ func Package(ctx context.Context, d *dagger.Client, opts PackageOpts) error {
 }
 
 func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
-	root := "/src/grafana"
-	name := "grafana.tar.gz"
+	root := "grafana"
+	name := "/dist/grafana.tar.gz"
 
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
@@ -142,6 +142,7 @@ func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger
 
 	packager := d.Container().
 		From(containers.BusyboxImage).
+		WithExec([]string{"mkdir", "/dist"}).
 		WithMountedDirectory("/src/grafana", src).
 		WithMountedDirectory("/src/grafana/public", frontend).
 		WithWorkdir("/src")
@@ -154,5 +155,5 @@ func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger
 		// TODO: Use container.WithNewFile here
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", args.GrafanaOpts.Version, path.Join(root, "VERSION"))}).
 		WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, PackagedPaths)...))
-	return packager.Directory("/src"), nil
+	return packager.Directory("/dist"), nil
 }

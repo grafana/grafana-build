@@ -95,7 +95,9 @@ func init() {
 		WithGenerator(GenerateTarballDirectory).
 		WithRequirement("/src/grafana/bin", "backend"))
 	DefaultArtifacts.Register("docker", NewArtifactDefinition().WithRequirement("/src/tarball", "tarball"))
-	DefaultArtifacts.Register("deb", NewArtifactDefinition().WithRequirement("/src/tarball", "tarball"))
-	DefaultArtifacts.Register("rpm", NewArtifactDefinition().WithRequirement("/src/tarball", "tarball"))
-	DefaultArtifacts.Register("windowsinstaller", NewArtifactDefinition().WithRequirement("/src/tarball", "tarball"))
+	DefaultArtifacts.Register("deb", NewArtifactDefinition().
+		WithRequirement("/mnt/tarball", "tarball").
+		WithGenerator(GenerateDebArtifact))
+	DefaultArtifacts.Register("rpm", NewArtifactDefinition().WithRequirement("/mnt/tarball", "tarball"))
+	DefaultArtifacts.Register("windowsinstaller", NewArtifactDefinition().WithRequirement("/mnt/tarball", "tarball"))
 }
