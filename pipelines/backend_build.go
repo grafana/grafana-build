@@ -155,11 +155,12 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 	return nil
 }
 
-func GenerateBackendDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+func GenerateBackendDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	args := genOpts.PipelineArgs
+	dist := genOpts.Distribution
 	opts := &GrafanaCompileOpts{
-		Source: src,
-		// TODO: Take distribution as requested from args
-		Distribution: executil.DistLinuxARM64,
+		Source:       src,
+		Distribution: dist,
 		Platform:     args.Platform,
 		Version:      args.GrafanaOpts.Version,
 		Env:          args.GrafanaOpts.Env,

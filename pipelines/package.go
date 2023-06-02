@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -128,9 +129,19 @@ func Package(ctx context.Context, d *dagger.Client, opts PackageOpts) error {
 	return nil
 }
 
-func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+func getTarFileOpts(genOpts ArtifactGeneratorOptions) TarFileOpts {
+	return TarFileOpts{
+		Version: genOpts.PipelineArgs.GrafanaOpts.Version,
+		BuildID: genOpts.PipelineArgs.GrafanaOpts.BuildID,
+		Edition: genOpts.PipelineArgs.PackageOpts.Edition,
+		Distro:  genOpts.Distribution,
+	}
+}
+
+func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	args := genOpts.PipelineArgs
 	root := "grafana"
-	name := "/dist/grafana.tar.gz"
+	name := TarFilename(getTarFileOpts(genOpts))
 
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
@@ -154,6 +165,6 @@ func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger
 	packager = packager.
 		// TODO: Use container.WithNewFile here
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", args.GrafanaOpts.Version, path.Join(root, "VERSION"))}).
-		WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, PackagedPaths)...))
+		WithExec(append([]string{"tar", "-czf", filepath.Join("/dist", name)}, PathsWithRoot(root, PackagedPaths)...))
 	return packager.Directory("/dist"), nil
 }

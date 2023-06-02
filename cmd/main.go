@@ -34,8 +34,8 @@ var app = &cli.App{
 	}),
 }
 
-func buildArtifact(ctx context.Context, cache map[string]*dagger.Directory, art string, reg *pipelines.ArtifactDefinitionRegistry, d *dagger.Client, src *dagger.Directory, args pipelines.PipelineArgs) (*dagger.Directory, error) {
-	cached, inCache := cache[art]
+func buildArtifact(ctx context.Context, cache map[string]*dagger.Directory, cacheKey string, art string, reg *pipelines.ArtifactDefinitionRegistry, d *dagger.Client, src *dagger.Directory, genOpts pipelines.ArtifactGeneratorOptions) (*dagger.Directory, error) {
+	cached, inCache := cache[cacheKey]
 	if inCache {
 		return cached, nil
 	}
@@ -50,18 +50,18 @@ func buildArtifact(ctx context.Context, cache map[string]*dagger.Directory, art 
 			return nil, fmt.Errorf("could not resolve dependency of `%s`: %s", art, v)
 		}
 
-		subOut, err := buildArtifact(ctx, cache, v, reg, d, src, args)
+		subOut, err := buildArtifact(ctx, cache, cacheKey, v, reg, d, src, genOpts)
 		if err != nil {
 			return nil, fmt.Errorf("could not build `%s->%s`: %w", art, v, err)
 		}
 		mounts[k] = subOut
 	}
 
-	result, err := def.Generator(ctx, d, src, args, mounts)
+	result, err := def.Generator(ctx, d, src, genOpts, mounts)
 	if err != nil {
 		return nil, err
 	}
-	cache[art] = result
+	cache[cacheKey] = result
 	return result, nil
 
 }
@@ -80,20 +80,30 @@ func MainCommand(cliCtx *cli.Context) error {
 	return PipelineAction(func(ctx context.Context, d *dagger.Client, src *dagger.Directory, args pipelines.PipelineArgs) error {
 		results := make(map[string]*dagger.Directory)
 		cache := make(map[string]*dagger.Directory)
-		for _, artifact := range artifacts {
-			dir, err := buildArtifact(ctx, cache, artifact, pipelines.DefaultArtifacts, d, src, args)
-			if err != nil {
-				return err
+
+		for _, distro := range args.PackageOpts.Distros {
+			genOpts := pipelines.ArtifactGeneratorOptions{
+				PipelineArgs: args,
+				Distribution: args.PackageOpts.Distros[0],
 			}
-			results[artifact] = dir
+			for _, artifact := range artifacts {
+				cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
+				dir, err := buildArtifact(ctx, cache, cacheKey, artifact, pipelines.DefaultArtifacts, d, src, genOpts)
+				if err != nil {
+					return err
+				}
+				results[cacheKey] = dir
+			}
 		}
 
 		dest := cliCtx.String("destination")
-
-		for _, dir := range results {
-			// If no file is specified as provided, then we want to export the whole directory
-			if _, err := containers.PublishDirectory(ctx, d, dir, args.PublishOpts, dest); err != nil {
-				return err
+		for _, distro := range args.PackageOpts.Distros {
+			for _, artifact := range artifacts {
+				cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
+				dir := results[cacheKey]
+				if _, err := containers.PublishDirectory(ctx, d, dir, args.PublishOpts, dest); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

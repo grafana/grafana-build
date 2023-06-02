@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-build/containers"
 )
 
-func GenerateDebArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
-	return generatePackageInstallerArtifact(ctx, d, src, args, InstallerOpts{
+func GenerateDebArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	return generatePackageInstallerArtifact(ctx, d, src, genOpts, InstallerOpts{
 		PackageType: "deb",
 		ConfigFiles: [][]string{
 			{"/src/packaging/deb/default/grafana-server", "/pkg/etc/default/grafana-server"},

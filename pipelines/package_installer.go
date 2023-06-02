@@ -24,12 +24,9 @@ type InstallerOpts struct {
 	Container    *dagger.Container
 }
 
-func generatePackageInstallerArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, opts InstallerOpts, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
-	v := "grafana.tar.gz"
-	tarOpts := TarFileOpts{}
-	tarOpts.Distro = args.PackageOpts.Distros[0]
-	tarOpts.Version = args.GrafanaOpts.Version
-	tarOpts.Edition = args.PackageOpts.Edition
+func generatePackageInstallerArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, opts InstallerOpts, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	tarOpts := getTarFileOpts(genOpts)
+	v := TarFilename(tarOpts)
 	var (
 		name    = filepath.Base(strings.TrimPrefix(strings.ReplaceAll(v, ".tar.gz", fmt.Sprintf(".%s", opts.PackageType)), "file://"))
 		fpmArgs = []string{
@@ -107,7 +104,7 @@ func generatePackageInstallerArtifact(ctx context.Context, d *dagger.Client, src
 	container = container.
 		WithExec([]string{"mkdir", "-p", "/dist"}).
 		WithExec([]string{"mkdir", "-p", "/src"}).
-		WithExec([]string{"tar", "--strip-components=1", "-xvf", "/mnt/tarball/grafana.tar.gz", "-C", "/src"}).
+		WithExec([]string{"tar", "--strip-components=1", "-xvf", fmt.Sprintf("/mnt/tarball/%s", v), "-C", "/src"}).
 		WithExec([]string{"ls", "-al", "/src"}).
 		// We use the /dist folder for the final output
 		WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).

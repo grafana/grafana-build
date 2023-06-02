@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/executil"
 )
 
 type ArtifactDefinition struct {
@@ -15,9 +16,6 @@ type ArtifactDefinition struct {
 	// combined
 	Requirements map[string]string
 
-	// ProvidedFiles contains a list of filenames that are provided by the generated container.
-	ProvidedFiles []string
-
 	// Generator is responsible for taking the commandline options/pipeline
 	// configuration and generating a single dagger.Directory out of it.
 	Generator ArtifactGenerator
@@ -25,8 +23,7 @@ type ArtifactDefinition struct {
 
 func NewArtifactDefinition() ArtifactDefinition {
 	return ArtifactDefinition{
-		Requirements:  make(map[string]string),
-		ProvidedFiles: make([]string, 0, 5),
+		Requirements: make(map[string]string),
 	}
 }
 
@@ -35,13 +32,10 @@ func (ad ArtifactDefinition) clone() ArtifactDefinition {
 	for k, v := range ad.Requirements {
 		requirements[k] = v
 	}
-	providedFiles := make([]string, 0, 10)
-	providedFiles = append(providedFiles, ad.ProvidedFiles...)
 	return ArtifactDefinition{
-		Name:          ad.Name,
-		Requirements:  requirements,
-		ProvidedFiles: providedFiles,
-		Generator:     ad.Generator,
+		Name:         ad.Name,
+		Requirements: requirements,
+		Generator:    ad.Generator,
 	}
 }
 
@@ -56,13 +50,13 @@ func (ad ArtifactDefinition) WithGenerator(gen ArtifactGenerator) ArtifactDefini
 	out.Generator = gen
 	return out
 }
-func (ad ArtifactDefinition) WithProvidedFiles(req ...string) ArtifactDefinition {
-	out := ad.clone()
-	out.ProvidedFiles = append(out.ProvidedFiles, req...)
-	return out
+
+type ArtifactGeneratorOptions struct {
+	Distribution executil.Distribution
+	PipelineArgs PipelineArgs
 }
 
-type ArtifactGenerator func(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs, mounts map[string]*dagger.Directory) (*dagger.Directory, error)
+type ArtifactGenerator func(ctx context.Context, d *dagger.Client, src *dagger.Directory, opts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error)
 
 func NewArtifactDefinitionRegistry() *ArtifactDefinitionRegistry {
 	return &ArtifactDefinitionRegistry{
@@ -88,10 +82,8 @@ var DefaultArtifacts = NewArtifactDefinitionRegistry()
 
 func init() {
 	DefaultArtifacts.Register("backend", NewArtifactDefinition().
-		WithGenerator(GenerateBackendDirectory).
-		WithProvidedFiles("grafana", "grafana-server", "grafana-cli"))
+		WithGenerator(GenerateBackendDirectory))
 	DefaultArtifacts.Register("tarball", NewArtifactDefinition().
-		WithProvidedFiles("grafana.tar.gz").
 		WithGenerator(GenerateTarballDirectory).
 		WithRequirement("/src/grafana/bin", "backend"))
 	DefaultArtifacts.Register("docker", NewArtifactDefinition().WithRequirement("/src/tarball", "tarball"))
