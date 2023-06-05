@@ -197,7 +197,8 @@ func init() {
 		WithRequirement("/src/grafana/bin", "backend"))
 	DefaultArtifacts.Register("docker", NewArtifactDefinition().
 		WithConstraint(ConstraintLinuxOnly).
-		WithRequirement("/src/tarball", "tarball"))
+		WithGenerator(GenerateDockerArtifact).
+		WithRequirement("/mnt/tarball", "tarball"))
 	DefaultArtifacts.Register("deb", NewArtifactDefinition().
 		WithRequirement("/mnt/tarball", "tarball").
 		WithConstraint(ConstraintLinuxOnly).

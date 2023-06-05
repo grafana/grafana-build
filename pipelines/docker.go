@@ -80,6 +80,71 @@ func GetBaseImage(base BaseImage, distro executil.Distribution, opts *containers
 		return opts.AlpineBase
 	}
 }
+func GenerateDockerArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
+	args := genOpts.PipelineArgs
+	var (
+		opts = args.DockerOpts
+	)
+
+	tarOpts := getTarFileOpts(genOpts)
+	v := TarFilename(tarOpts)
+
+	var (
+		dockerfile = src.File("Dockerfile")
+		runsh      = src.File("packaging/docker/run.sh")
+	)
+
+	output := d.Container().From("busybox").WithExec([]string{"mkdir", "/dist"})
+
+	bases := []BaseImage{BaseImageAlpine, BaseImageUbuntu}
+	for _, base := range bases {
+		var (
+			platform  = executil.Platform(tarOpts.Distro)
+			tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
+			baseImage = GetBaseImage(base, tarOpts.Distro, opts)
+			socket    = d.Host().UnixSocket("/var/run/docker.sock")
+		)
+
+		log.Println("Building docker images", tags, "with base image", baseImage, "and platform", platform)
+
+		args := []string{"GRAFANA_TGZ=grafana.tar.gz",
+			fmt.Sprintf("BASE_IMAGE=%s", baseImage),
+			"GO_SRC=tgz-builder",
+			"JS_SRC=tgz-builder",
+		}
+
+		// Docker build and give the grafana.tar.gz as a build argument
+		before := func(c *dagger.Container) *dagger.Container {
+			container := c
+			for path, dir := range mounts {
+				container = container.WithDirectory(path, dir)
+				if path == "/mnt/tarball" {
+					container = container.WithMountedFile("/src/grafana.tar.gz", dir.File(v))
+				}
+			}
+			return container.WithMountedFile("/src/Dockerfile", dockerfile).
+				WithMountedFile("/src/packaging/docker/run.sh", runsh)
+		}
+
+		builder := containers.DockerBuild(d, &containers.DockerBuildOpts{
+			Tags:       tags,
+			BuildArgs:  args,
+			UnixSocket: socket,
+			Before:     before,
+			Platform:   platform,
+		})
+
+		ext := "docker.tar.gz"
+		if base == BaseImageUbuntu {
+			ext = "ubuntu.docker.tar.gz"
+		}
+		name := DestinationName(v, ext)
+		builder = builder.WithExec([]string{"docker", "save", tags[0], "-o", name})
+		output = output.WithFile(fmt.Sprintf("/dist/%s", name), builder.Directory("/src").File(name))
+	}
+
+	return output.Directory("/dist"), nil
+}
 
 // Docker is a pipeline that uses a grafana.tar.gz as input and creates a Docker image using that same Grafana's Dockerfile.
 // Grafana's Dockerfile should support supplying a tar.gz using a --build-arg.

@@ -26,7 +26,7 @@ var app = &cli.App{
 		WindowsInstallerCommand,
 	},
 	Action: MainCommand,
-	Flags: JoinFlagsWithDefault(GrafanaFlags, PackageFlags, PublishFlags, []cli.Flag{
+	Flags: JoinFlagsWithDefault(GrafanaFlags, PackageFlags, PublishFlags, DockerFlags, []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:  "artifact",
 			Usage: "Specify the output artifact of the command (deb|rpm|docker|tarball)",
