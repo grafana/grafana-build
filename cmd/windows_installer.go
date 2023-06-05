@@ -12,6 +12,6 @@ var WindowsInstallerCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
-		GPGFlags,
+		GCPFlags,
 	),
 }

@@ -2,26 +2,32 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/slices"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 )
 
 // PublishPackage creates a package and publishes it to a Google Cloud Storage bucket.
 func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	opts := args.GrafanaOpts
-	// This bool slice stores the values of args.BuildEnterprise for each build
-	// --enterprise: []bool{true}
-	// --enterprise --grafana: []bool{true, false}
-	// if -- enterprise is not used it always returns []bool{false}
-	skipOss := opts.BuildEnterprise && !opts.BuildGrafana
-	isEnterpriseBuild := slices.Unique([]bool{opts.BuildEnterprise, skipOss})
-	distros := args.PackageOpts.Distros
+	var (
+		opts = args.GrafanaOpts
+		// This bool slice stores the values of args.BuildEnterprise for each build
+		// --enterprise: []bool{true}
+		// --enterprise --grafana: []bool{true, false}
+		// if -- enterprise is not used it always returns []bool{false}
+		skipOss           = opts.BuildEnterprise && !opts.BuildGrafana
+		isEnterpriseBuild = slices.Unique([]bool{opts.BuildEnterprise, skipOss})
+		distros           = args.PackageOpts.Distros
+		nodeCache         = d.CacheVolume("yarn-dependencies")
+	)
+
+	files := map[string]*dagger.File{}
+
 	for _, isEnterprise := range isEnterpriseBuild {
 		var (
 			src     = src
@@ -50,9 +56,10 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 				Env:      args.GrafanaOpts.Env,
 				GoTags:   args.GrafanaOpts.GoTags,
 			},
-			BuildID:       opts.BuildID,
-			Distributions: distros,
-			Edition:       edition,
+			BuildID:         opts.BuildID,
+			Distributions:   distros,
+			Edition:         edition,
+			NodeCacheVolume: nodeCache,
 		}
 		packages, err := PackageFiles(ctx, d, opts)
 		if err != nil {
@@ -70,14 +77,22 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 			fn := TarFilename(opts)
 			dst := strings.Join([]string{args.PublishOpts.Destination, fn}, "/")
 			log.Println("Writing package", fn, "to", dst)
-			out, err := containers.PublishFile(ctx, d, targz, args.PublishOpts, dst)
-			if err != nil {
-				return err
-			}
-
-			fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
+			files[dst] = targz
 		}
 	}
+	var (
+		grp = &errgroup.Group{}
+		sm  = semaphore.NewWeighted(int64(args.ConcurrencyOpts.Parallel))
+	)
 
-	return nil
+	for dst, file := range files {
+		grp.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
+			File:        file,
+			Destination: dst,
+			PublishOpts: args.PublishOpts,
+			GCPOpts:     args.GCPOpts,
+		}))
+	}
+
+	return grp.Wait()
 }

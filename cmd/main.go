@@ -21,6 +21,7 @@ var app = &cli.App{
 		CDNCommand,
 		DockerCommand,
 		WindowsInstallerCommand,
+		ZipCommand,
 	},
 }
 

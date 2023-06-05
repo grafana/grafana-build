@@ -21,7 +21,7 @@ const winSWx64URL = "https://github.com/winsw/winsw/releases/download/v2.12.0/Wi
 // The WindowsInstaller also uses "winsw", or "Windows Service Wrapper" (https://github.com/winsw/winsw) to handle the status, start, and stop functions of
 // the windows service so that Grafana doesn't have to implement it.
 func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts)
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 		exe := base.
 			WithFile("/src/grafana.tar.gz", targz).
 			WithExec([]string{"mkdir", "-p", "/src/grafana"}).
-			WithExec([]string{"tar", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
+			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 			WithWorkdir("/src").
 			WithExec(nsisArgs).
 			File("/src/grafana-setup.exe")
@@ -120,12 +120,17 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	for k, v := range exes {
 		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
 		log.Println(k, v, dst)
-		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
+		out, err := containers.PublishFile(ctx, d, &containers.PublishFileOpts{
+			File:        v,
+			Destination: dst,
+			PublishOpts: args.PublishOpts,
+			GCPOpts:     args.GCPOpts,
+		})
 		if err != nil {
 			return err
 		}
 
-		fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
+		WriteToStdout(out)
 	}
 
 	return nil

@@ -18,8 +18,8 @@ func publishLocalDir(ctx context.Context, dir *dagger.Directory, dst string) err
 	return nil
 }
 
-func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory, opts *PublishOpts, dst string) error {
-	auth := GCSAuth(d, opts.GCSOpts)
+func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory, opts *GCPOpts, dst string) error {
+	auth := GCSAuth(d, opts)
 	uploader, err := GCSUploadDirectory(d, GoogleCloudImage, auth, dir, dst)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory,
 }
 
 // PublishDirectory publishes a directory to the given destination.
-func PublishDirectory(ctx context.Context, d *dagger.Client, dir *dagger.Directory, opts *PublishOpts, dst string) (string, error) {
+func PublishDirectory(ctx context.Context, d *dagger.Client, dir *dagger.Directory, opts *GCPOpts, dst string) (string, error) {
 	log.Println("Publishing directory", dst)
 	u, err := url.Parse(dst)
 	if err != nil {

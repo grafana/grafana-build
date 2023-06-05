@@ -30,14 +30,14 @@ var DefaultBuildOpts = func(distro executil.Distribution, buildinfo *BuildInfo) 
 // BuildOptsStaticARM builds Grafana statically for the armv6/v7 architectures (not armhf/arm64)
 func BuildOptsStaticARM(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
 	var (
-		os, arch = executil.OSAndArch(distro)
-		arm      = executil.ArchVersion(distro)
+		os, _ = executil.OSAndArch(distro)
+		arm   = executil.ArchVersion(distro)
 	)
 
 	return &executil.GoBuildOpts{
 		ExperimentalFlags: []string{},
 		OS:                os,
-		Arch:              arch,
+		Arch:              "arm",
 		GoARM:             executil.GoARM(arm),
 		CGOEnabled:        true,
 		TrimPath:          true,
@@ -47,6 +47,27 @@ func BuildOptsStaticARM(distro executil.Distribution, buildinfo *BuildInfo) *exe
 			"-X":                  buildinfo.LDFlags(),
 			"-linkmode=external":  nil,
 			"-extldflags=-static": nil,
+		},
+		Tags: DefaultTags,
+	}
+}
+
+// BuildOptsDynamicARM builds Grafana statically for the armv6/v7 architectures (not armhf/arm64)
+func BuildOptsDynamicARM(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
+	var (
+		os, _ = executil.OSAndArch(distro)
+		arm   = executil.ArchVersion(distro)
+	)
+
+	return &executil.GoBuildOpts{
+		ExperimentalFlags: []string{},
+		OS:                os,
+		Arch:              "arm",
+		GoARM:             executil.GoARM(arm),
+		CGOEnabled:        true,
+		TrimPath:          true,
+		LDFlags: map[string][]string{
+			"-X": buildinfo.LDFlags(),
 		},
 		Tags: DefaultTags,
 	}
@@ -112,9 +133,9 @@ func BuildOptsDynamicWindows(distro executil.Distribution, buildinfo *BuildInfo)
 }
 
 var DistributionGoOpts = map[executil.Distribution]DistroBuildOptsFunc{
-	executil.DistLinuxARM:   BuildOptsStaticARM,
-	executil.DistLinuxARMv6: BuildOptsStaticARM,
-	executil.DistLinuxARMv7: BuildOptsStaticARM,
+	executil.DistLinuxARM:   BuildOptsDynamicARM,
+	executil.DistLinuxARMv6: BuildOptsDynamicARM,
+	executil.DistLinuxARMv7: BuildOptsDynamicARM,
 	executil.DistLinuxARM64: BuildOptsStatic,
 	executil.DistLinuxAMD64: BuildOptsStatic,
 
