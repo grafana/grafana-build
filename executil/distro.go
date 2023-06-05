@@ -137,6 +137,14 @@ func IsWindows(d Distribution) bool {
 	return strings.Split(string(d), "/")[0] == "windows"
 }
 
+func IsLinux(d Distribution) bool {
+	return strings.Split(string(d), "/")[0] == "linux"
+}
+
+func IsDarwin(d Distribution) bool {
+	return strings.Split(string(d), "/")[0] == "darwin"
+}
+
 func OSAndArch(d Distribution) (string, string) {
 	p := strings.Split(string(d), "/")
 	return p[0], p[1]

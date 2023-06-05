@@ -81,29 +81,36 @@ func MainCommand(cliCtx *cli.Context) error {
 		results := make(map[string]*dagger.Directory)
 		cache := make(map[string]*dagger.Directory)
 
-		for _, distro := range args.PackageOpts.Distros {
-			genOpts := pipelines.ArtifactGeneratorOptions{
-				PipelineArgs: args,
-				Distribution: args.PackageOpts.Distros[0],
+		finalArtifacts, err := pipelines.GeneratateFinalArtifactList(ctx, pipelines.DefaultArtifacts, artifacts, args)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Generating the following artifacts: %v", finalArtifacts)
+
+		if len(finalArtifacts) == 0 {
+			return fmt.Errorf("the combination of distros and artifacts didn't produce any valid output artifacts")
+		}
+
+		for _, req := range finalArtifacts {
+			artifact := req.Name
+			distro := req.Options.Distribution
+			cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
+			dir, err := buildArtifact(ctx, cache, cacheKey, artifact, pipelines.DefaultArtifacts, d, src, req.Options)
+			if err != nil {
+				return err
 			}
-			for _, artifact := range artifacts {
-				cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
-				dir, err := buildArtifact(ctx, cache, cacheKey, artifact, pipelines.DefaultArtifacts, d, src, genOpts)
-				if err != nil {
-					return err
-				}
-				results[cacheKey] = dir
-			}
+			results[cacheKey] = dir
 		}
 
 		dest := cliCtx.String("destination")
-		for _, distro := range args.PackageOpts.Distros {
-			for _, artifact := range artifacts {
-				cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
-				dir := results[cacheKey]
-				if _, err := containers.PublishDirectory(ctx, d, dir, args.PublishOpts, dest); err != nil {
-					return err
-				}
+		for _, req := range finalArtifacts {
+			distro := req.Options.Distribution
+			artifact := req.Name
+			cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
+			dir := results[cacheKey]
+			if _, err := containers.PublishDirectory(ctx, d, dir, args.PublishOpts, dest); err != nil {
+				return err
 			}
 		}
 		return nil
