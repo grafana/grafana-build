@@ -28,7 +28,6 @@ func GenerateDebArtifact(ctx context.Context, d *dagger.Client, src *dagger.Dire
 		EnvFolder: "/pkg/etc/default",
 		Container: containers.FPMContainer(d),
 	}, mounts)
-
 }
 
 // Deb uses the grafana package given by the '--package' argument and creates a .deb installer.

@@ -63,7 +63,6 @@ func buildArtifact(ctx context.Context, cache map[string]*dagger.Directory, cach
 	}
 	cache[cacheKey] = result
 	return result, nil
-
 }
 
 func MainCommand(cliCtx *cli.Context) error {
