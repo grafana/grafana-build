@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -335,7 +336,7 @@ func main() {
 			ServiceAccountKeyBase64: os.Getenv("GCP_KEY_BASE64"),
 		})
 
-		container = client.Container().From("google/cloud-sdk:alpine")
+		container = client.Container().From("google/cloud-sdk:alpine").WithEnvVariable("CACHE", "0").WithMountedDirectory("dist", client.Host().Directory("./dist"))
 	)
 
 	if c, err := authenticator.Authenticate(client, container); err == nil {
@@ -376,7 +377,8 @@ func main() {
 
 		destinations := handler(os.Getenv("DESTINATION"), name)
 		for _, v := range destinations {
-			container = container.WithMountedDirectory("dist", client.Host().Directory("./dist")).WithExec([]string{"gsutil", "cp", name, v})
+			log.Println("Copying", name, "to", v)
+			container = container.WithExec([]string{"gsutil", "cp", name, v})
 		}
 	}
 

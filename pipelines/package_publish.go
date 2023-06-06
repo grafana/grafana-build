@@ -55,6 +55,7 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 				Platform: args.Platform,
 				Env:      args.GrafanaOpts.Env,
 				GoTags:   args.GrafanaOpts.GoTags,
+				Edition:  edition,
 			},
 			BuildID:         opts.BuildID,
 			Distributions:   distros,

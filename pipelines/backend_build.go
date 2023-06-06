@@ -27,6 +27,9 @@ type GrafanaCompileOpts struct {
 	// Env is an optional map of environment variables (keyed by literal variable name to value) to set in the build container(s).
 	Env    map[string]string
 	GoTags []string
+
+	// Edition is just used for logging / visualization purposes
+	Edition string
 }
 
 func (o *GrafanaCompileOpts) BuildInfo(ctx context.Context, d *dagger.Client) (*containers.BuildInfo, error) {

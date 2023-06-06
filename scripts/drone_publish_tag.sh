@@ -4,7 +4,7 @@ local_dst="file://dist/${DRONE_BUILD_EVENT}"
 
 set -x
 # Build all of the grafana.tar.gz packages.
-time go run ./cmd \
+dagger run go run ./cmd \
   package \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
@@ -23,7 +23,7 @@ time go run ./cmd \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
 # Build the grafana-pro tar.gz package.
-time go run ./cmd \
+dagger run go run ./cmd \
   package \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
@@ -44,21 +44,21 @@ time go run ./cmd \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
-time go run ./cmd deb \
+dagger run go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
-time go run ./cmd rpm \
+dagger run go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # Build a docker iamge for all Linux distros except armv6
-time go run ./cmd docker \
+dagger run go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
   --ubuntu-base="ubuntu:22.10" \
@@ -67,20 +67,20 @@ time go run ./cmd docker \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # For Windows we distribute zips and exes
-time go run ./cmd zip \
+dagger run go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
 
-time go run ./cmd windows-installer \
+dagger run go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
 
 # Copy only the linux/amd64 edition frontends into a separate folder
-time go run ./cmd cdn \
+dagger run go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep linux_amd64 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt

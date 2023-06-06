@@ -3,10 +3,12 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -150,6 +152,28 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 	return wg.Wait()
 }
 
+type SyncWriter struct {
+	Writer io.Writer
+
+	mutex *sync.Mutex
+}
+
+func NewSyncWriter(w io.Writer) *SyncWriter {
+	return &SyncWriter{
+		Writer: w,
+		mutex:  &sync.Mutex{},
+	}
+}
+
+func (w *SyncWriter) Write(b []byte) (int, error) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
+	return w.Writer.Write(b)
+}
+
+var Stdout = NewSyncWriter(os.Stdout)
+
 func PublishFileFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.PublishFileOpts) func() error {
 	return func() error {
 		log.Printf("[%s] Attempting to publish file", opts.Destination)
@@ -162,11 +186,11 @@ func PublishFileFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		log.Printf("[%s] Publishing file", opts.Destination)
 		out, err := containers.PublishFile(ctx, d, opts)
 		if err != nil {
-			return err
+			return fmt.Errorf("[%s] error: %w", opts.Destination, err)
 		}
 		log.Printf("[%s] Done publishing file", opts.Destination)
 
-		fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
+		fmt.Fprintln(Stdout, strings.Join(out, "\n"))
 		return nil
 	}
 }

@@ -3,3 +3,4 @@ bin/
 *.tar.gz
 .idea/
 dist/
+grafana/
