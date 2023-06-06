@@ -82,7 +82,7 @@ func PublishFile(ctx context.Context, d *dagger.Client, opts *PublishFileOpts) (
 		log.Println("Checksum is enabled, creating checksum", name)
 		files[name] = d.Container().
 			From("busybox").
-			WithMountedFile("/src/file", file).
+			WithFile("/src/file", file).
 			WithExec([]string{"/bin/sh", "-c", "sha256sum /src/file | awk '{print $1}' > /src/file.sha256"}).
 			File("/src/file.sha256")
 	}
