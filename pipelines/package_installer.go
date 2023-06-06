@@ -181,6 +181,7 @@ func PublishFileFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		if err := sm.Acquire(ctx, 1); err != nil {
 			return fmt.Errorf("failed to acquire semaphore: %w", err)
 		}
+		defer sm.Release(1)
 		log.Printf("[%s] Acquired semaphore", opts.Destination)
 
 		log.Printf("[%s] Publishing file", opts.Destination)
