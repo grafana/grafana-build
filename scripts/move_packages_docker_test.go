@@ -189,7 +189,7 @@ var dockerMapping = []m{
 }
 
 func TestMoveDocker(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range dockerMapping {
 		out := DockerHandler(bucket, v.input)
 

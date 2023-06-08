@@ -184,7 +184,7 @@ var targzMapping = []m{
 }
 
 func TestMoveTargz(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range targzMapping {
 		out := TarGZHandler(bucket, v.input)
 		if len(out) != len(v.output) {

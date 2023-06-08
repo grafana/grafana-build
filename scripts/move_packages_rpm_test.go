@@ -93,7 +93,7 @@ var rpmMapping = []m{
 }
 
 func TestMoverpm(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range rpmMapping {
 		out := RPMHandler(bucket, v.input)
 

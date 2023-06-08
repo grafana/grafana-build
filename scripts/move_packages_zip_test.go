@@ -21,7 +21,7 @@ var zipMapping = []m{
 }
 
 func TestMoveZip(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range zipMapping {
 		out := ZipHandler(bucket, v.input)
 

@@ -97,7 +97,7 @@ var debMapping = []m{
 }
 
 func TestMoveDeb(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range debMapping {
 		out := DebHandler(bucket, v.input)
 

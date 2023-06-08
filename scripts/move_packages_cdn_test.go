@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const testBucket = "gs://bucket"
+
 var cdnMapping = []m{
 	{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/public",
@@ -28,7 +30,7 @@ var cdnMapping = []m{
 }
 
 func TestMoveCDN(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range cdnMapping {
 		out := CDNHandler(bucket, v.input)
 

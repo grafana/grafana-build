@@ -42,6 +42,9 @@ const (
 	// 2: ersion
 	// 3. name (grafana-oss | grafana-enterprise)
 	cdnFormat = "%[1]s/artifacts/static-assets/%[3]s/%[2]s/public"
+
+	sha256Ext = ".sha256"
+	grafana   = "grafana"
 )
 
 // One artifact and be copied to multiple different locations (like armv7 tar.gz packages should be copied to tar.gz and -musl.tar.gz)
@@ -72,16 +75,16 @@ func RPMHandler(destination, name string) []string {
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
 	sha256 := ""
-	if ext == ".sha256" {
-		sha256 = ".sha256"
+	if ext == sha256Ext {
+		sha256 = sha256Ext
 	}
 
 	n := filepath.Base(name) // Surprisingly still works even with 'gs://' urls
-	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(strings.ReplaceAll(n, ".sha256", ""), "rpm", "tar.gz"))
+	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(strings.ReplaceAll(n, sha256Ext, ""), "rpm", "tar.gz"))
 
 	// In grafana-build we just use "" to refer to "oss"
 	edition := "oss"
-	fullName := "grafana"
+	fullName := grafana
 	if opts.Edition != "" {
 		edition = opts.Edition
 		fullName += "-" + opts.Edition
@@ -144,16 +147,16 @@ func DebHandler(destination, name string) []string {
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
 	sha256 := ""
-	if ext == ".sha256" {
-		sha256 = ".sha256"
+	if ext == sha256Ext {
+		sha256 = sha256Ext
 	}
 
 	n := filepath.Base(name) // Surprisingly still works even with 'gs://' urls
-	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(strings.ReplaceAll(n, ".sha256", ""), "deb", "tar.gz"))
+	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(strings.ReplaceAll(n, sha256Ext, ""), "deb", "tar.gz"))
 
 	// In grafana-build we just use "" to refer to "oss"
 	edition := "oss"
-	fullName := "grafana"
+	fullName := grafana
 	version := opts.Version
 	ersion := strings.TrimPrefix(version, "v")
 	enterprise2 := ""
@@ -190,7 +193,6 @@ func DebHandler(destination, name string) []string {
 	}
 
 	return dst
-
 }
 
 func TarGZHandler(destination, name string) []string {
@@ -199,16 +201,16 @@ func TarGZHandler(destination, name string) []string {
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
 	sha256 := ""
-	if ext == ".sha256" {
-		sha256 = ".sha256"
+	if ext == sha256Ext {
+		sha256 = sha256Ext
 	}
 
 	n := filepath.Base(name) // Surprisingly still works even with 'gs://' urls
-	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(n, ".sha256", ""))
+	opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(n, sha256Ext, ""))
 
 	// In grafana-build we just use "" to refer to "oss"
 	edition := "oss"
-	fullName := "grafana"
+	fullName := grafana
 	version := opts.Version
 	ersion := strings.TrimPrefix(version, "v")
 	enterprise2 := ""
@@ -252,14 +254,14 @@ func DockerHandler(destination, name string) []string {
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
 	sha256 := ""
-	if ext == ".sha256" {
-		sha256 = ".sha256"
+	if ext == sha256Ext {
+		sha256 = sha256Ext
 	}
 
 	n := filepath.Base(name) // Surprisingly still works even with 'gs://' urls
 
 	// try to get .ubuntu.docker.tar.gz.sha256 / .ubuntu.docker.tar.gz / docker.tar.gz to all just end in 'tar.gz'
-	normalized := strings.ReplaceAll(n, ".sha256", "")
+	normalized := strings.ReplaceAll(n, sha256Ext, "")
 	normalized = strings.ReplaceAll(normalized, ".ubuntu", "")
 	normalized = strings.ReplaceAll(normalized, ".docker", "")
 
@@ -267,7 +269,7 @@ func DockerHandler(destination, name string) []string {
 
 	// In grafana-build we just use "" to refer to "oss"
 	edition := "oss"
-	fullName := "grafana"
+	fullName := grafana
 	if opts.Edition != "" {
 		edition = opts.Edition
 		if edition == "pro" {
@@ -297,24 +299,19 @@ func CDNHandler(destination, name string) []string {
 
 	// In grafana-build we just use "" to refer to "oss"
 	edition := "oss"
-	fullName := "grafana"
+	fullName := grafana
 	if opts.Edition != "" {
 		edition = opts.Edition
 	}
 
 	fullName += "-" + edition
 
-	_, arch := executil.OSAndArch(opts.Distro)
-	if arch == "arm" {
-		arch += "v" + executil.ArchVersion(opts.Distro)
-	}
-
 	names := []string{
 		fmt.Sprintf(cdnFormat, destination, strings.TrimPrefix(opts.Version, "v"), fullName),
 	}
 
 	if edition == "oss" {
-		names = append(names, fmt.Sprintf(cdnFormat, destination, strings.TrimPrefix(opts.Version, "v"), "grafana"))
+		names = append(names, fmt.Sprintf(cdnFormat, destination, strings.TrimPrefix(opts.Version, "v"), grafana))
 	}
 
 	return names
@@ -352,8 +349,8 @@ func main() {
 		)
 
 		// sha256 extensions should be handled the same way what precedes the extension
-		if ext == ".sha256" {
-			ext = filepath.Ext(strings.ReplaceAll(name, ".sha256", ""))
+		if ext == sha256Ext {
+			ext = filepath.Ext(strings.ReplaceAll(name, sha256Ext, ""))
 		}
 
 		// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that

@@ -33,7 +33,7 @@ var exeMapping = []m{
 }
 
 func TestMoveEXEs(t *testing.T) {
-	bucket := "gs://bucket"
+	bucket := testBucket
 	for _, v := range exeMapping {
 		out := EXEHandler(bucket, v.input)
 

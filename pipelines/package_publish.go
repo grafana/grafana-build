@@ -83,7 +83,7 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 	}
 	var (
 		grp = &errgroup.Group{}
-		sm  = semaphore.NewWeighted(int64(args.ConcurrencyOpts.Parallel))
+		sm  = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
 	)
 
 	for dst, file := range files {
