@@ -2,6 +2,9 @@
 dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 
+# This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
+docker run --privileged --rm tonistiigi/binfmt --install all
+
 # Build all of the grafana.tar.gz packages.
 go run ./cmd \
   package \
