@@ -45,6 +45,9 @@ type PipelineArgs struct {
 
 	// DockerOpts will be populated if the DockerFlags are enabled on the current sub-command.
 	DockerOpts *containers.DockerOpts
+
+	// ProImageOpts will be populated if ProImageFlags are enabled on the current sub-command.
+	ProImageOpts *containers.ProImageOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -69,5 +72,6 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
 		DockerOpts:       containers.DockerOptsFromFlags(c),
+		ProImageOpts:     containers.ProImageOptsFromFlags(c),
 	}, nil
 }

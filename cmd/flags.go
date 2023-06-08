@@ -172,6 +172,34 @@ var PackageFlags = []cli.Flag{
 	},
 }
 
+var ProImageFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "github-token",
+		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "deb",
+		Usage:    "The Grafana debian package that will be used to build the pro image",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "grafana-version",
+		Usage:    "The Grafana version",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:  "release-type",
+		Usage: "The Grafana release type",
+		Value: "prerelease",
+	},
+	&cli.BoolFlag{
+		Name:  "push",
+		Usage: "Push the built image to the container registry",
+		Value: false,
+	},
+}
+
 var DefaultFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "platform",
