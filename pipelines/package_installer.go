@@ -3,13 +3,18 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/executil"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 )
 
 type InstallerOpts struct {
@@ -27,7 +32,7 @@ type InstallerOpts struct {
 // Uses the grafana package given by the '--package' argument and creates a installer.
 // It accepts publish args, so you can place the file in a local or remote destination.
 func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, opts InstallerOpts) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts)
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
 	if err != nil {
 		return err
 	}
@@ -127,17 +132,66 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 				}).WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"})
 		}
 
-		debs[name] = container.File("/src/" + name)
+		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
+		debs[dst] = container.File("/src/" + name)
 	}
 
-	for k, v := range debs {
-		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
-		if err != nil {
-			return err
+	var (
+		wg = &errgroup.Group{}
+		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+	)
+	for dst, file := range debs {
+		wg.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
+			Destination: dst,
+			File:        file,
+			GCPOpts:     args.GCPOpts,
+			PublishOpts: args.PublishOpts,
+		}))
+	}
+
+	return wg.Wait()
+}
+
+type SyncWriter struct {
+	Writer io.Writer
+
+	mutex *sync.Mutex
+}
+
+func NewSyncWriter(w io.Writer) *SyncWriter {
+	return &SyncWriter{
+		Writer: w,
+		mutex:  &sync.Mutex{},
+	}
+}
+
+func (w *SyncWriter) Write(b []byte) (int, error) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
+	return w.Writer.Write(b)
+}
+
+var Stdout = NewSyncWriter(os.Stdout)
+
+func PublishFileFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.PublishFileOpts) func() error {
+	return func() error {
+		log.Printf("[%s] Attempting to publish file", opts.Destination)
+		log.Printf("[%s] Acquiring semaphore", opts.Destination)
+		if err := sm.Acquire(ctx, 1); err != nil {
+			return fmt.Errorf("failed to acquire semaphore: %w", err)
 		}
+		defer sm.Release(1)
+		log.Printf("[%s] Acquired semaphore", opts.Destination)
 
-		fmt.Fprintln(os.Stdout, strings.Join(out, "\n"))
+		log.Printf("[%s] Publishing file", opts.Destination)
+		out, err := containers.PublishFile(ctx, d, opts)
+		if err != nil {
+			return fmt.Errorf("[%s] error: %w", opts.Destination, err)
+		}
+		log.Printf("[%s] Done publishing file", opts.Destination)
+
+		fmt.Fprintln(Stdout, strings.Join(out, "\n"))
+		return nil
 	}
-	return nil
 }

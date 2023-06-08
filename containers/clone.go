@@ -58,6 +58,7 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 
 	container := d.Container().From(GitImage).
+		WithEnvVariable("REF", opts.Ref).
 		WithEnvVariable("UNAUTHENTICATED_CLONE_URL", opts.URL).
 		WithEntrypoint([]string{})
 

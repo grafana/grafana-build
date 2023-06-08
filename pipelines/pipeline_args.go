@@ -12,6 +12,16 @@ import (
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
 type PipelineFuncWithPackageInput func(context.Context, *dagger.Client, PipelineArgs) error
 
+type ConcurrencyOpts struct {
+	Parallel int64
+}
+
+func ConcurrencyOptsFromFlags(c cliutil.CLIContext) *ConcurrencyOpts {
+	return &ConcurrencyOpts{
+		Parallel: c.Int64("parallel"),
+	}
+}
+
 type PipelineArgs struct {
 	// These arguments are ones that are available at the global level.
 	Verbose bool
@@ -39,12 +49,10 @@ type PipelineArgs struct {
 	// PackageInputOpts will be populated if the PackageInputFlags are enabled on current sub-command.
 	// This is set for pipelines that accept a package as input.
 	PackageInputOpts *containers.PackageInputOpts
-
-	// GPGOpts will be populated if the GPGFlags are enabled on the current sub-command.
-	GPGOpts *containers.GPGOpts
-
-	// DockerOpts will be populated if the DockerFlags are enabled on the current sub-command.
-	DockerOpts *containers.DockerOpts
+	GPGOpts          *containers.GPGOpts
+	DockerOpts       *containers.DockerOpts
+	GCPOpts          *containers.GCPOpts
+	ConcurrencyOpts  *ConcurrencyOpts
 
 	// ProImageOpts will be populated if ProImageFlags are enabled on the current sub-command.
 	ProImageOpts *containers.ProImageOpts
@@ -72,6 +80,8 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		PublishOpts:      containers.PublishOptsFromFlags(c),
 		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
 		DockerOpts:       containers.DockerOptsFromFlags(c),
+		GCPOpts:          containers.GCPOptsFromFlags(c),
+		ConcurrencyOpts:  ConcurrencyOptsFromFlags(c),
 		ProImageOpts:     containers.ProImageOptsFromFlags(c),
 	}, nil
 }

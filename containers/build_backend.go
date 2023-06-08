@@ -122,7 +122,6 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		log.Printf("Building '%s' for %s", v, distro)
 		log.Printf("Building '%s' with env: '%+v'", v, env)
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
-		builder = builder.WithExec([]string{"env"})
 		builder = builder.WithExec(cmd.Args)
 	}
 

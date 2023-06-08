@@ -13,5 +13,7 @@ var DockerCommand = &cli.Command{
 		PackageInputFlags,
 		PublishFlags,
 		DockerFlags,
+		GCPFlags,
+		ConcurrencyFlags,
 	),
 }

@@ -3,6 +3,7 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts)
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
 	if err != nil {
 		return err
 	}
@@ -22,18 +23,21 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			name  = DestinationName(v, "")
 			targz = packages[i]
 		)
+
+		// We can't use path.Join here because publishopts.Destination might have a URL scheme which will get santizied, and we can't use filepath.Join because Windows would use \\ filepath separators.
+		dst := strings.Join([]string{args.PublishOpts.Destination, name, "public"}, "/")
+
+		log.Println("Copying frontend assets for", name, "to", dst)
+		folder := fmt.Sprintf("/src/%s", name)
+
 		// gcloud rsync the public folder to ['dst']/public
 		public := d.Container().From("busybox").
 			WithFile("/src/grafana.tar.gz", targz).
-			WithExec([]string{"mkdir", "-p", "/src/grafana"}).
-			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
-			WithWorkdir("/src").
-			Directory("/src/grafana/public")
+			WithExec([]string{"mkdir", "-p", folder}).
+			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", folder}).
+			Directory(folder + "/public")
 
-			// We can't use path.Join here because publishopts.Destination might have a URL scheme which will get santizied, and we can't use filepath.Join because Windows would use \\ filepath separators.
-		dst := strings.Join([]string{args.PublishOpts.Destination, name, "public"}, "/")
-
-		dst, err := containers.PublishDirectory(ctx, d, public, args.PublishOpts, dst)
+		dst, err := containers.PublishDirectory(ctx, d, public, args.GCPOpts, dst)
 		if err != nil {
 			return err
 		}

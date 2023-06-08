@@ -6,4 +6,5 @@ type CLIContext interface {
 	Set(string, string) error
 	StringSlice(string) []string
 	Path(string) string
+	Int64(string) int64
 }

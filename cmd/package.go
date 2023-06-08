@@ -13,5 +13,7 @@ var PackageCommand = &cli.Command{
 		GrafanaFlags,
 		PackageFlags,
 		PublishFlags,
+		GCPFlags,
+		ConcurrencyFlags,
 	),
 }
