@@ -2,7 +2,6 @@
 dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 
-set -x
 # Build all of the grafana.tar.gz packages.
 go run ./cmd \
   package \
