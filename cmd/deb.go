@@ -12,5 +12,7 @@ var DebCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
+		GCPFlags,
+		ConcurrencyFlags,
 	),
 }

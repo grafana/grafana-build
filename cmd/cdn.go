@@ -12,5 +12,6 @@ var CDNCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
+		GCPFlags,
 	),
 }

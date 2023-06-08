@@ -40,7 +40,7 @@ func mainAction(cctx *cli.Context) (rerr error) {
 		return fmt.Errorf("linting failed: %w", err)
 	}
 
-	workDir := dc.Host().Directory(".")
+	workDir := dc.Host().Directory(".").WithoutDirectory("dist").WithoutDirectory("grafana")
 	goContainer := dc.Container(containerOpts).
 		From("golang:1.20.2")
 

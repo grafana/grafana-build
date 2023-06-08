@@ -110,7 +110,7 @@ func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url 
 	return file, nil
 }
 
-func GCSAuth(d *dagger.Client, opts *GCSOpts) GCPAuthenticator {
+func GCSAuth(d *dagger.Client, opts *GCPOpts) GCPAuthenticator {
 	var auth GCPAuthenticator = &GCPInheritedAuth{}
 	// The order of operations:
 	// 1. Try to use base64 key.
