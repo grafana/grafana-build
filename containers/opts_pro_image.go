@@ -32,6 +32,5 @@ func ProImageOptsFromFlags(c cliutil.CLIContext) *ProImageOpts {
 		ReleaseType:       c.String("release-type"),
 		Push:              c.Bool("push"),
 		ContainerRegistry: c.String("container-registry"),
-		GCPOpts:           GCPOptsFromFlags(c),
 	}
 }
