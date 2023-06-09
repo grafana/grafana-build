@@ -52,8 +52,8 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
 
 		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
-			ServiceAccountKey:       args.ProImageOpts.GCPOpts.ServiceAccountKey,
-			ServiceAccountKeyBase64: args.ProImageOpts.GCPOpts.ServiceAccountKeyBase64,
+			ServiceAccountKey:       args.GCPOpts.ServiceAccountKey,
+			ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
 		})
 
 		authenticatedContainer, err := authenticator.Authenticate(dc, publishContainer)
