@@ -26,7 +26,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 		WithUnixSocket(socketPath, socket).
 		WithExec([]string{"apk", "add", "--update", "docker"}).
 		WithDirectory("/src", hostedGrafanaRepo).
-		WithFile("/src/grafana.deb", debianPackageFile, dagger.ContainerWithFileOpts{}).
+		WithFile("/src/grafana.deb", debianPackageFile).
 		WithWorkdir("/src").
 		WithExec([]string{
 			"/bin/sh", "-c",
