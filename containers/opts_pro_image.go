@@ -20,8 +20,6 @@ type ProImageOpts struct {
 
 	// The container registry that the image should be pushed to. Required if Push is true.
 	ContainerRegistry string
-
-	GCPOpts *GCPOpts
 }
 
 func ProImageOptsFromFlags(c cliutil.CLIContext) *ProImageOpts {
