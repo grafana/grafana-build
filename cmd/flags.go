@@ -193,6 +193,10 @@ var ProImageFlags = []cli.Flag{
 		Usage: "Push the built image to the container registry",
 		Value: false,
 	},
+	&cli.StringFlag{
+		Name:  "container-registry",
+		Usage: "The container registry that the image should be pushed to. Required if Push is true.",
+	},
 }
 
 var DefaultFlags = []cli.Flag{
