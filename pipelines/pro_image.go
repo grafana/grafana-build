@@ -68,7 +68,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 			return fmt.Errorf("publishing container: %w", err)
 		}
 
-		fmt.Print(ref)
+		fmt.Fprintln(os.Stdout, ref)
 	}
 
 	return nil
