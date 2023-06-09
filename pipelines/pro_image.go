@@ -21,7 +21,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 
 	container := dc.Container().From("golang:1.20-alpine").
 		WithUnixSocket(socketPath, socket).
-		WithExec([]string{"apk", "add", "--update", "make", "docker", "git", "jq", "jsonnet"}).
+		WithExec([]string{"apk", "add", "--update", "docker"}).
 		WithDirectory("/src", hostedGrafanaRepo).
 		WithFile("/src/grafana.deb", debianPackageFile, dagger.ContainerWithFileOpts{}).
 		WithWorkdir("/src").
@@ -37,25 +37,8 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 			),
 		})
 
-	if args.ProImageOpts.Push {
-		panic("TODO: push to container registry")
-	}
-
-	exitCode, err := container.ExitCode(ctx)
-	if err != nil {
-		return fmt.Errorf("getting container exit code: %w", err)
-	}
-
-	if exitCode != 0 {
-		stderr, err := container.Stderr(ctx)
-		if err != nil {
-			return fmt.Errorf("getting container stderr: exitCode=%d %w", exitCode, err)
-		}
-		stdout, err := container.Stdout(ctx)
-		if err != nil {
-			return fmt.Errorf("getting container stdout: exitCode=%d %w", exitCode, err)
-		}
-		return fmt.Errorf("container exit code is not 0: exitCode=%d stderr=%s stdout=%s", exitCode, stderr, stdout)
+	if err := containers.ExitError(ctx, container); err != nil {
+		return fmt.Errorf("container did not exit successfully: %w", err)
 	}
 
 	return nil
