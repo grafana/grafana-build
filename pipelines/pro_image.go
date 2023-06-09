@@ -49,7 +49,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 			return fmt.Errorf("--container-registry=<string> is required")
 		}
 
-		publishContainer := dc.Container().From("google/cloud-sdk:alpine").WithEnvVariable("CACHE", "0")
+		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
 
 		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
 			ServiceAccountKey:       args.ProImageOpts.GCPOpts.ServiceAccountKey,
