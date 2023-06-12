@@ -23,14 +23,12 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
-
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt & \
 # Build the grafana-pro tar.gz package.
 go run ./cmd \
   package \
+  --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
-  --distro=linux/arm64 \
-  --distro=linux/arm/v7 \
   --checksum \
   --env GO_BUILD_TAGS=pro \
   --env WIRE_TAGS=pro \
@@ -44,9 +42,10 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt & \
+fg
 
-Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
+# Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
