@@ -23,7 +23,7 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt &
 # Build the grafana-pro tar.gz package.
 go run ./cmd \
   package \
@@ -42,8 +42,9 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt && \
-fg
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt &
+
+wait
 
 cat pro.txt grafana.txt > assets.txt
 
@@ -52,25 +53,27 @@ go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt &
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > rpms.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > rpms.txt &
 # For Windows we distribute zips and exes
 go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > zips.txt & \
-go run ./cmd windows-installer & \
+  --checksum > zips.txt &
+go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > exes.txt && \
-fg
+  --checksum > exes.txt &
+
+
+wait
 
 # Build a docker iamge for all Linux distros except armv6
 go run ./cmd docker \
@@ -85,7 +88,7 @@ go run ./cmd docker \
 go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep pro | grep -v docker | grep -v sha256 | grep linux_amd64 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> cdn.txt
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt
 
 cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt >> assets.txt
 
