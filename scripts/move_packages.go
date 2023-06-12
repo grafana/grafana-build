@@ -109,7 +109,7 @@ func RPMHandler(name string) []string {
 
 	enterprise2 := ""
 	version := opts.Version
-	ersion := strings.TrimPrefix(version, "v")
+	ersion := strings.Replace(strings.TrimPrefix(version, "v"), "-", "~", 1)
 
 	if edition == "pro" {
 		// "pro" in this case is called "enterprise2"
@@ -117,8 +117,6 @@ func RPMHandler(name string) []string {
 		edition = "enterprise2"
 		// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 		enterprise2 = "-enterprise2"
-		// and for debs the dashes in the version are replaced by tildes for compatibility with a specific docker image for grafnaa cloud
-		ersion = strings.Replace(ersion, "-", "~", 1)
 		// and has an period separator {version}.{arch} instead of {version}_{arch}
 	}
 	dst := fmt.Sprintf(rpmFormat, version, edition, fullName, ersion, goos, arch, edition, sha256, enterprise2)
@@ -160,6 +158,7 @@ func DebHandler(name string) []string {
 	fullName := grafana
 	version := opts.Version
 	ersion := strings.TrimPrefix(version, "v")
+	ersion = strings.Replace(ersion, "-", "~", 1)
 	enterprise2 := ""
 	if opts.Edition != "" {
 		edition = opts.Edition
@@ -171,8 +170,6 @@ func DebHandler(name string) []string {
 			edition = "enterprise2"
 			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 			enterprise2 = "-enterprise2"
-			// and for debs the dashes in the version are replaced by tildes for compatibility with a specific docker image for grafnaa cloud
-			ersion = strings.Replace(ersion, "-", "~", 1)
 			// and has an period separator {version}.{arch} instead of {version}_{arch}
 		}
 	}
