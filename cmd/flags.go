@@ -8,7 +8,7 @@ import (
 
 var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
-	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs.",
+	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs",
 }
 
 // PackageInputFlags are used for commands that require a grafana package as input.
@@ -102,6 +102,10 @@ var GrafanaFlags = []cli.Flag{
 		Name:  "go-tags",
 		Usage: "Sets the go `-tags` flag when compiling the backend",
 	},
+	&cli.StringFlag{
+		Name:  "yarn-cache",
+		Usage: "If there is a yarn cache directory, then mount that when running 'yarn install' instead of creating a cache directory",
+	},
 }
 
 // DockerFlags are used when producing docker images.
@@ -125,7 +129,7 @@ var DockerFlags = []cli.Flag{
 
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
-	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'.",
+	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'",
 	Value: cli.NewStringSlice(DefaultDistros...),
 }
 
