@@ -11,28 +11,27 @@ var cdnMapping = []m{
 	{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/public",
 		output: []string{
-			"gs://bucket/artifacts/static-assets/grafana-oss/1.2.3/public",
-			"gs://bucket/artifacts/static-assets/grafana/1.2.3/public",
+			"artifacts/static-assets/grafana-oss/1.2.3/public",
+			"artifacts/static-assets/grafana/1.2.3/public",
 		},
 	},
 	{
 		input: "gs://bucket/tag/grafana-enterprise_v1.2.3_102_linux_amd64/public",
 		output: []string{
-			"gs://bucket/artifacts/static-assets/grafana-enterprise/1.2.3/public",
+			"artifacts/static-assets/grafana-enterprise/1.2.3/public",
 		},
 	},
 	{
 		input: "gs://bucket/tag/grafana-pro_v1.2.3_102_linux_amd64/public",
 		output: []string{
-			"gs://bucket/artifacts/static-assets/grafana-pro/1.2.3/public",
+			"artifacts/static-assets/grafana-pro/1.2.3/public",
 		},
 	},
 }
 
 func TestMoveCDN(t *testing.T) {
-	bucket := testBucket
 	for _, v := range cdnMapping {
-		out := CDNHandler(bucket, v.input)
+		out := CDNHandler(v.input)
 
 		if len(out) != len(v.output) {
 			t.Errorf("expected %d in output but received %d\nexpected: %v\nreceived: %v", len(v.output), len(out), v.output, out)

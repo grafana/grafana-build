@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -25,30 +26,30 @@ const (
 	// 7: The architecture: 'amd64', 'armv6', 'armv7', 'arm64'.
 	// 8: -musl, sometimes.
 	// 9: '.sha256', sometimes.
-	tarGzFormat = "%[1]s/artifacts/downloads%[10]s/%[2]s/%[3]s/release/%[4]s-%[5]s.%[6]s-%[7]s%[8]s.tar.gz%[9]s"
-	debFormat   = "%[1]s/artifacts/downloads%[10]s/%[2]s/%[3]s/release/%[4]s_%[5]s_%[7]s.deb%[9]s"
-	deb2Format  = "%[1]s/artifacts/downloads%[10]s/%[2]s/%[3]s/release/%[4]s_%[5]s.%[7]s.deb%[9]s"
-	rpmFormat   = "%[1]s/artifacts/downloads%[10]s/%[2]s/%[3]s/release/%[4]s-%[5]s-1.%[7]s.rpm%[9]s"
-	exeFormat   = "%[1]s/artifacts/downloads%[10]s/%[2]s/%[3]s/release/%[4]s_%[5]s_%[7]s.exe%[9]s"
+	tarGzFormat = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
+	debFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.deb%[8]s"
+	deb2Format  = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s.%[6]s.deb%[8]s"
+	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
+	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
 	// 1: The gs://bucket prefix URL
 	// 2: ersion
 	// 3. name (grafana-oss | grafana-enterprise)
 	// 4: '-ubuntu', if set
 	// 5: arch
 	// 6: '.sha256', if set
-	dockerFormat = "%[1]s/artifacts/docker/%[2]s/%[3]s-%[2]s%[4]s-%[5]s.img%[6]s"
+	dockerFormat = "artifacts/docker/%[1]s/%[2]s-%[1]s%[3]s-%[4]s.img%[5]s"
 
 	// 1: The gs://bucket prefix URL
 	// 2: ersion
 	// 3. name (grafana-oss | grafana-enterprise)
-	cdnFormat = "%[1]s/artifacts/static-assets/%[3]s/%[2]s/public"
+	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
 
 	sha256Ext = ".sha256"
 	grafana   = "grafana"
 )
 
 // One artifact and be copied to multiple different locations (like armv7 tar.gz packages should be copied to tar.gz and -musl.tar.gz)
-type HandlerFunc func(destination, name string) []string
+type HandlerFunc func(name string) []string
 
 var Handlers = map[string]HandlerFunc{
 	".tar.gz":        TarGZHandler,
@@ -59,8 +60,8 @@ var Handlers = map[string]HandlerFunc{
 	".zip":           ZipHandler,
 }
 
-func ZipHandler(destination, name string) []string {
-	files := EXEHandler(destination, strings.ReplaceAll(name, "zip", "exe"))
+func ZipHandler(name string) []string {
+	files := EXEHandler(strings.ReplaceAll(name, "zip", "exe"))
 
 	for i, v := range files {
 		files[i] = strings.ReplaceAll(v, "exe", "zip")
@@ -69,7 +70,7 @@ func ZipHandler(destination, name string) []string {
 	return files
 }
 
-func RPMHandler(destination, name string) []string {
+func RPMHandler(name string) []string {
 	ext := filepath.Ext(name)
 
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
@@ -120,15 +121,15 @@ func RPMHandler(destination, name string) []string {
 		ersion = strings.Replace(ersion, "-", "~", 1)
 		// and has an period separator {version}.{arch} instead of {version}_{arch}
 	}
-	dst := fmt.Sprintf(rpmFormat, destination, version, edition, fullName, ersion, goos, arch, edition, sha256, enterprise2)
+	dst := fmt.Sprintf(rpmFormat, version, edition, fullName, ersion, goos, arch, edition, sha256, enterprise2)
 
 	return []string{
 		dst,
 	}
 }
 
-func EXEHandler(destination, name string) []string {
-	packages := DebHandler(destination, strings.ReplaceAll(name, "exe", "deb"))
+func EXEHandler(name string) []string {
+	packages := DebHandler(strings.ReplaceAll(name, "exe", "deb"))
 	for i, v := range packages {
 		v = strings.ReplaceAll(v, "deb", "exe")
 		v = strings.ReplaceAll(v, "amd64", "windows-amd64")
@@ -140,7 +141,7 @@ func EXEHandler(destination, name string) []string {
 	return packages
 }
 
-func DebHandler(destination, name string) []string {
+func DebHandler(name string) []string {
 	ext := filepath.Ext(name)
 	format := debFormat
 
@@ -189,13 +190,13 @@ func DebHandler(destination, name string) []string {
 
 	dst := []string{}
 	for _, n := range names {
-		dst = append(dst, fmt.Sprintf(format, destination, opts.Version, edition, n, ersion, goos, arch, edition, sha256, enterprise2))
+		dst = append(dst, fmt.Sprintf(format, opts.Version, edition, n, ersion, goos, arch, edition, sha256, enterprise2))
 	}
 
 	return dst
 }
 
-func TarGZHandler(destination, name string) []string {
+func TarGZHandler(name string) []string {
 	ext := filepath.Ext(name)
 
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
@@ -242,13 +243,13 @@ func TarGZHandler(destination, name string) []string {
 
 	dst := []string{}
 	for _, m := range libc {
-		dst = append(dst, fmt.Sprintf(tarGzFormat, destination, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
+		dst = append(dst, fmt.Sprintf(tarGzFormat, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
 	}
 
 	return dst
 }
 
-func DockerHandler(destination, name string) []string {
+func DockerHandler(name string) []string {
 	ext := filepath.Ext(name)
 
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
@@ -288,11 +289,11 @@ func DockerHandler(destination, name string) []string {
 		arch += "v" + executil.ArchVersion(opts.Distro)
 	}
 	return []string{
-		fmt.Sprintf(dockerFormat, destination, strings.TrimPrefix(opts.Version, "v"), fullName, ubuntu, arch, sha256),
+		fmt.Sprintf(dockerFormat, strings.TrimPrefix(opts.Version, "v"), fullName, ubuntu, arch, sha256),
 	}
 }
 
-func CDNHandler(destination, name string) []string {
+func CDNHandler(name string) []string {
 	n := filepath.Base(strings.ReplaceAll(name, "/public", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
 
 	opts := pipelines.TarOptsFromFileName(n)
@@ -307,11 +308,11 @@ func CDNHandler(destination, name string) []string {
 	fullName += "-" + edition
 
 	names := []string{
-		fmt.Sprintf(cdnFormat, destination, strings.TrimPrefix(opts.Version, "v"), fullName),
+		fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), fullName),
 	}
 
 	if edition == "oss" {
-		names = append(names, fmt.Sprintf(cdnFormat, destination, strings.TrimPrefix(opts.Version, "v"), grafana))
+		names = append(names, fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), grafana))
 	}
 
 	return names
@@ -321,6 +322,8 @@ func CDNHandler(destination, name string) []string {
 // Just pipe this into bash or exec or whatever to do the actual copying.
 // Run without redirecting stdout to verify the operations.
 func main() {
+	prefix := os.Args[1]
+
 	ctx := context.Background()
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stderr))
 	if err != nil {
@@ -333,7 +336,7 @@ func main() {
 			ServiceAccountKeyBase64: os.Getenv("GCP_KEY_BASE64"),
 		})
 
-		container = client.Container().From("google/cloud-sdk:alpine").WithEnvVariable("CACHE", "0").WithMountedDirectory("dist", client.Host().Directory("./dist"))
+		container = client.Container().From("google/cloud-sdk:alpine")
 	)
 
 	if c, err := authenticator.Authenticate(client, container); err == nil {
@@ -361,23 +364,53 @@ func main() {
 			}
 		}
 		handler := Handlers[ext]
-
 		if ext == "" {
 			if filepath.Base(name) == "public" {
-				destinations := CDNHandler(os.Getenv("DESTINATION"), name)
+				destinations := CDNHandler(name)
 				for _, v := range destinations {
-					container = container.WithExec([]string{"gsutil", "-m", "rsync", "-r", name, v})
+					dir := filepath.Join(prefix, filepath.Dir(v))
+					v := filepath.Join(prefix, v)
+
+					log.Println("Creating dir", dir)
+					if err := os.MkdirAll(dir, 0755); err != nil {
+						panic(err)
+					}
+					log.Println("Copying", name, "to", v)
+					cmd := exec.Command("cp", "-r", strings.TrimPrefix(name, "file://"), v)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					if err := cmd.Run(); err != nil {
+						panic(err)
+					}
+					//container = container.WithExec([]string{"gcloud", "storage", "cp", "-r", name, v})
 				}
 			}
 			continue
 		}
 
-		destinations := handler(os.Getenv("DESTINATION"), name)
+		destinations := handler(name)
 		for _, v := range destinations {
-			log.Println("Copying", name, "to", v)
-			container = container.WithExec([]string{"gsutil", "cp", name, v})
+			dir := filepath.Join(prefix, filepath.Dir(v))
+			v := filepath.Join(prefix, v)
+			log.Println("Creating directory", dir)
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				panic(err)
+			}
+			log.Println("Copying", name, "to", dir)
+			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				panic(err)
+			}
+			//container = container.WithExec([]string{"gcloud", "storage", "cp", name, v})
 		}
 	}
+
+	log.Println("Copying", prefix, "to gcs")
+	dst := os.Getenv("DESTINATION")
+	container = container.WithMountedDirectory("dist", client.Host().Directory(prefix)).
+		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/artifacts", dst})
 
 	stdout, err := container.Stdout(ctx)
 	if err != nil {
