@@ -23,7 +23,7 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt & \
 # Build the grafana-pro tar.gz package.
 go run ./cmd \
   package \
@@ -42,32 +42,34 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt && \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt && \
 fg
+
+cat pro.txt grafana.txt > assets.txt
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt & \
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > rpms.txt & \
 # For Windows we distribute zips and exes
 go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum >> assets.txt \
+  --checksum > zips.txt \
 go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum >> assets.txt \
+  --checksum > exes.txt \
 fg
 
 # Build a docker iamge for all Linux distros except armv6
@@ -77,13 +79,15 @@ go run ./cmd docker \
   --ubuntu-base="ubuntu:22.10" \
   --alpine-base="alpine:3.18.0" \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt
 
 # Copy only the linux/amd64 edition frontends into a separate folder
 go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep pro | grep -v docker | grep -v sha256 | grep linux_amd64 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> cdn.txt
+
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
