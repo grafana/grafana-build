@@ -69,6 +69,14 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
+	cacheOpts := &containers.YarnCacheOpts{
+		CacheVolume: opts.NodeCacheVolume,
+	}
+
+	if opts.YarnCacheHostDir != "" {
+		cacheOpts.HostDir = d.Host().Directory(opts.YarnCacheHostDir)
+	}
+
 	// install and cache the node modules
 	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
 		NodeVersion: nodeVersion,
@@ -82,12 +90,12 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			"yarn.lock":    src.File("yarn.lock"),
 			".yarnrc.yml":  src.File(".yarnrc.yml"),
 		},
-		Cache: opts.NodeCacheVolume,
+		CacheOpts: cacheOpts,
 	}); err != nil {
 		return nil, err
 	}
 
-	frontend := containers.CompileFrontend(d, src, opts.NodeCacheVolume, nodeVersion)
+	frontend := containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
 	if err != nil {
 		return nil, err
 	}

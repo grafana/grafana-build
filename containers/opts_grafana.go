@@ -32,7 +32,8 @@ type GrafanaOpts struct {
 
 	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
-	Version string
+	Version          string
+	YarnCacheHostDir string
 }
 
 func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOpts, error) {
@@ -79,17 +80,18 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		}
 	}
 	return &GrafanaOpts{
-		BuildID:         buildID,
-		Version:         version,
-		BuildEnterprise: enterprise,
-		BuildGrafana:    grafana,
-		GrafanaDir:      grafanaDir,
-		GrafanaRef:      ref,
-		EnterpriseDir:   enterpriseDir,
-		EnterpriseRef:   enterpriseRef,
-		GitHubToken:     gitHubToken,
-		Env:             env,
-		GoTags:          goTags,
+		BuildID:          buildID,
+		Version:          version,
+		BuildEnterprise:  enterprise,
+		BuildGrafana:     grafana,
+		GrafanaDir:       grafanaDir,
+		GrafanaRef:       ref,
+		EnterpriseDir:    enterpriseDir,
+		EnterpriseRef:    enterpriseRef,
+		GitHubToken:      gitHubToken,
+		Env:              env,
+		GoTags:           goTags,
+		YarnCacheHostDir: c.String("yarn-cache"),
 	}, nil
 }
 
