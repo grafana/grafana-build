@@ -64,12 +64,12 @@ go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > zips.txt \
-go run ./cmd windows-installer \
+  --checksum > zips.txt & \
+go run ./cmd windows-installer & \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > exes.txt \
+  --checksum > exes.txt && \
 fg
 
 # Build a docker iamge for all Linux distros except armv6
@@ -87,7 +87,7 @@ go run ./cmd cdn \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> cdn.txt
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
