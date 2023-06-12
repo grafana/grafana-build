@@ -17,7 +17,7 @@ go run ./cmd \
   --distro=darwin/amd64 \
   --checksum \
   --enterprise \
-  --enterprise-ref="main" \
+  --enterprise-ref=${DRONE_TAG} \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
@@ -35,7 +35,7 @@ go run ./cmd \
   --go-tags=pro \
   --edition=pro \
   --enterprise \
-  --enterprise-ref="main" \
+  --enterprise-ref=${DRONE_TAG}\
   --grafana=false \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
