@@ -42,7 +42,7 @@ go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt & \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt && \
 fg
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
