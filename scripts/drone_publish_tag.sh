@@ -8,6 +8,7 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 # Build all of the grafana.tar.gz packages.
 go run ./cmd \
   package \
+  --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
   --distro=linux/arm/v6 \
