@@ -28,7 +28,6 @@ const (
 	// 9: '.sha256', sometimes.
 	tarGzFormat = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
 	debFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.deb%[8]s"
-	deb2Format  = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s.%[6]s.deb%[8]s"
 	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
 	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
 	// 1: The gs://bucket prefix URL
@@ -164,13 +163,11 @@ func DebHandler(name string) []string {
 		edition = opts.Edition
 		fullName += "-" + opts.Edition
 		if edition == "pro" {
-			format = deb2Format
 			// "pro" in this case is called "enterprise2"
 			fullName = "grafana-enterprise2"
 			edition = "enterprise2"
 			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 			enterprise2 = "-enterprise2"
-			// and has an period separator {version}.{arch} instead of {version}_{arch}
 		}
 	}
 

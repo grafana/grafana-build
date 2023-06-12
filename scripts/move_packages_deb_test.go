@@ -85,13 +85,13 @@ var debMapping = []m{
 	{
 		input: "gs://bucket/tag/grafana-pro_v1.2.3-pre.4_102_linux_amd64.deb",
 		output: []string{
-			"artifacts/downloads-enterprise2/v1.2.3-pre.4/enterprise2/release/grafana-enterprise2_1.2.3~pre.4.amd64.deb",
+			"artifacts/downloads-enterprise2/v1.2.3-pre.4/enterprise2/release/grafana-enterprise2_1.2.3~pre.4_amd64.deb",
 		},
 	},
 	{
 		input: "gs://bucket/tag/grafana-pro_v1.2.3-pre.4_102_linux_amd64.deb.sha256",
 		output: []string{
-			"artifacts/downloads-enterprise2/v1.2.3-pre.4/enterprise2/release/grafana-enterprise2_1.2.3~pre.4.amd64.deb.sha256",
+			"artifacts/downloads-enterprise2/v1.2.3-pre.4/enterprise2/release/grafana-enterprise2_1.2.3~pre.4_amd64.deb.sha256",
 		},
 	},
 }
