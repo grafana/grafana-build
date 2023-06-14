@@ -46,10 +46,6 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 	}
 
 	if args.ProImageOpts.Push {
-		if args.ProImageOpts.ContainerRegistry == "" {
-			return fmt.Errorf("--container-registry=<string> is required")
-		}
-
 		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
 
 		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
