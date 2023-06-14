@@ -58,6 +58,12 @@ var GrafanaFlags = []cli.Flag{
 		Required: false,
 	},
 	&cli.StringFlag{
+		Name:     "grafana-repo",
+		Usage:    "Grafana repo to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana.git",
+	},
+	&cli.StringFlag{
 		Name:     "grafana-ref",
 		Usage:    "Grafana ref to clone, not valid if --grafana-dir is set",
 		Required: false,
@@ -72,6 +78,12 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "enterprise-dir",
 		Usage:    "Local Grafana Enterprise dir to use, instead of git clone",
 		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "enterprise-repo",
+		Usage:    "Grafana Enterprise repo to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana-enterprise.git",
 	},
 	&cli.StringFlag{
 		Name:     "enterprise-ref",
