@@ -12,6 +12,9 @@ type ProImageOpts struct {
 	// The Grafana version.
 	GrafanaVersion string
 
+	// The docker image tag.
+	ImageTag string
+
 	// The release type.
 	ReleaseType string
 
@@ -27,8 +30,9 @@ func ProImageOptsFromFlags(c cliutil.CLIContext) *ProImageOpts {
 		GithubToken:       c.String("github-token"),
 		Deb:               c.String("deb"),
 		GrafanaVersion:    c.String("grafana-version"),
+		ImageTag:          c.String("image-tag"),
 		ReleaseType:       c.String("release-type"),
 		Push:              c.Bool("push"),
-		ContainerRegistry: c.String("container-registry"),
+		ContainerRegistry: c.String("registry"),
 	}
 }

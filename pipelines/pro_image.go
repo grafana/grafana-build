@@ -28,7 +28,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 	socketPath := "/var/run/docker.sock"
 	socket := dc.Host().UnixSocket(socketPath)
 
-	hostedGrafanaImageTag := fmt.Sprintf("hosted-grafana-pro:%s", args.ProImageOpts.GrafanaVersion)
+	hostedGrafanaImageTag := fmt.Sprintf("hosted-grafana-pro:%s", args.ProImageOpts.ImageTag)
 
 	container := dc.Container().From("golang:1.20-alpine").
 		WithUnixSocket(socketPath, socket).
@@ -59,7 +59,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 			ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
 		})
 
-		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
+		publishContainer := dc.Container().From("google/cloud-sdk:433.0.0-alpine")
 
 		authenticatedContainer, err := authenticator.Authenticate(dc, publishContainer)
 		if err != nil {

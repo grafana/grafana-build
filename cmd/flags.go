@@ -179,6 +179,11 @@ var ProImageFlags = []cli.Flag{
 		Required: true,
 	},
 	&cli.StringFlag{
+		Name:     "image-tag",
+		Usage:    "The docker image tag",
+		Required: true,
+	},
+	&cli.StringFlag{
 		Name:  "release-type",
 		Usage: "The Grafana release type",
 		Value: "prerelease",
