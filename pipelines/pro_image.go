@@ -54,6 +54,10 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 	}
 
 	if args.ProImageOpts.Push {
+		if args.ProImageOpts.ContainerRegistry == "" {
+			return fmt.Errorf("--registry=<string> is required")
+		}
+
 		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
 			ServiceAccountKey:       args.GCPOpts.ServiceAccountKey,
 			ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
