@@ -174,11 +174,6 @@ var ProImageFlags = []cli.Flag{
 		Required: false,
 	},
 	&cli.StringFlag{
-		Name:     "deb",
-		Usage:    "The Grafana debian package that will be used to build the pro image",
-		Required: true,
-	},
-	&cli.StringFlag{
 		Name:     "grafana-version",
 		Usage:    "The Grafana version",
 		Required: true,

@@ -10,7 +10,15 @@ import (
 )
 
 func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Directory, args PipelineArgs) error {
-	debianPackageFile := dc.Host().Directory("./").File(args.ProImageOpts.Deb)
+	if len(args.PackageInputOpts.Packages) > 1 {
+		return fmt.Errorf("only one package is allowed: packages=%+v", args.PackageInputOpts.Packages)
+	}
+	packages, err := containers.GetPackages(ctx, dc, args.PackageInputOpts, args.GCPOpts)
+	if err != nil {
+		return fmt.Errorf("getting packages: packages=%+v %w", args.PackageInputOpts.Packages, err)
+	}
+
+	debianPackageFile := packages[0]
 
 	hostedGrafanaRepo, err := containers.CloneWithGitHubToken(dc, args.ProImageOpts.GithubToken, "https://github.com/grafana/hosted-grafana.git", "main")
 	if err != nil {
@@ -46,26 +54,29 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 	}
 
 	if args.ProImageOpts.Push {
-		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
-
 		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
 			ServiceAccountKey:       args.GCPOpts.ServiceAccountKey,
 			ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
 		})
+
+		publishContainer := dc.Container().From("google/cloud-sdk:alpine")
 
 		authenticatedContainer, err := authenticator.Authenticate(dc, publishContainer)
 		if err != nil {
 			return fmt.Errorf("authenticating container with gcs auth: %w", err)
 		}
 
-		image := fmt.Sprintf("%s/%s", args.ProImageOpts.ContainerRegistry, hostedGrafanaImageTag)
+		address := fmt.Sprintf("%s/%s", args.ProImageOpts.ContainerRegistry, hostedGrafanaImageTag)
 
-		ref, err := authenticatedContainer.Publish(ctx, image)
+		ref, err := authenticatedContainer.Publish(ctx, address)
 		if err != nil {
-			return fmt.Errorf("publishing container: %w", err)
+			return fmt.Errorf("publishing container: address=%s %w", address, err)
 		}
 
-		fmt.Fprintln(os.Stdout, ref)
+		n, err := fmt.Fprintln(os.Stdout, ref)
+		if err != nil {
+			return fmt.Errorf("writing ref to stdout: bytesWritten=%d %w", n, err)
+		}
 	}
 
 	return nil
