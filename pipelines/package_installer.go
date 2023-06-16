@@ -112,6 +112,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 
 		container := opts.Container.
 			WithFile("/src/grafana.tar.gz", packages[i]).
+			WithEnvVariable("XZ_DEFAULTS", "-T0").
 			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
 			WithExec([]string{"ls", "-al", "/src"}).
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).

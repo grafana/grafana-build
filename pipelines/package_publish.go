@@ -50,12 +50,13 @@ func PublishPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory
 
 		opts := PackageOpts{
 			GrafanaCompileOpts: &GrafanaCompileOpts{
-				Source:   src,
-				Version:  opts.Version,
-				Platform: args.Platform,
-				Env:      args.GrafanaOpts.Env,
-				GoTags:   args.GrafanaOpts.GoTags,
-				Edition:  edition,
+				Source:           src,
+				Version:          opts.Version,
+				Platform:         args.Platform,
+				Env:              args.GrafanaOpts.Env,
+				GoTags:           args.GrafanaOpts.GoTags,
+				Edition:          edition,
+				YarnCacheHostDir: args.GrafanaOpts.YarnCacheHostDir,
 			},
 			BuildID:         opts.BuildID,
 			Distributions:   distros,

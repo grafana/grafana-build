@@ -15,28 +15,51 @@ func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
 		WithExec([]string{"cat", ".nvmrc"})
 }
 
-func CompileFrontend(d *dagger.Client, src *dagger.Directory, nodeCache *dagger.CacheVolume, nodeVersion string) *dagger.Directory {
-	// Get the node version from the 'src' directories '.nvmrc' file.
-	return NodeContainer(d, NodeImage(nodeVersion)).
+func CompileFrontend(d *dagger.Client, src *dagger.Directory, opts *YarnCacheOpts, nodeVersion string) *dagger.Directory {
+	c := NodeContainer(d, NodeImage(nodeVersion)).
 		WithDirectory("/src", src).
-		WithMountedCache("/src/.yarn/cache", nodeCache).
-		WithWorkdir("/src").
+		WithWorkdir("/src")
+
+	c = WithYarnCache(c, opts)
+
+	// Get the node version from the 'src' directories '.nvmrc' file.
+	return c.
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
-		Directory("public/")
+		Directory("public/").WithoutDirectory("app").WithoutDirectory("test").WithoutDirectory("testdata")
+}
+
+type YarnCacheOpts struct {
+	// If HostDir is set, then that will be mounted to the .yarn/cache directory.
+	HostDir *dagger.Directory
+
+	// If HostDir is not set, then CacheVolume will be mounted in the container.
+	CacheVolume *dagger.CacheVolume
 }
 
 type YarnInstallOpts struct {
-	Cache       *dagger.CacheVolume
+	CacheOpts   *YarnCacheOpts
 	Files       map[string]*dagger.File
 	Directories map[string]*dagger.Directory
 	NodeVersion string
 }
 
+func WithYarnCache(container *dagger.Container, opts *YarnCacheOpts) *dagger.Container {
+	yarnCacheDir := "/yarn/cache"
+	c := container.WithEnvVariable("YARN_CACHE_FOLDER", yarnCacheDir)
+	if opts.HostDir != nil {
+		return c.WithMountedDirectory(yarnCacheDir, opts.HostDir)
+	}
+
+	return c.WithMountedCache(yarnCacheDir, opts.CacheVolume)
+}
+
 func YarnInstall(ctx context.Context, d *dagger.Client, opts *YarnInstallOpts) error {
 	container := NodeContainer(d, NodeImage(opts.NodeVersion)).
 		WithWorkdir("/src")
+
+	container = WithYarnCache(container, opts.CacheOpts)
 
 	for path, file := range opts.Files {
 		container = container.WithMountedFile(path, file)
@@ -46,7 +69,7 @@ func YarnInstall(ctx context.Context, d *dagger.Client, opts *YarnInstallOpts) e
 		container = container.WithMountedDirectory(path, dir)
 	}
 
-	container = container.WithMountedCache("/src/.yarn/cache", opts.Cache).
+	container = container.
 		WithExec([]string{"yarn", "install", "--immutable"})
 
 	if e, err := container.ExitCode(ctx); err != nil {
