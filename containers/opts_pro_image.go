@@ -4,7 +4,7 @@ import "github.com/grafana/grafana-build/cliutil"
 
 type ProImageOpts struct {
 	// Github token used to clone private repositories.
-	GithubToken string
+	GitHubToken string
 
 	// The path to a Grafana debian package.
 	Deb string
@@ -27,7 +27,7 @@ type ProImageOpts struct {
 
 func ProImageOptsFromFlags(c cliutil.CLIContext) *ProImageOpts {
 	return &ProImageOpts{
-		GithubToken:       c.String("github-token"),
+		GitHubToken:       c.String("github-token"),
 		Deb:               c.String("deb"),
 		GrafanaVersion:    c.String("grafana-version"),
 		ImageTag:          c.String("image-tag"),
