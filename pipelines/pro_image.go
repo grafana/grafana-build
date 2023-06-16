@@ -3,6 +3,7 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"dagger.io/dagger"
@@ -20,6 +21,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 
 	debianPackageFile := packages[0]
 
+	log.Printf("Cloning hosted Grafana...")
 	hostedGrafanaRepo, err := containers.CloneWithGitHubToken(dc, args.ProImageOpts.GitHubToken, "https://github.com/grafana/hosted-grafana.git", "main")
 	if err != nil {
 		return fmt.Errorf("cloning hosted-grafana repo: %w", err)
@@ -30,6 +32,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 
 	hostedGrafanaImageTag := fmt.Sprintf("hosted-grafana-pro:%s", args.ProImageOpts.ImageTag)
 
+	log.Printf("Building hosted Grafana image...")
 	container := dc.Container().From("golang:1.20-alpine").
 		WithUnixSocket(socketPath, socket).
 		WithExec([]string{"apk", "add", "--update", "docker"}).
@@ -75,6 +78,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 
 	address := fmt.Sprintf("%s/%s", args.ProImageOpts.ContainerRegistry, hostedGrafanaImageTag)
 
+	log.Printf("Pushing hosted Grafana image to registry...")
 	ref, err := authenticatedContainer.Publish(ctx, address)
 	if err != nil {
 		return fmt.Errorf("publishing container: address=%s %w", address, err)
