@@ -190,6 +190,12 @@ var ProImageFlags = []cli.Flag{
 		Required: false,
 	},
 	&cli.StringFlag{
+		Name:     "grafana-repo",
+		Usage:    "The Grafana repository",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana",
+	},
+	&cli.StringFlag{
 		Name:     "grafana-version",
 		Usage:    "The Grafana version",
 		Required: true,
