@@ -148,7 +148,7 @@ func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory,
 	}
 
 	log.Printf("Cloning Grafana Enterprise...")
-	src, err := CloneWithGitHubToken(client, ght, g.EnterpriseDir, g.EnterpriseRef)
+	src, err := CloneWithGitHubToken(client, ght, g.EnterpriseRepo, g.EnterpriseRef)
 	if err != nil {
 		return nil, err
 	}
