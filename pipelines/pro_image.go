@@ -79,7 +79,9 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 	address := fmt.Sprintf("%s/%s", args.ProImageOpts.ContainerRegistry, hostedGrafanaImageTag)
 
 	log.Printf("Pushing hosted Grafana image to registry...")
-	ref, err := authenticatedContainer.Publish(ctx, address)
+	ref, err := authenticatedContainer.
+		WithExec([]string{"gcloud", "auth", "configure-docker", "--quiet"}).
+		Publish(ctx, address)
 	if err != nil {
 		return fmt.Errorf("publishing container: address=%s %w", address, err)
 	}
