@@ -81,7 +81,7 @@ func MainCommand(cliCtx *cli.Context) error {
 		results := make(map[string]*dagger.Directory)
 		cache := make(map[string]*dagger.Directory)
 
-		finalArtifacts, err := pipelines.GeneratateFinalArtifactList(ctx, pipelines.DefaultArtifacts, artifacts, args)
+		finalArtifacts, err := pipelines.GenerateFinalArtifactList(ctx, d, pipelines.DefaultArtifacts, artifacts, args)
 		if err != nil {
 			return err
 		}
