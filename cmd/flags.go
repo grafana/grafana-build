@@ -1,18 +1,32 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/urfave/cli/v2"
 )
 
 var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
-	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs.",
+	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs",
 }
 
 // PackageInputFlags are used for commands that require a grafana package as input.
 // These commands are exclusively used outside of the CI process and are typically used in the CD process where a grafana.tar.gz has already been created.
 var PackageInputFlags = []cli.Flag{
 	FlagPackage,
+}
+
+// GCPFlags are used in commands that need to authenticate with Google Cloud platform using the Google Cloud SDK
+var GCPFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "gcp-service-account-key-base64",
+		Usage: "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
+	},
+	&cli.StringFlag{
+		Name:  "gcp-service-account-key",
+		Usage: "Provides a service-account keyfile to use to authenticate with the Google Cloud SDK. If not provided or is empty, then $XDG_CONFIG_HOME/gcloud will be mounted in the container",
+	},
 }
 
 // PublishFlags are flags that are used in commands that create artifacts.
@@ -23,14 +37,6 @@ var PublishFlags = []cli.Flag{
 		Usage:   "full URL to upload the artifacts to (examples: '/tmp/package.tar.gz', 'file://package.tar.gz', 'file:///tmp/package.tar.gz', 'gs://bucket/grafana/')",
 		Aliases: []string{"d"},
 		Value:   "file://dist",
-	},
-	&cli.StringFlag{
-		Name:  "gcp-service-account-key-base64",
-		Usage: "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
-	},
-	&cli.StringFlag{
-		Name:  "gcp-service-account-key",
-		Usage: "Provides a service-account keyfile to use to authenticate with the Google Cloud SDK. If not provided or is empty, then $XDG_CONFIG_HOME/gcloud will be mounted in the container",
 	},
 	&cli.BoolFlag{
 		Name:  "checksum",
@@ -52,6 +58,12 @@ var GrafanaFlags = []cli.Flag{
 		Required: false,
 	},
 	&cli.StringFlag{
+		Name:     "grafana-repo",
+		Usage:    "Grafana repo to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana.git",
+	},
+	&cli.StringFlag{
 		Name:     "grafana-ref",
 		Usage:    "Grafana ref to clone, not valid if --grafana-dir is set",
 		Required: false,
@@ -66,6 +78,12 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "enterprise-dir",
 		Usage:    "Local Grafana Enterprise dir to use, instead of git clone",
 		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "enterprise-repo",
+		Usage:    "Grafana Enterprise repo to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana-enterprise.git",
 	},
 	&cli.StringFlag{
 		Name:     "enterprise-ref",
@@ -96,6 +114,10 @@ var GrafanaFlags = []cli.Flag{
 		Name:  "go-tags",
 		Usage: "Sets the go `-tags` flag when compiling the backend",
 	},
+	&cli.StringFlag{
+		Name:  "yarn-cache",
+		Usage: "If there is a yarn cache directory, then mount that when running 'yarn install' instead of creating a cache directory",
+	},
 }
 
 // DockerFlags are used when producing docker images.
@@ -115,31 +137,11 @@ var DockerFlags = []cli.Flag{
 		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
 		Value: "ubuntu:latest",
 	},
-	&cli.StringFlag{
-		Name:  "alpine-base-armv7",
-		Usage: "The alpine image to use as the base image when building the Alpine (armv7) version of the Grafana docker image",
-		Value: "arm32v7/alpine:latest",
-	},
-	&cli.StringFlag{
-		Name:  "ubuntu-base-armv7",
-		Usage: "The Ubuntu image to use as the base image when building the Ubuntu (armv7) version of the Grafana docker image",
-		Value: "arm32v7/ubuntu:latest",
-	},
-	&cli.StringFlag{
-		Name:  "alpine-base-arm64",
-		Usage: "The alpine image to use as the base image when building the Alpine (arm64) version of the Grafana docker image",
-		Value: "arm64v8/alpine:latest",
-	},
-	&cli.StringFlag{
-		Name:  "ubuntu-base-arm64",
-		Usage: "The Ubuntu image to use as the base image when building the Ubuntu (arm64) version of the Grafana docker image",
-		Value: "arm64v8/ubuntu:latest",
-	},
 }
 
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
-	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'.",
+	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'",
 	Value: cli.NewStringSlice(DefaultDistros...),
 }
 
@@ -159,6 +161,15 @@ var GPGFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  "sign",
 		Usage: "Enable GPG signing of RPM packages",
+	},
+}
+
+var ConcurrencyFlags = []cli.Flag{
+	&cli.IntFlag{
+		Name:        "parallel",
+		Usage:       "The number of parallel pipelines to run. This can be particularly useful for building for multiple distributions at the same time",
+		DefaultText: "Just like with 'go test', this defaults to GOMAXPROCS",
+		Value:       runtime.GOMAXPROCS(0),
 	},
 }
 

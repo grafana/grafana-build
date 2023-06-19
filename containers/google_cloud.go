@@ -75,7 +75,7 @@ func GCSUploadDirectory(d *dagger.Client, image string, auth GCPAuthenticator, d
 	secret := d.SetSecret("gcs-destination", dst)
 	container = container.WithSecretVariable("GCS_DESTINATION", secret)
 
-	return container.WithExec([]string{"/bin/sh", "-c", "gsutil -m rsync -J -r /src ${GCS_DESTINATION}"}), nil
+	return container.WithExec([]string{"/bin/sh", "-c", "gcloud storage cp -r /src ${GCS_DESTINATION}"}), nil
 }
 
 func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *dagger.File, dst string) (*dagger.Container, error) {
@@ -89,7 +89,7 @@ func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *
 	}
 	secret := d.SetSecret("gcs-destination", dst)
 	container = container.WithSecretVariable("GCS_DESTINATION", secret)
-	return container.WithExec([]string{"/bin/sh", "-c", "gsutil cp /src/file ${GCS_DESTINATION}"}), nil
+	return container.WithExec([]string{"/bin/sh", "-c", "gcloud storage cp /src/file ${GCS_DESTINATION}"}), nil
 }
 
 func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url string) (*dagger.File, error) {
@@ -104,13 +104,13 @@ func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url 
 	}
 	secret := d.SetSecret("gcs-download-url", url)
 	file := container.WithSecretVariable("GCS_DOWNLOAD_URL", secret).
-		WithExec([]string{"/bin/sh", "-c", "gsutil cp ${GCS_DOWNLOAD_URL} /src/file"}).
+		WithExec([]string{"/bin/sh", "-c", "gcloud storage cp ${GCS_DOWNLOAD_URL} /src/file"}).
 		File("/src/file")
 
 	return file, nil
 }
 
-func GCSAuth(d *dagger.Client, opts *GCSOpts) GCPAuthenticator {
+func GCSAuth(d *dagger.Client, opts *GCPOpts) GCPAuthenticator {
 	var auth GCPAuthenticator = &GCPInheritedAuth{}
 	// The order of operations:
 	// 1. Try to use base64 key.

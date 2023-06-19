@@ -20,8 +20,10 @@ type GrafanaOpts struct {
 	BuildGrafana bool
 	// GrafanaDir is the path to the Grafana source tree.
 	GrafanaDir      string
+	GrafanaRepo     string
 	GrafanaRef      string
 	BuildEnterprise bool
+	EnterpriseRepo  string
 	EnterpriseRef   string
 	// EnterpriseDir is the path to the Grafana Enterprise source tree.
 	EnterpriseDir string
@@ -32,21 +34,24 @@ type GrafanaOpts struct {
 
 	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
-	Version string
+	Version          string
+	YarnCacheHostDir string
 }
 
 func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOpts, error) {
 	var (
-		version       = c.String("version")
-		grafana       = c.Bool("grafana")
-		grafanaDir    = c.String("grafana-dir")
-		ref           = c.String("grafana-ref")
-		enterprise    = c.Bool("enterprise")
-		enterpriseDir = c.String("enterprise-dir")
-		enterpriseRef = c.String("enterprise-ref")
-		buildID       = c.String("build-id")
-		gitHubToken   = c.String("github-token")
-		goTags        = c.StringSlice("go-tags")
+		version        = c.String("version")
+		grafana        = c.Bool("grafana")
+		grafanaRepo    = c.String("grafana-repo")
+		grafanaDir     = c.String("grafana-dir")
+		ref            = c.String("grafana-ref")
+		enterprise     = c.Bool("enterprise")
+		enterpriseDir  = c.String("enterprise-dir")
+		enterpriseRepo = c.String("enterprise-repo")
+		enterpriseRef  = c.String("enterprise-ref")
+		buildID        = c.String("build-id")
+		gitHubToken    = c.String("github-token")
+		goTags         = c.StringSlice("go-tags")
 	)
 
 	if buildID == "" {
@@ -79,17 +84,20 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		}
 	}
 	return &GrafanaOpts{
-		BuildID:         buildID,
-		Version:         version,
-		BuildEnterprise: enterprise,
-		BuildGrafana:    grafana,
-		GrafanaDir:      grafanaDir,
-		GrafanaRef:      ref,
-		EnterpriseDir:   enterpriseDir,
-		EnterpriseRef:   enterpriseRef,
-		GitHubToken:     gitHubToken,
-		Env:             env,
-		GoTags:          goTags,
+		BuildID:          buildID,
+		Version:          version,
+		BuildEnterprise:  enterprise,
+		BuildGrafana:     grafana,
+		GrafanaDir:       grafanaDir,
+		GrafanaRepo:      grafanaRepo,
+		GrafanaRef:       ref,
+		EnterpriseDir:    enterpriseDir,
+		EnterpriseRepo:   enterpriseRepo,
+		EnterpriseRef:    enterpriseRef,
+		GitHubToken:      gitHubToken,
+		Env:              env,
+		GoTags:           goTags,
+		YarnCacheHostDir: c.String("yarn-cache"),
 	}, nil
 }
 
@@ -139,8 +147,8 @@ func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory,
 		ght = token
 	}
 
-	log.Printf("Cloning Grafana Enterprise from https://github.com/grafana/grafana-enterprise.git, ref %s", g.GrafanaRef)
-	src, err := CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana-enterprise.git", g.GrafanaRef)
+	log.Printf("Cloning Grafana Enterprise...")
+	src, err := CloneWithGitHubToken(client, ght, g.EnterpriseRepo, g.EnterpriseRef)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +186,8 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 		ght = token
 	}
 
-	log.Printf("Cloning Grafana from https://github.com/grafana/grafana.git, ref %s", g.GrafanaRef)
-	src, err := CloneWithGitHubToken(client, ght, "https://github.com/grafana/grafana.git", g.GrafanaRef)
+	log.Printf("Cloning Grafana...")
+	src, err := CloneWithGitHubToken(client, ght, g.GrafanaRepo, g.GrafanaRef)
 	if err != nil {
 		return nil, err
 	}

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/executil"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 )
 
 type BaseImage int
@@ -60,26 +61,6 @@ func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []strin
 	return tags
 }
 
-func GetBaseImage(base BaseImage, distro executil.Distribution, opts *containers.DockerOpts) string {
-	if base == BaseImageUbuntu {
-		switch _, arch := executil.OSAndArch(distro); arch {
-		case "arm64":
-			return opts.UbuntuBaseARM64
-		case "armv7":
-			return opts.UbuntuBaseARMv7
-		default:
-			return opts.UbuntuBase
-		}
-	}
-	switch _, arch := executil.OSAndArch(distro); arch {
-	case "arm64":
-		return opts.AlpineBaseARM64
-	case "armv7":
-		return opts.AlpineBaseARMv7
-	default:
-		return opts.AlpineBase
-	}
-}
 func GenerateDockerArtifact(ctx context.Context, d *dagger.Client, src *dagger.Directory, genOpts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error) {
 	args := genOpts.PipelineArgs
 	var (
@@ -101,9 +82,13 @@ func GenerateDockerArtifact(ctx context.Context, d *dagger.Client, src *dagger.D
 		var (
 			platform  = executil.Platform(tarOpts.Distro)
 			tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
-			baseImage = GetBaseImage(base, tarOpts.Distro, opts)
+			baseImage = opts.AlpineBase
 			socket    = d.Host().UnixSocket("/var/run/docker.sock")
 		)
+
+		if base == BaseImageUbuntu {
+			baseImage = opts.UbuntuBase
+		}
 
 		log.Println("Building docker images", tags, "with base image", baseImage, "and platform", platform)
 
@@ -149,7 +134,7 @@ func GenerateDockerArtifact(ctx context.Context, d *dagger.Client, src *dagger.D
 // Docker is a pipeline that uses a grafana.tar.gz as input and creates a Docker image using that same Grafana's Dockerfile.
 // Grafana's Dockerfile should support supplying a tar.gz using a --build-arg.
 func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts)
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
 	if err != nil {
 		return err
 	}
@@ -174,9 +159,13 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			var (
 				platform  = executil.Platform(tarOpts.Distro)
 				tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
-				baseImage = GetBaseImage(base, tarOpts.Distro, opts)
+				baseImage = opts.AlpineBase
 				socket    = d.Host().UnixSocket("/var/run/docker.sock")
 			)
+
+			if base == BaseImageUbuntu {
+				baseImage = opts.UbuntuBase
+			}
 
 			log.Println("Building docker images", tags, "with base image", baseImage, "and platform", platform)
 
@@ -209,22 +198,24 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 				}
 				name := DestinationName(v, ext)
 				img := builder.WithExec([]string{"docker", "save", tags[0], "-o", name}).File(name)
-				saved[name] = img
+				dst := strings.Join([]string{publishOpts.Destination, name}, "/")
+				saved[dst] = img
 			}
 		}
 	}
 
-	// The map of saved items will be nil if there was no destination set.
-	// The images will still exist in the docker service though.
-	for k, v := range saved {
-		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		out, err := containers.PublishFile(ctx, d, v, args.PublishOpts, dst)
-
-		if err != nil {
-			return err
-		}
-		fmt.Fprintln(os.Stdout, out)
+	var (
+		wg = &errgroup.Group{}
+		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+	)
+	for dst, file := range saved {
+		wg.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
+			Destination: dst,
+			File:        file,
+			GCPOpts:     args.GCPOpts,
+			PublishOpts: args.PublishOpts,
+		}))
 	}
 
-	return nil
+	return wg.Wait()
 }

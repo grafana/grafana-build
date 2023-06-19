@@ -48,6 +48,14 @@ func (t *TestCLIContext) Path(key string) string {
 	return t.Data[key].(string)
 }
 
+func (t *TestCLIContext) Int64(key string) int64 {
+	if _, ok := t.Data[key]; !ok {
+		return 0
+	}
+
+	return t.Data[key].(int64)
+}
+
 func TestPipelineArgsFromContext(t *testing.T) {
 	enterpriseDir, err := os.MkdirTemp("", "grafana-enterprise-*")
 	if err != nil {

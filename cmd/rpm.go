@@ -13,5 +13,7 @@ var RPMCommand = &cli.Command{
 		PackageInputFlags,
 		PublishFlags,
 		GPGFlags,
+		GCPFlags,
+		ConcurrencyFlags,
 	),
 }

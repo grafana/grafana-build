@@ -46,8 +46,9 @@ type PackageOpts struct {
 	*GrafanaCompileOpts
 	Distributions []executil.Distribution
 
-	BuildID string
-	Edition string
+	BuildID         string
+	Edition         string
+	NodeCacheVolume *dagger.CacheVolume
 }
 
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
@@ -63,15 +64,39 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	if err != nil {
 		return nil, err
 	}
-
 	// Get the node version from .nvmrc...
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
-	nodeCache := d.CacheVolume("yarn")
-	frontend := containers.CompileFrontend(d, src, nodeCache, nodeVersion)
+	cacheOpts := &containers.YarnCacheOpts{
+		CacheVolume: opts.NodeCacheVolume,
+	}
+
+	if opts.YarnCacheHostDir != "" {
+		cacheOpts.HostDir = d.Host().Directory(opts.YarnCacheHostDir)
+	}
+
+	// install and cache the node modules
+	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
+		NodeVersion: nodeVersion,
+		Directories: map[string]*dagger.Directory{
+			".yarn":           src.Directory(".yarn").WithoutDirectory(".cache"),
+			"packages":        src.Directory("packages"),
+			"plugins-bundled": src.Directory("plugins-bundled"),
+		},
+		Files: map[string]*dagger.File{
+			"package.json": src.File("package.json"),
+			"yarn.lock":    src.File("yarn.lock"),
+			".yarnrc.yml":  src.File(".yarnrc.yml"),
+		},
+		CacheOpts: cacheOpts,
+	}); err != nil {
+		return nil, err
+	}
+
+	frontend := containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +173,33 @@ func GenerateTarballDirectory(ctx context.Context, d *dagger.Client, src *dagger
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
-	nodeCache := d.CacheVolume("yarn")
-	frontend := containers.CompileFrontend(d, src, nodeCache, nodeVersion)
+	cacheOpts := &containers.YarnCacheOpts{
+		CacheVolume: genOpts.NodeCacheVolume,
+	}
+
+	if genOpts.PipelineArgs.GrafanaOpts.YarnCacheHostDir != "" {
+		cacheOpts.HostDir = d.Host().Directory(genOpts.PipelineArgs.GrafanaOpts.YarnCacheHostDir)
+	}
+
+	// install and cache the node modules
+	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
+		NodeVersion: nodeVersion,
+		Directories: map[string]*dagger.Directory{
+			".yarn":           src.Directory(".yarn").WithoutDirectory(".cache"),
+			"packages":        src.Directory("packages"),
+			"plugins-bundled": src.Directory("plugins-bundled"),
+		},
+		Files: map[string]*dagger.File{
+			"package.json": src.File("package.json"),
+			"yarn.lock":    src.File("yarn.lock"),
+			".yarnrc.yml":  src.File(".yarnrc.yml"),
+		},
+		CacheOpts: cacheOpts,
+	}); err != nil {
+		return nil, err
+	}
+
+	frontend := containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
 
 	packager := d.Container().
 		From(containers.BusyboxImage).

@@ -27,6 +27,11 @@ type GrafanaCompileOpts struct {
 	// Env is an optional map of environment variables (keyed by literal variable name to value) to set in the build container(s).
 	Env    map[string]string
 	GoTags []string
+
+	// Edition is just used for logging / visualization purposes
+	Edition string
+
+	YarnCacheHostDir string
 }
 
 func (o *GrafanaCompileOpts) BuildInfo(ctx context.Context, d *dagger.Client) (*containers.BuildInfo, error) {
@@ -128,12 +133,13 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 	dirs := make([]*dagger.Directory, len(distroList))
 	for i, distro := range distros {
 		opts := &GrafanaCompileOpts{
-			Source:       src,
-			Distribution: distro,
-			Platform:     args.Platform,
-			Version:      args.GrafanaOpts.Version,
-			Env:          args.GrafanaOpts.Env,
-			GoTags:       args.GrafanaOpts.GoTags,
+			Source:           src,
+			Distribution:     distro,
+			Platform:         args.Platform,
+			Version:          args.GrafanaOpts.Version,
+			Env:              args.GrafanaOpts.Env,
+			GoTags:           args.GrafanaOpts.GoTags,
+			YarnCacheHostDir: args.GrafanaOpts.YarnCacheHostDir,
 		}
 		container, err := GrafanaBackendBuildDirectory(ctx, d, opts)
 		if err != nil {

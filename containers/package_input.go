@@ -13,7 +13,6 @@ import (
 
 type PackageInputOpts struct {
 	Packages []string
-	GCSOpts  *GCSOpts
 }
 
 func PackageInputOptsFromFlags(c cliutil.CLIContext) *PackageInputOpts {
@@ -24,9 +23,9 @@ func PackageInputOptsFromFlags(c cliutil.CLIContext) *PackageInputOpts {
 
 // GetPackage uses the PackageInputOpts to get a Grafana package, either from the local filesystem (if the package is of type 'file://...')
 // or Google Cloud Storage if the package is a 'gs://' URL.
-func GetPackages(ctx context.Context, d *dagger.Client, opts *PackageInputOpts) ([]*dagger.File, error) {
-	files := make([]*dagger.File, len(opts.Packages))
-	for i, pkg := range opts.Packages {
+func GetPackages(ctx context.Context, d *dagger.Client, packageOpts *PackageInputOpts, gcpOpts *GCPOpts) ([]*dagger.File, error) {
+	files := make([]*dagger.File, len(packageOpts.Packages))
+	for i, pkg := range packageOpts.Packages {
 		u, err := url.Parse(pkg)
 		if err != nil {
 			return nil, err
@@ -43,7 +42,7 @@ func GetPackages(ctx context.Context, d *dagger.Client, opts *PackageInputOpts) 
 
 			file = f
 		case "gs":
-			f, err := getGCSPackage(ctx, d, opts.GCSOpts, u.String())
+			f, err := getGCSPackage(ctx, d, gcpOpts, u.String())
 			if err != nil {
 				return nil, err
 			}
@@ -64,7 +63,7 @@ func getLocalPackage(ctx context.Context, d *dagger.Client, file string) (*dagge
 	return d.Host().Directory(filepath.Dir(file)).File(filepath.Base(file)), nil
 }
 
-func getGCSPackage(ctx context.Context, d *dagger.Client, opts *GCSOpts, gcsURL string) (*dagger.File, error) {
+func getGCSPackage(ctx context.Context, d *dagger.Client, opts *GCPOpts, gcsURL string) (*dagger.File, error) {
 	auth := GCSAuth(d, opts)
 	return GCSDownloadFile(d, GoogleCloudImage, auth, gcsURL)
 }

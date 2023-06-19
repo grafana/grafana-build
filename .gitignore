@@ -1,5 +1,7 @@
 .grafana/
 bin/
 *.tar.gz
+*.txt
 .idea/
 dist/
+grafana/

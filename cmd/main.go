@@ -24,6 +24,7 @@ var app = &cli.App{
 		CDNCommand,
 		DockerCommand,
 		WindowsInstallerCommand,
+		ZipCommand,
 	},
 	Action: MainCommand,
 	Flags: JoinFlagsWithDefault(GrafanaFlags, PackageFlags, PublishFlags, DockerFlags, []cli.Flag{
@@ -108,7 +109,7 @@ func MainCommand(cliCtx *cli.Context) error {
 			artifact := req.Name
 			cacheKey := fmt.Sprintf("%s-%s", artifact, distro)
 			dir := results[cacheKey]
-			if _, err := containers.PublishDirectory(ctx, d, dir, args.PublishOpts, dest); err != nil {
+			if _, err := containers.PublishDirectory(ctx, d, dir, args.GCPOpts, dest); err != nil {
 				return err
 			}
 		}

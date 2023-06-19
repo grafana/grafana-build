@@ -70,8 +70,9 @@ func (ad ArtifactDefinition) WithConstraint(con ArtifactConstraint) ArtifactDefi
 }
 
 type ArtifactGeneratorOptions struct {
-	Distribution executil.Distribution
-	PipelineArgs PipelineArgs
+	Distribution    executil.Distribution
+	PipelineArgs    PipelineArgs
+	NodeCacheVolume *dagger.CacheVolume
 }
 
 type ArtifactGenerator func(ctx context.Context, d *dagger.Client, src *dagger.Directory, opts ArtifactGeneratorOptions, mounts map[string]*dagger.Directory) (*dagger.Directory, error)

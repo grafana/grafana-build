@@ -8,16 +8,14 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"dagger.io/dagger"
 )
 
 type GitCloneOptions struct {
-	Ref   string
-	URL   string
-	Depth int
+	Ref string
+	URL string
 
 	SSHKeyPath string
 
@@ -51,13 +49,11 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 	}
 
 	cloneArgs := []string{"git", "clone"}
-	if opts.Depth != 0 {
-		cloneArgs = append(cloneArgs, "--depth", strconv.Itoa(opts.Depth))
-	}
 
 	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 
 	container := d.Container().From(GitImage).
+		WithEnvVariable("REF", opts.Ref).
 		WithEnvVariable("UNAUTHENTICATED_CLONE_URL", opts.URL).
 		WithEntrypoint([]string{})
 
@@ -79,6 +75,7 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 
 	cloneURLSecret := d.SetSecret("git-clone-url", cloneURL)
 	container = container.
+		WithEnvVariable("CACHE", "0").
 		WithSecretVariable("GIT_CLONE_URL", cloneURLSecret).
 		WithExec([]string{"/bin/sh", "-c", strings.Join(cloneArgs, " ")})
 
@@ -109,7 +106,6 @@ func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
 	container, err := CloneContainer(d, &GitCloneOptions{
 		URL: url,
 		Ref: ref,
-		//Depth: 1,
 	})
 
 	if err != nil {
@@ -127,7 +123,6 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 	container, err := CloneContainer(d, &GitCloneOptions{
 		URL:      url,
 		Ref:      ref,
-		Depth:    1,
 		Username: "x-oauth-token",
 		Password: token,
 	})
@@ -154,7 +149,6 @@ func CloneWithSSHAuth(d *dagger.Client, sshKeyPath, url, ref string) (*dagger.Di
 	container, err := CloneContainer(d, &GitCloneOptions{
 		URL:        url,
 		Ref:        ref,
-		Depth:      1,
 		SSHKeyPath: sshKeyPath,
 	})
 
