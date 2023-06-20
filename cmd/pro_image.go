@@ -7,7 +7,7 @@ import (
 
 var ProImageCommand = &cli.Command{
 	Name:        "pro-image",
-	Action:      PipelineAction(pipelines.ProImage),
+	Action:      PipelineActionWithPackageInput(pipelines.ProImage),
 	Description: "Creates a hosted grafana pro image",
 	Flags:       JoinFlagsWithDefault(ProImageFlags, GCPFlags, PackageInputFlags),
 }

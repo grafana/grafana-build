@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-build/containers"
 )
 
-func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Directory, args PipelineArgs) error {
+func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 	if len(args.PackageInputOpts.Packages) > 1 {
 		return fmt.Errorf("only one package is allowed: packages=%+v", args.PackageInputOpts.Packages)
 	}
@@ -80,7 +80,6 @@ func ProImage(ctx context.Context, dc *dagger.Client, directory *dagger.Director
 
 	log.Printf("Pushing hosted Grafana image to registry...")
 	ref, err := authenticatedContainer.
-		WithExec([]string{"gcloud", "auth", "configure-docker", "--quiet"}).
 		Publish(ctx, address)
 	if err != nil {
 		return fmt.Errorf("publishing container: address=%s %w", address, err)
