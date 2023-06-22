@@ -133,11 +133,13 @@ func BuildOptsDynamicWindows(distro executil.Distribution, buildinfo *BuildInfo)
 }
 
 var DistributionGoOpts = map[executil.Distribution]DistroBuildOptsFunc{
-	executil.DistLinuxARM:   BuildOptsDynamicARM,
-	executil.DistLinuxARMv6: BuildOptsDynamicARM,
-	executil.DistLinuxARMv7: BuildOptsDynamicARM,
-	executil.DistLinuxARM64: BuildOptsStatic,
-	executil.DistLinuxAMD64: BuildOptsStatic,
+	executil.DistLinuxARM:          BuildOptsDynamicARM,
+	executil.DistLinuxARMv6:        BuildOptsDynamicARM,
+	executil.DistLinuxARMv7:        BuildOptsDynamicARM,
+	executil.DistLinuxARM64:        BuildOptsStatic,
+	executil.DistLinuxARM64Dynamic: BuildOptsDynamic,
+	executil.DistLinuxAMD64:        BuildOptsStatic,
+	executil.DistLinuxAMD64Dynamic: BuildOptsDynamic,
 
 	executil.DistDarwinAMD64: BuildOptsDynamic,
 	executil.DistDarwinARM64: BuildOptsDynamic,
