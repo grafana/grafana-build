@@ -23,11 +23,16 @@ func CompileFrontend(d *dagger.Client, src *dagger.Directory, opts *YarnCacheOpt
 	c = WithYarnCache(c, opts)
 
 	// Get the node version from the 'src' directories '.nvmrc' file.
-	return c.
+	public := c.
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
-		Directory("public").WithoutDirectory("app").WithoutDirectory("test").WithoutDirectory("testdata")
+		Directory("/src/public").
+		WithoutDirectory("/src/public/app").
+		WithoutDirectory("/src/public/test").
+		WithoutDirectory("/src/public/testdata")
+
+	return public
 }
 
 type YarnCacheOpts struct {

@@ -82,7 +82,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
 		NodeVersion: nodeVersion,
 		Directories: map[string]*dagger.Directory{
-			".yarn":           src.Directory(".yarn").WithoutDirectory("cache"),
+			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
 			"packages":        src.Directory("packages"),
 			"plugins-bundled": src.Directory("plugins-bundled"),
 		},
