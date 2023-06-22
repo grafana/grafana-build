@@ -27,7 +27,7 @@ func CompileFrontend(d *dagger.Client, src *dagger.Directory, opts *YarnCacheOpt
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
-		Directory("public/").WithoutDirectory("app").WithoutDirectory("test").WithoutDirectory("testdata")
+		Directory("public").WithoutDirectory("app").WithoutDirectory("test").WithoutDirectory("testdata")
 }
 
 type YarnCacheOpts struct {
