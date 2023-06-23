@@ -18,8 +18,7 @@ func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			{"/src/packaging/deb/systemd/grafana-server.service", "/pkg/usr/lib/systemd/system/grafana-server.service"},
 		},
 		AfterInstall: "/src/packaging/deb/control/postinst",
-		// TODO: The prerm script was added in v9.5.0; we need to add this flag on versions later than 9.5.0
-		// BeforeRemove: "/src/packaging/deb/control/prerm"
+		BeforeRemove: "/src/packaging/deb/control/prerm",
 		Depends: []string{
 			"adduser",
 			"libfontconfig1",
