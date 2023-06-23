@@ -48,6 +48,9 @@ wait
 
 cat pro.txt grafana.txt > assets.txt
 
+# Create the npm artifacts using only the amd64 linux package
+go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt
+
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
@@ -90,7 +93,7 @@ go run ./cmd cdn \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt npm.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
