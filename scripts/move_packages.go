@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"dagger.io/dagger"
@@ -64,14 +63,8 @@ var Handlers = map[string]HandlerFunc{
 }
 
 func NPMHandler(name string) []string {
-	r, err := regexp.Compile(`^[^\d]*(\d.*)(\.tgz)`)
-	if err != nil {
-		panic(err)
-	}
-
 	var (
-		matches = r.FindStringSubmatch(strings.ReplaceAll(name, "e2e", ""))
-		version = "v" + matches[1]
+		version = os.Getenv("DRONE_TAG")
 		file    = filepath.Base(name)
 	)
 

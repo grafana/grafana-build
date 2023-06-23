@@ -2,6 +2,8 @@
 dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 
+set -x
+
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
 
@@ -43,8 +45,9 @@ go run ./cmd \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt &
-
 wait
+
+echo "Done building tar.gz packages..."
 
 cat pro.txt grafana.txt > assets.txt
 

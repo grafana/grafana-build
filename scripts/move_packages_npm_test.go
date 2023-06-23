@@ -12,6 +12,12 @@ var npmMapping = []m{
 			"artifacts/npm/v1.2.3-pre/npm-artifacts/@grafana-data-1.2.3-pre.tgz",
 		},
 	},
+	{
+		input: "file://dist/npm-artifacts/@grafana-data-1.2.3-pre.tgz",
+		output: []string{
+			"artifacts/npm/v1.2.3-pre/npm-artifacts/@grafana-data-1.2.3-pre.tgz",
+		},
+	},
 }
 
 func TestMoveNPM(t *testing.T) {
