@@ -27,6 +27,7 @@ var PackagedPaths = []string{
 	"packaging/autocomplete",
 	"plugins-bundled/",
 	"public/",
+	"npm-artifacts/",
 }
 
 func PathsWithRoot(root string, paths []string) []string {
@@ -81,7 +82,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
 		NodeVersion: nodeVersion,
 		Directories: map[string]*dagger.Directory{
-			".yarn":           src.Directory(".yarn").WithoutDirectory(".cache"),
+			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
 			"packages":        src.Directory("packages"),
 			"plugins-bundled": src.Directory("plugins-bundled"),
 		},
@@ -95,10 +96,11 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		return nil, err
 	}
 
-	frontend := containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		frontend    = containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
+		npmPackages = containers.NPMPackages(d, src, cacheOpts, version, nodeVersion)
+	)
+
 	name := "grafana"
 	if edition != "" {
 		name = fmt.Sprintf("%s-%s", name, edition)
@@ -113,6 +115,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			WithMountedDirectory(path.Join("/src", root), src).
 			WithMountedDirectory(path.Join("/src", root, "bin"), backend).
 			WithMountedDirectory(path.Join("/src", root, "public"), frontend).
+			WithMountedDirectory(path.Join("/src", root, "npm-artifacts"), npmPackages).
 			WithWorkdir("/src")
 
 		opts := TarFileOpts{

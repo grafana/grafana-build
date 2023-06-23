@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
+set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
@@ -43,10 +44,14 @@ go run ./cmd \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt &
-
 wait
 
+echo "Done building tar.gz packages..."
+
 cat pro.txt grafana.txt > assets.txt
+
+# Create the npm artifacts using only the amd64 linux package
+go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
@@ -90,7 +95,7 @@ go run ./cmd cdn \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt npm.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
