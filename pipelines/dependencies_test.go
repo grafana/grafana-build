@@ -57,7 +57,7 @@ func TestGenerateFinalArtifactList(t *testing.T) {
 		args := PipelineArgs{}
 		args.PackageOpts = &containers.PackageOpts{}
 		args.PackageOpts.Distros = []executil.Distribution{executil.DistWindowsAMD64}
-		result, err := GeneratateFinalArtifactList(ctx, reg, []string{"windows", "deb"}, args)
+		result, err := GenerateFinalArtifactList(ctx, nil, reg, []string{"windows", "deb"}, args)
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		req := result[0]
@@ -68,7 +68,7 @@ func TestGenerateFinalArtifactList(t *testing.T) {
 		args := PipelineArgs{}
 		args.PackageOpts = &containers.PackageOpts{}
 		args.PackageOpts.Distros = []executil.Distribution{executil.DistLinuxAMD64}
-		result, err := GeneratateFinalArtifactList(ctx, reg, []string{"windows", "deb"}, args)
+		result, err := GenerateFinalArtifactList(ctx, nil, reg, []string{"windows", "deb"}, args)
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		req := result[0]

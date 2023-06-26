@@ -366,10 +366,11 @@ func main() {
 					v := filepath.Join(prefix, v)
 
 					log.Println("Creating dir", dir)
-					if err := os.MkdirAll(dir, 0755); err != nil {
+					if err := os.MkdirAll(dir, 0700); err != nil {
 						panic(err)
 					}
 					log.Println("Copying", name, "to", v)
+					//nolint:gosec
 					cmd := exec.Command("cp", "-r", strings.TrimPrefix(name, "file://"), v)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
@@ -387,10 +388,11 @@ func main() {
 			dir := filepath.Join(prefix, filepath.Dir(v))
 			v := filepath.Join(prefix, v)
 			log.Println("Creating directory", dir)
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := os.MkdirAll(dir, 0700); err != nil {
 				panic(err)
 			}
 			log.Println("Copying", name, "to", dir)
+			//nolint:gosec
 			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
