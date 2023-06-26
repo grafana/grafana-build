@@ -3,7 +3,7 @@ module github.com/grafana/grafana-build
 go 1.20
 
 require (
-	dagger.io/dagger v0.6.1
+	dagger.io/dagger v0.7.2
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/stretchr/testify v1.8.2
 	github.com/urfave/cli/v2 v2.24.4
@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/99designs/gqlgen v0.17.31 // indirect
 	github.com/Khan/genqlient v0.6.0 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
