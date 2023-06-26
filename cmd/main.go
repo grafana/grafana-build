@@ -22,6 +22,7 @@ var app = &cli.App{
 		DockerCommand,
 		WindowsInstallerCommand,
 		ZipCommand,
+		ValidateCommand,
 	},
 }
 
