@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"dagger.io/dagger"
 	"github.com/urfave/cli/v2"
@@ -11,6 +12,7 @@ func lintProject(ctx context.Context, dc *dagger.Client) error {
 	workDir := dc.Host().Directory(".")
 	container := dc.Container().
 		From("golangci/golangci-lint:v1.52.2").
+		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithWorkdir("/src").
 		WithMountedDirectory("/src", workDir).
 		WithExec([]string{"golangci-lint", "run"})
