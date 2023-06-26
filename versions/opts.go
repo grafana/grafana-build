@@ -55,7 +55,7 @@ var LatestOptions = Options{
 	DebPreRM:           NewNullable(true),
 }
 
-// OptionsMap is a list of semver filters and corresponding options.
+// OptionsList is a list of semver filters and corresponding options.
 // If multiple constraints match the given semver, then they are merged in the order they appear, where later entries override earlier ones.
 // These options should only exist if they are contrary to the LatestOptions, as the applicable options will be merged with it. In the event of any conflicts, the options in this list will override those in the LatestOptions.
 var OptionsList = []Options{
