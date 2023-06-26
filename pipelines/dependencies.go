@@ -108,17 +108,17 @@ func (ra RequestedArtifact) String() string {
 	return fmt.Sprintf("%s (%s)", ra.Name, ra.Options.Distribution)
 }
 
-func GenerateFinalArtifactList(ctx context.Context, d *dagger.Client, reg *ArtifactDefinitionRegistry, artifactNames []string, args PipelineArgs) ([]RequestedArtifact, error) {
+func GenerateFinalArtifactList(ctx context.Context, d *dagger.Client, reg *ArtifactDefinitionRegistry, artifactNames []string, baseOpts ArtifactGeneratorOptions) ([]RequestedArtifact, error) {
 	finalArtifacts := []RequestedArtifact{}
 
 	// Go through all the artifact trees and check if they can even be
 	// built. The outcome of this is a list of all the final artifacts that
 	// can eventually be exported to the user.
-	for _, distro := range args.PackageOpts.Distros {
+	for _, distro := range baseOpts.PipelineArgs.PackageOpts.Distros {
 		genOpts := ArtifactGeneratorOptions{
-			PipelineArgs:    args,
+			PipelineArgs:    baseOpts.PipelineArgs,
 			Distribution:    distro,
-			NodeCacheVolume: d.CacheVolume("yarn-dependencies"),
+			NodeCacheVolume: baseOpts.NodeCacheVolume,
 		}
 		for _, artifact := range artifactNames {
 			req := RequestedArtifact{

@@ -81,7 +81,12 @@ func MainCommand(cliCtx *cli.Context) error {
 		results := make(map[string]*dagger.Directory)
 		cache := make(map[string]*dagger.Directory)
 
-		finalArtifacts, err := pipelines.GenerateFinalArtifactList(ctx, d, pipelines.DefaultArtifacts, artifacts, args)
+		baseOpts := pipelines.ArtifactGeneratorOptions{
+			PipelineArgs:    args,
+			NodeCacheVolume: d.CacheVolume("yarn-dependencies"),
+		}
+
+		finalArtifacts, err := pipelines.GenerateFinalArtifactList(ctx, d, pipelines.DefaultArtifacts, artifacts, baseOpts)
 		if err != nil {
 			return err
 		}
