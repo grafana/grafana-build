@@ -71,6 +71,10 @@ var OptionsList = []Options{
 		Constraint:   NewNullable("< 9.4.0-0"), // The -0 includes prereleases. Without it, prereleases are ignored from comparison. I don't really know why??? but it is what it is.
 		Autocomplete: NewNullable(false),
 	},
+	{
+		Constraint:         NewNullable(">= 9.2.11-0, < 9.3.0-0"), // The combined executable change was backported to 9.2.x at v9.2.11
+		CombinedExecutable: NewNullable(true),
+	},
 }
 
 // OptionsFor returns the options found for a given version. If no versions that matched were found, then the result of "LatestOptions" is returned.
