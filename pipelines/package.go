@@ -9,6 +9,7 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/versions"
 )
 
 // PackagedPaths are paths that are included in the grafana tarball.
@@ -25,9 +26,9 @@ var PackagedPaths = []string{
 	"packaging/rpm",
 	"packaging/docker",
 	"packaging/wrappers",
-	"packaging/autocomplete",
 	"plugins-bundled/",
 	"public/",
+	"npm-artifacts/",
 }
 
 func PathsWithRoot(root string, paths []string) []string {
@@ -54,11 +55,12 @@ type PackageOpts struct {
 // PackageFile builds and packages Grafana into a tar.gz for each dsitrbution and returns a map of the dagger file that holds each tarball, keyed by the distribution it corresponds to.
 func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[executil.Distribution]*dagger.File, error) {
 	var (
-		src     = opts.Source
-		distros = opts.Distributions
-		version = opts.Version
-		buildID = opts.BuildID
-		edition = opts.Edition
+		src         = opts.Source
+		distros     = opts.Distributions
+		version     = opts.Version
+		versionOpts = versions.OptionsFor(version)
+		buildID     = opts.BuildID
+		edition     = opts.Edition
 	)
 	backends, err := GrafanaBackendBuildDirectories(ctx, d, opts.GrafanaCompileOpts, distros)
 	if err != nil {
@@ -82,7 +84,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
 		NodeVersion: nodeVersion,
 		Directories: map[string]*dagger.Directory{
-			".yarn":           src.Directory(".yarn").WithoutDirectory(".cache"),
+			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
 			"packages":        src.Directory("packages"),
 			"plugins-bundled": src.Directory("plugins-bundled"),
 		},
@@ -96,10 +98,11 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		return nil, err
 	}
 
-	frontend := containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		frontend    = containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
+		npmPackages = containers.NPMPackages(d, src, cacheOpts, version, nodeVersion)
+	)
+
 	name := "grafana"
 	if edition != "" {
 		name = fmt.Sprintf("%s-%s", name, edition)
@@ -108,12 +111,19 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	root := fmt.Sprintf("%s-%s", name, version)
 
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
+
+	paths := PackagedPaths
+	if versionOpts.Autocomplete.IsSet && versionOpts.Autocomplete.Value {
+		paths = append(paths, "packaging/autocomplete")
+	}
+
 	for k, backend := range backends {
 		packager := d.Container().
 			From(containers.BusyboxImage).
 			WithMountedDirectory(path.Join("/src", root), src).
 			WithMountedDirectory(path.Join("/src", root, "bin"), backend).
 			WithMountedDirectory(path.Join("/src", root, "public"), frontend).
+			WithMountedDirectory(path.Join("/src", root, "npm-artifacts"), npmPackages).
 			WithWorkdir("/src")
 
 		opts := TarFileOpts{
@@ -125,7 +135,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 
 		name := TarFilename(opts)
 		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", opts.Version, path.Join(root, "VERSION"))}).
-			WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, PackagedPaths)...))
+			WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, paths)...))
 		packages[k] = packager.File(name)
 	}
 

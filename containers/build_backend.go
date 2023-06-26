@@ -8,6 +8,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/versions"
 )
 
 const GoImage = "golang:1.20.1-alpine"
@@ -55,6 +56,8 @@ type CompileBackendOpts struct {
 	BuildInfo    *BuildInfo
 	Env          map[string]string
 	GoTags       []string
+
+	CombinedExecutables bool
 }
 
 // CompileBackendBuilder returns the container that is completely set up to build Grafana for the given distribution.
@@ -112,7 +115,18 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 	// TODO: we are doing this twice; once before make gen-go, and then again after. Would be nice if we only had to do this once.
 	builder = WithEnv(builder, opts.Env)
 
-	for _, v := range GrafanaCommands {
+	vopts := versions.OptionsFor(buildinfo.Version)
+	commands := GrafanaCommands
+
+	// If this version didn't support the combined executables, then only build grafana-server and grafana-cli
+	if vopts.CombinedExecutable.IsSet && !vopts.CombinedExecutable.Value {
+		commands = []string{
+			"grafana-server",
+			"grafana-cli",
+		}
+	}
+
+	for _, v := range commands {
 		o := goBuildOpts
 		o.Main = path.Join("pkg", "cmd", v)
 		o.Output = path.Join("bin", string(distro), binaryName(v, distro))
