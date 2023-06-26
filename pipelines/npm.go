@@ -8,16 +8,6 @@ import (
 	"github.com/grafana/grafana-build/containers"
 )
 
-var npmPackages = []string{
-	"@grafana/ui",
-	"@grafana/data",
-	"@grafana/toolkit",
-	"@grafana/runtime",
-	"@grafana/e2e",
-	"@grafana/e2e-selectors",
-	"@grafana/schema",
-}
-
 // NPM publishes the NPM packages in the grafana.tar.gz(s)
 func NPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)

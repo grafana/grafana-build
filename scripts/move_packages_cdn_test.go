@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-const testBucket = "gs://bucket"
-
 var cdnMapping = []m{
 	{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/public",
