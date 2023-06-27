@@ -17,31 +17,33 @@ import (
 )
 
 const (
-	// 1: The gs://bucket prefix URL
-	// 2: The version (with a v prefix)
-	// 3: The "edition". Options: 'oss', 'pro', 'enterprise'.
-	// 4: The full name. 'grafana', 'grafana-enterprise', 'grafana-pro
-	// 5: The 'ersion', or 'version' without the 'v'.
-	// 6: The OS: 'windows', 'linux', 'darwin'
-	// 7: The architecture: 'amd64', 'armv6', 'armv7', 'arm64'.
-	// 8: -musl, sometimes.
-	// 9: '.sha256', sometimes.
+	// 1: The version (with a v prefix)
+	// 2: The "edition". Options: 'oss', 'pro', 'enterprise'.
+	// 3: The full name. 'grafana', 'grafana-enterprise', 'grafana-pro
+	// 4: The 'ersion', or 'version' without the 'v'.
+	// 5: The OS: 'windows', 'linux', 'darwin'
+	// 6: The architecture: 'amd64', 'armv6', 'armv7', 'arm64'.
+	// 7: -musl, sometimes.
+	// 8: '.sha256', sometimes.
 	tarGzFormat = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
 	debFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.deb%[8]s"
 	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
 	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
-	// 1: The gs://bucket prefix URL
-	// 2: ersion
-	// 3. name (grafana-oss | grafana-enterprise)
-	// 4: '-ubuntu', if set
-	// 5: arch
-	// 6: '.sha256', if set
+
+	// 1: ersion
+	// 2. name (grafana-oss | grafana-enterprise)
+	// 3: '-ubuntu', if set
+	// 4: arch
+	// 5: '.sha256', if set
 	dockerFormat = "artifacts/docker/%[1]s/%[2]s-%[1]s%[3]s-%[4]s.img%[5]s"
 
-	// 1: The gs://bucket prefix URL
-	// 2: ersion
-	// 3. name (grafana-oss | grafana-enterprise)
+	// 1: ersion
+	// 2. name (grafana-oss | grafana-enterprise)
 	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
+
+	// 1: version
+	// 2: package name (@grafana-ui-10.0.0.tgz)
+	npmFormat = "artifacts/npm/%[1]s/npm-artifacts/%[2]s"
 
 	sha256Ext = ".sha256"
 	grafana   = "grafana"
@@ -52,11 +54,21 @@ type HandlerFunc func(name string) []string
 
 var Handlers = map[string]HandlerFunc{
 	".tar.gz":        TarGZHandler,
+	".tgz":           NPMHandler,
 	".deb":           DebHandler,
 	".rpm":           RPMHandler,
 	".docker.tar.gz": DockerHandler,
 	".exe":           EXEHandler,
 	".zip":           ZipHandler,
+}
+
+func NPMHandler(name string) []string {
+	var (
+		version = os.Getenv("DRONE_TAG")
+		file    = filepath.Base(name)
+	)
+
+	return []string{fmt.Sprintf(npmFormat, version, file)}
 }
 
 func ZipHandler(name string) []string {
@@ -366,10 +378,11 @@ func main() {
 					v := filepath.Join(prefix, v)
 
 					log.Println("Creating dir", dir)
-					if err := os.MkdirAll(dir, 0755); err != nil {
+					if err := os.MkdirAll(dir, 0700); err != nil {
 						panic(err)
 					}
 					log.Println("Copying", name, "to", v)
+					//nolint:gosec
 					cmd := exec.Command("cp", "-r", strings.TrimPrefix(name, "file://"), v)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
@@ -387,10 +400,11 @@ func main() {
 			dir := filepath.Join(prefix, filepath.Dir(v))
 			v := filepath.Join(prefix, v)
 			log.Println("Creating directory", dir)
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := os.MkdirAll(dir, 0700); err != nil {
 				panic(err)
 			}
 			log.Println("Copying", name, "to", dir)
+			//nolint:gosec
 			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr

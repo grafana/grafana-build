@@ -83,6 +83,7 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 			env[key] = value
 		}
 	}
+
 	return &GrafanaOpts{
 		BuildID:          buildID,
 		Version:          version,

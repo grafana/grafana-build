@@ -114,7 +114,16 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			WithFile("/src/grafana.tar.gz", packages[i]).
 			WithEnvVariable("XZ_DEFAULTS", "-T0").
 			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
-			WithExec([]string{"ls", "-al", "/src"}).
+			WithExec([]string{"ls", "-al", "/src"})
+		// Fix for issue where some older versions did not have BeforeRemove or AfterInstall scripts: Still add them, but provide empty scripts that do nothing if they don't exist
+		if opts.AfterInstall != "" {
+			container = container.WithExec([]string{"touch", opts.AfterInstall})
+		}
+		// Fix for issue where some older versions did not have BeforeRemove or AfterInstall scripts: Still add them, but provide empty scripts that do nothing if they don't exist
+		if opts.BeforeRemove != "" {
+			container = container.WithExec([]string{"touch", opts.BeforeRemove})
+		}
+		container = container.
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
 			// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
 			WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
