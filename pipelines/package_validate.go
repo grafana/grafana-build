@@ -42,13 +42,20 @@ func ValidatePackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.
 		log.Printf("[%s] Acquired semaphore", name)
 
 		log.Printf("[%s] Validating package", name)
-		out, err := containers.ValidatePackage(ctx, d, file, src)
+		container, err := containers.ValidatePackage(ctx, d, file, src)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}
+
 		log.Printf("[%s] Done publishing file", name)
 
-		fmt.Fprintln(Stdout, out)
+		// TODO: Respect the --destination argument and format the sub-folder based on the package name
+		if _, err := container.Directory("e2e/verify/specs").Export(ctx, "e2e-out"); err != nil {
+			return err
+		}
+
+		// TODO: Print the directory name based on the --destination argument
+		fmt.Fprintln(Stdout, "")
 		return nil
 	}
 }
