@@ -41,13 +41,18 @@ func ValidatePackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.
 		defer sm.Release(1)
 		log.Printf("[%s] Acquired semaphore", name)
 
+		log.Printf("[%s] Acquiring node version", name)
+		nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get node version from source code: %w", err)
+		}
+
 		log.Printf("[%s] Validating package", name)
-		container, err := containers.ValidatePackage(ctx, d, file, src)
+		container, err := containers.ValidatePackage(d, file, src, nodeVersion)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}
-
-		log.Printf("[%s] Done publishing file", name)
+		log.Printf("[%s] Done validating package", name)
 
 		// TODO: Respect the --destination argument and format the sub-folder based on the package name
 		if _, err := container.Directory("e2e/verify/specs").Export(ctx, "e2e-out"); err != nil {

@@ -1,20 +1,11 @@
 package containers
 
 import (
-	"context"
-	"fmt"
-
 	"dagger.io/dagger"
 )
 
 // NodeContainer returns a docker container with everything set up that is needed to build or run frontend tests.
-func ValidatePackage(ctx context.Context, d *dagger.Client, file *dagger.File, src *dagger.Directory) (*dagger.Container, error) {
-	// Get the node version from .nvmrc...
-	nodeVersion, err := NodeVersion(d, src).Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
-	}
-
+func ValidatePackage(d *dagger.Client, file *dagger.File, src *dagger.Directory, nodeVersion string) (*dagger.Container, error) {
 	service := d.Container().From("alpine:latest").
 		WithDirectory("/archive", ExtractedArchive(d, file)).
 		WithWorkdir("/archive").
