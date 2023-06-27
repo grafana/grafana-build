@@ -21,7 +21,7 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, file *dagger.File, s
 		WithExec([]string{"/archive/bin/grafana-server"}).
 		WithExposedPort(3000)
 
-	return NodeContainer(d, NodeImage(nodeVersion)).
+	return CypressContainer(d, CypressImage(nodeVersion)).
 		WithDirectory("/src", src).
 		WithWorkdir("/src").
 		WithServiceBinding("grafana", service).
