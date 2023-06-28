@@ -12,6 +12,7 @@ var ValidateCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		GrafanaFlags,
+		PublishFlags,
 		GCPFlags,
 		ConcurrencyFlags,
 	),
