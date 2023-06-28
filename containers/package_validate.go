@@ -1,6 +1,9 @@
 package containers
 
 import (
+	"math/rand"
+	"strconv"
+
 	"dagger.io/dagger"
 )
 
@@ -12,7 +15,11 @@ func ValidatePackage(d *dagger.Client, file *dagger.File, src *dagger.Directory,
 		WithExec([]string{"/archive/bin/grafana", "server"}).
 		WithExposedPort(3000)
 
+	// The cypress container should never be cached
+	r := rand.Int()
+
 	return CypressContainer(d, CypressImage(nodeVersion)).
+		WithEnvVariable("CACHE", strconv.Itoa(r)).
 		WithDirectory("/src", src).
 		WithWorkdir("/src").
 		WithServiceBinding("grafana", service).
