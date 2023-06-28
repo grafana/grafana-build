@@ -7,6 +7,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/executil"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
@@ -54,8 +55,12 @@ func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
+	taropts := TarOptsFromFileName(packageName)
+
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container().From("alpine:latest").
+	service := d.Container(dagger.ContainerOpts{
+		Platform: executil.Platform(taropts.Distro),
+	}).From("alpine:latest").
 		WithDirectory("/src", containers.ExtractedArchive(d, pkg, packageName)).
 		WithWorkdir("/src").
 		WithExec([]string{"./bin/grafana", "server"}).
