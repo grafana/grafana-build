@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -30,12 +29,15 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 	socketPath := "/var/run/docker.sock"
 	socket := dc.Host().UnixSocket(socketPath)
 
-	hostedGrafanaImageTag := fmt.Sprintf("hosted-grafana-pro:%s", args.ProImageOpts.ImageTag)
+	hostedGrafanaImage := fmt.Sprintf("%s/hosted-grafana-pro:%s", args.ProImageOpts.ContainerRegistry, args.ProImageOpts.ImageTag)
 
-	log.Printf("Building hosted Grafana image...")
-	container := dc.Container().From("golang:1.20-alpine").
+	log.Printf("Building hosted Grafana image: %s", hostedGrafanaImage)
+	container := dc.Container().From("google/cloud-sdk:433.0.0-alpine").
+		WithExec([]string{
+			"/bin/sh", "-c",
+			"gcloud auth configure-docker --quiet",
+		}).
 		WithUnixSocket(socketPath, socket).
-		WithExec([]string{"apk", "add", "--update", "docker"}).
 		WithDirectory("/src", hostedGrafanaRepo).
 		WithFile("/src/grafana.deb", debianPackageFile).
 		WithWorkdir("/src").
@@ -48,46 +50,34 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 			fmt.Sprintf("docker build --platform=linux/amd64 --build-arg=RELEASE_TYPE=%s --build-arg=GRAFANA_VERSION=%s --build-arg=HGRUN_IMAGE=hgrun:latest . -f ./docker/hosted-grafana-all/Dockerfile -t %s",
 				args.ProImageOpts.ReleaseType,
 				args.ProImageOpts.GrafanaVersion,
-				hostedGrafanaImageTag,
+				hostedGrafanaImage,
 			),
 		})
 
+	if args.ProImageOpts.Push {
+		if args.ProImageOpts.ContainerRegistry == "" {
+			return fmt.Errorf("--registry=<string> is required")
+		}
+
+		authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
+			ServiceAccountKey:       args.GCPOpts.ServiceAccountKey,
+			ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
+		})
+
+		authenticatedContainer, err := authenticator.Authenticate(dc, container)
+		if err != nil {
+			return fmt.Errorf("authenticating container with gcs auth: %w", err)
+		}
+
+		log.Printf("Pushing hosted Grafana image to registry...")
+		container = authenticatedContainer.WithExec([]string{
+			"/bin/sh", "-c",
+			fmt.Sprintf("docker push %s", hostedGrafanaImage),
+		})
+	}
+
 	if err := containers.ExitError(ctx, container); err != nil {
 		return fmt.Errorf("container did not exit successfully: %w", err)
-	}
-
-	if !args.ProImageOpts.Push {
-		return nil
-	}
-
-	if args.ProImageOpts.ContainerRegistry == "" {
-		return fmt.Errorf("--registry=<string> is required")
-	}
-
-	authenticator := containers.GCSAuth(dc, &containers.GCPOpts{
-		ServiceAccountKey:       args.GCPOpts.ServiceAccountKey,
-		ServiceAccountKeyBase64: args.GCPOpts.ServiceAccountKeyBase64,
-	})
-
-	publishContainer := dc.Container().From("google/cloud-sdk:433.0.0-alpine")
-
-	authenticatedContainer, err := authenticator.Authenticate(dc, publishContainer)
-	if err != nil {
-		return fmt.Errorf("authenticating container with gcs auth: %w", err)
-	}
-
-	address := fmt.Sprintf("%s/%s", args.ProImageOpts.ContainerRegistry, hostedGrafanaImageTag)
-
-	log.Printf("Pushing hosted Grafana image to registry...")
-	ref, err := authenticatedContainer.
-		Publish(ctx, address)
-	if err != nil {
-		return fmt.Errorf("publishing container: address=%s %w", address, err)
-	}
-
-	n, err := fmt.Fprintln(os.Stdout, ref)
-	if err != nil {
-		return fmt.Errorf("writing ref to stdout: bytesWritten=%d %w", n, err)
 	}
 
 	return nil
