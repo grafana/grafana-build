@@ -23,9 +23,20 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	dirs := map[string]*dagger.Directory{}
 	for i, name := range args.PackageInputOpts.Packages {
 		pkg := packages[i]
-		dir, err := validatePackage(ctx, d, pkg, src, name)
-		if err != nil {
-			return err
+
+		var dir *dagger.Directory
+		if strings.HasSuffix(name, ".tar.gz") {
+			dir, err = validatePackage(ctx, d, pkg, src, name)
+			if err != nil {
+				return err
+			}
+		} else if strings.HasSuffix(name, ".deb") {
+			dir, err = validateDeb(ctx, d, pkg, src, name)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("unknown package extension")
 		}
 
 		// replace .tar.gz with .e2e-artifacts/
@@ -45,6 +56,26 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 		grp.Go(PublishDirFunc(ctx, sm, d, dir, args.GCPOpts, dst))
 	}
 	return grp.Wait()
+}
+
+// validateDeb uses the given package (deb) and grafana source code (src) to run the e2e smoke tests.
+// the returned directory is the e2e artifacts created by cypress (screenshots and videos).
+func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
+	}
+
+	// This grafana service runs in the background for the e2e tests
+	service := d.Container().From("debian:latest").
+		WithFile("/src/package.deb", deb).
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
+		WithWorkdir("/usr/share/grafana").
+		WithExec([]string{"grafana-server"}).
+		WithExposedPort(3000)
+
+	return containers.ValidatePackage(d, service, src, nodeVersion), nil
 }
 
 // validatePackage uses the given package (pkg) and grafana source code (src) to run the e2e smoke tests.
