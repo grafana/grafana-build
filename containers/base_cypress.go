@@ -5,7 +5,7 @@ import (
 )
 
 func CypressImage(version string) string {
-	return "cypress/included:9.5.1"
+	return "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97"
 }
 
 // CypressContainer returns a docker container with everything set up that is needed to build or run e2e tests.
