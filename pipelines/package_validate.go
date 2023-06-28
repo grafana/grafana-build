@@ -3,7 +3,7 @@ package pipelines
 import (
 	"context"
 	"fmt"
-	"log"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -18,49 +18,48 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 		return err
 	}
 
+	// Define all of the containers first, and where their artifacts will be exported to
+	dirs := map[string]*dagger.Directory{}
+	for i, name := range args.PackageInputOpts.Packages {
+		pkg := packages[i]
+		dir, err := validatePackage(ctx, d, pkg, src, name)
+		if err != nil {
+			return err
+		}
+
+		// replace .tar.gz with .e2e-artifacts/
+		destination := DestinationName(name, "e2e-artifacts")
+		dirs[destination] = dir
+	}
+
 	var (
 		grp = &errgroup.Group{}
 		sm  = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
 	)
 
-	for i, file := range packages {
-		name := args.PackageInputOpts.Packages[i]
-		grp.Go(ValidatePackageFunc(ctx, sm, d, file, src, name))
+	// Run them in parallel
+	for k, dir := range dirs {
+		// Join the produced destination with the protocol given by the '--destination' flag.
+		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
+		grp.Go(PublishDirFunc(ctx, sm, d, dir, args.GCPOpts, dst))
 	}
-
 	return grp.Wait()
 }
 
-func ValidatePackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, file *dagger.File, src *dagger.Directory, name string) func() error {
-	return func() error {
-		log.Printf("[%s] Attempting to validate package", name)
-		log.Printf("[%s] Acquiring semaphore", name)
-		if err := sm.Acquire(ctx, 1); err != nil {
-			return fmt.Errorf("failed to acquire semaphore: %w", err)
-		}
-		defer sm.Release(1)
-		log.Printf("[%s] Acquired semaphore", name)
-
-		log.Printf("[%s] Acquiring node version", name)
-		nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get node version from source code: %w", err)
-		}
-
-		log.Printf("[%s] Validating package", name)
-		container, err := containers.ValidatePackage(d, file, src, nodeVersion)
-		if err != nil {
-			return fmt.Errorf("[%s] error: %w", name, err)
-		}
-		log.Printf("[%s] Done validating package", name)
-
-		// TODO: Respect the --destination argument and format the sub-folder based on the package name
-		if _, err := container.Directory("e2e/verify/specs").Export(ctx, "e2e-out"); err != nil {
-			return err
-		}
-
-		// TODO: Print the directory name based on the --destination argument
-		fmt.Fprintln(Stdout, "")
-		return nil
+// validatePackage uses the given package (pkg) and grafana source code (src) to run the e2e smoke tests.
+// the returned directory is the e2e artifacts created by cypress (screenshots and videos).
+func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
+
+	// This grafana service runs in the background for the e2e tests
+	service := d.Container().From("alpine:latest").
+		WithDirectory("/src", containers.ExtractedArchive(d, pkg, packageName)).
+		WithWorkdir("/src").
+		WithExec([]string{"./bin/grafana", "server"}).
+		WithExposedPort(3000)
+
+	return containers.ValidatePackage(d, service, src, nodeVersion), nil
 }

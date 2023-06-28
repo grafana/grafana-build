@@ -79,7 +79,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 
 		var (
 			targz      = packages[i]
-			src        = containers.ExtractedArchive(d, targz)
+			src        = containers.ExtractedArchive(d, targz, v)
 			dockerfile = src.File("Dockerfile")
 			runsh      = src.File("packaging/docker/run.sh")
 		)
