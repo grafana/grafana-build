@@ -36,12 +36,7 @@ AddBrandingImage left 100u
 ; Page directory
 
 Section
-	# Preemptively stop grafana-server if it is running
-	# 'Grafana' is the name of the service in the old installer.
 	nsExec::ExecToLog 'sc stop "Grafana"'
-	Pop $0
-
-	nsExec::ExecToLog 'sc stop "grafana-server"'
 	Pop $0
 
 	SetOutPath $INSTDIR
@@ -95,7 +90,7 @@ Section Uninstall
 	# Remove the shortcuts
 	delete "$SMPROGRAMS\Uninstall Grafana.lnk"
 	# Stop and uninstall the Grafana service if one already exists
-	nsExec::ExecToLog '$INSTDIR\grafana-svc.exe stop'
+	nsExec::ExecToLog 'sc stop "Grafana"'
 	Pop $0
 
 	nsExec::ExecToLog '$INSTDIR\grafana-svc.exe uninstall'
