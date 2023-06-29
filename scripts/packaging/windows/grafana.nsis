@@ -120,4 +120,6 @@ Section Uninstall
 	# This is a good thing, as we want to loosely preserve the grafana.db and logs generated from previous installs.
 	# In the future we should consider giving the user the option to delete the grafana.db and logs in the uninstaller.
 	RMDIR $INSTDIR
+
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 SectionEnd
