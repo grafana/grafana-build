@@ -60,6 +60,10 @@ func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		return validateDeb(ctx, d, pkg, src, name)
 	}
 
+	if strings.HasSuffix(name, ".rpm") {
+		return validateRpm(ctx, d, pkg, src, name)
+	}
+
 	return nil, fmt.Errorf("unknown package extension")
 }
 
@@ -90,6 +94,25 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithFile("/src/package.deb", deb).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
+		WithWorkdir("/usr/share/grafana").
+		WithExec([]string{"grafana-server"}).
+		WithExposedPort(3000)
+
+	return containers.ValidatePackage(d, service, src, nodeVersion), nil
+}
+
+// validateRpm uses the given package (rpm) and grafana source code (src) to run the e2e smoke tests.
+// the returned directory is the e2e artifacts created by cypress (screenshots and videos).
+func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
+	}
+
+	// This grafana service runs in the background for the e2e tests
+	service := d.Container().From("redhat/ubi8:latest").
+		WithFile("/src/package.rpm", rpm).
+		WithExec([]string{"yum", "install", "-y", "/src/package.rpm"}).
 		WithWorkdir("/usr/share/grafana").
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
