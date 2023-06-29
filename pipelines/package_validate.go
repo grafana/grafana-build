@@ -133,7 +133,9 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: executil.Platform(taropts.Distro),
-	}).From("alpine:latest").
+	}).From("ubuntu:22.10").
+		WithExec([]string{"apt-get", "update", "-yq"}).
+		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates"}).
 		WithDirectory("/src", containers.ExtractedArchive(d, pkg, packageName)).
 		WithWorkdir("/src").
 		WithExec([]string{"./bin/grafana", "server"}).

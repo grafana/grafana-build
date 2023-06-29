@@ -20,6 +20,6 @@ func ValidatePackage(d *dagger.Client, service *dagger.Container, src *dagger.Di
 		WithEnvVariable("HOST", "grafana").
 		WithEnvVariable("PORT", "3000").
 		WithExec([]string{"yarn", "install", "--immutable"}).
-		WithExec([]string{"/bin/sh", "-c", "/src/e2e/verify-release || true"}).
+		WithExec([]string{"/bin/sh", "-c", "/src/e2e/verify-release"}).
 		Directory("e2e/verify/specs")
 }
