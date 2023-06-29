@@ -218,6 +218,7 @@ var ProImageFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "registry",
 		Usage: "The container registry that the image should be pushed to. Required if --push is set.",
+		Value: "docker.io",
 	},
 }
 

@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana-build/versions"
 )
 
-const GoImage = "golang:1.20.1-alpine"
+const (
+	GoImageAlpine = "golang:1.20.1-alpine"
+	GoImageDeb    = "golang:1.20.1"
+)
 
 var GrafanaCommands = []string{
 	"grafana",
@@ -83,7 +86,15 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		env         = executil.GoBuildEnv(goBuildOpts)
 	)
 
-	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
+	goImage := GoImageAlpine
+	switch goBuildOpts.LibC {
+	case executil.Musl:
+		goImage = GoImageAlpine
+	case executil.GLibC:
+		goImage = GoImageDeb
+	}
+
+	builder := GolangContainer(d, BuilderPlatform(distro, platform), goImage)
 
 	// We are doing a "cross build" or cross compilation if the requested platform does not match the platform we're building for.
 	isCrossBuild := !strings.Contains(string(distro), string(platform))
