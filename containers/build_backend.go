@@ -126,11 +126,14 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		}
 	}
 
+	// Add the user-provided opts.GoTags to the default list of tags.
+	goBuildOpts.Tags = append(goBuildOpts.Tags, opts.GoTags...)
+
 	for _, v := range commands {
 		o := goBuildOpts
 		o.Main = path.Join("pkg", "cmd", v)
 		o.Output = path.Join("bin", string(distro), binaryName(v, distro))
-		o.Tags = append(o.Tags, opts.GoTags...)
+		log.Println("o.Tags:", o.Tags, "ops.GoTags:", opts.GoTags)
 
 		cmd := executil.GoBuildCmd(o)
 		log.Printf("Building '%s' for %s", v, distro)
