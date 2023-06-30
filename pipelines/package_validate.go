@@ -18,12 +18,13 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	if err != nil {
 		return err
 	}
+	yarnCache := d.CacheVolume("yarn-cache")
 
 	// Define all of the containers first, and where their artifacts will be exported to
 	dirs := map[string]*dagger.Directory{}
 	for i, name := range args.PackageInputOpts.Packages {
 		pkg := packages[i]
-		dir, err := validatePackage(ctx, d, pkg, src, name)
+		dir, err := validatePackage(ctx, d, pkg, src, yarnCache, name)
 		if err != nil {
 			return err
 		}
@@ -47,21 +48,21 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	return grp.Wait()
 }
 
-func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, name string) (*dagger.Directory, error) {
+func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, name string) (*dagger.Directory, error) {
 	if strings.HasSuffix(name, ".docker.tar.gz") {
-		return validateDocker(ctx, d, pkg, src, name)
+		return validateDocker(ctx, d, pkg, src, yarnCache, name)
 	}
 
 	if strings.HasSuffix(name, ".tar.gz") {
-		return validateTarball(ctx, d, pkg, src, name)
+		return validateTarball(ctx, d, pkg, src, yarnCache, name)
 	}
 
 	if strings.HasSuffix(name, ".deb") {
-		return validateDeb(ctx, d, pkg, src, name)
+		return validateDeb(ctx, d, pkg, src, yarnCache, name)
 	}
 
 	if strings.HasSuffix(name, ".rpm") {
-		return validateRpm(ctx, d, pkg, src, name)
+		return validateRpm(ctx, d, pkg, src, yarnCache, name)
 	}
 
 	return nil, fmt.Errorf("unknown package extension")
@@ -69,7 +70,7 @@ func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 
 // validateDocker uses the given package (.docker.tar.gz) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
-func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
@@ -78,12 +79,12 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container().Import(pkg).WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, nodeVersion), nil
+	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateDeb uses the given package (deb) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
-func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
@@ -102,12 +103,12 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, nodeVersion), nil
+	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateRpm uses the given package (rpm) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
-func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
@@ -125,12 +126,12 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, nodeVersion), nil
+	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateTarball uses the given package (pkg) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
-func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, packageName string) (*dagger.Directory, error) {
+func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
 	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
@@ -149,5 +150,5 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, nodeVersion), nil
+	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }

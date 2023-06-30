@@ -40,13 +40,7 @@ type YarnCacheOpts struct {
 	CacheVolume *dagger.CacheVolume
 }
 
-type YarnInstallOpts struct {
-	CacheOpts   *YarnCacheOpts
-	Files       map[string]*dagger.File
-	Directories map[string]*dagger.Directory
-	NodeVersion string
-}
-
+// WithYarnCache mounts the given YarnCacheDir in the provided container
 func WithYarnCache(container *dagger.Container, opts *YarnCacheOpts) *dagger.Container {
 	yarnCacheDir := "/yarn/cache"
 	c := container.WithEnvVariable("YARN_CACHE_FOLDER", yarnCacheDir)
@@ -57,6 +51,14 @@ func WithYarnCache(container *dagger.Container, opts *YarnCacheOpts) *dagger.Con
 	return c.WithMountedCache(yarnCacheDir, opts.CacheVolume)
 }
 
+type YarnInstallOpts struct {
+	CacheOpts   *YarnCacheOpts
+	Files       map[string]*dagger.File
+	Directories map[string]*dagger.Directory
+	NodeVersion string
+}
+
+// YarnInstall mounts all of the necessary files to run a `yarn install` and then runs `yarn install` to populate the cache before being reused elsewhere.
 func YarnInstall(ctx context.Context, d *dagger.Client, opts *YarnInstallOpts) error {
 	container := NodeContainer(d, NodeImage(opts.NodeVersion)).
 		WithWorkdir("/src")
