@@ -107,17 +107,13 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
 		WithWorkdir("/usr/share/grafana")
 
-	if strings.Contains(packageName, "enterprise") {
-		exitCode, err := serviceContainer.
-			WithExec([]string{"grep", "-q", "Grafana Enterprise", "LICENSE"}).
-			ExitCode(ctx)
-
-		if err != nil || exitCode != 0 {
+	if taropts.Edition == "enterprise" {
+		license, err := serviceContainer.File("/usr/share/LICENSE").Contents(ctx)
+		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
 			return nil, fmt.Errorf("failed to validate enterprise license")
 		}
 	}
 
-	// This grafana service runs in the background for the e2e tests
 	service := serviceContainer.
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
@@ -143,17 +139,13 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		WithExec([]string{"yum", "install", "-y", "/src/package.rpm"}).
 		WithWorkdir("/usr/share/grafana")
 
-	if strings.Contains(packageName, "enterprise") {
-		exitCode, err := serviceContainer.
-			WithExec([]string{"grep", "-q", "Grafana Enterprise", "LICENSE"}).
-			ExitCode(ctx)
-
-		if err != nil || exitCode != 0 {
+	if taropts.Edition == "enterprise" {
+		license, err := serviceContainer.File("/usr/share/grafana/LICENSE").Contents(ctx)
+		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
 			return nil, fmt.Errorf("failed to validate enterprise license")
 		}
 	}
 
-	// This grafana service runs in the background for the e2e tests
 	service := serviceContainer.
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
@@ -172,6 +164,7 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 	taropts := TarOptsFromFileName(packageName)
 	archive := containers.ExtractedArchive(d, pkg, packageName)
 
+	// This grafana service runs in the background for the e2e tests
 	serviceContainer := d.Container(dagger.ContainerOpts{
 		Platform: executil.Platform(taropts.Distro),
 	}).From("ubuntu:22.10").
@@ -180,17 +173,13 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		WithDirectory("/src", archive).
 		WithWorkdir("/src")
 
-	if strings.Contains(packageName, "enterprise") {
-		exitCode, err := serviceContainer.
-			WithExec([]string{"grep", "-q", "Grafana Enterprise", "/src/LICENSE"}).
-			ExitCode(ctx)
-
-		if err != nil || exitCode != 0 {
+	if taropts.Edition == "enterprise" {
+		license, err := serviceContainer.File("/src/LICENSE").Contents(ctx)
+		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
 			return nil, fmt.Errorf("failed to validate enterprise license")
 		}
 	}
 
-	// This grafana service runs in the background for the e2e tests
 	service := serviceContainer.
 		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
