@@ -108,7 +108,7 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithWorkdir("/usr/share/grafana")
 
 	if taropts.Edition == "enterprise" {
-		license, err := serviceContainer.File("/usr/share/LICENSE").Contents(ctx)
+		license, err := serviceContainer.File("/usr/share/grafana/LICENSE").Contents(ctx)
 		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
 			return nil, fmt.Errorf("failed to validate enterprise license")
 		}
