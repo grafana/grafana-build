@@ -76,8 +76,12 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
+	taropts := TarOptsFromFileName(packageName)
+
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container().Import(pkg).WithExposedPort(3000)
+	service := d.Container(dagger.ContainerOpts{
+		Platform: executil.Platform(taropts.Distro),
+	}).Import(pkg).WithExposedPort(3000)
 
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
