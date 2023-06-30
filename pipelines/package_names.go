@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -14,6 +15,21 @@ type TarFileOpts struct {
 	// Edition is the flavor text after "grafana-", like "enterprise".
 	Edition string
 	Distro  executil.Distribution
+}
+
+func WithoutExt(name string) string {
+	ext := filepath.Ext(name)
+	log.Println("Got ext")
+	n := strings.TrimSuffix(name, ext)
+
+	// Explicitely handle `.gz` which might will also probably have a `.tar` extension as well.
+	if ext == ".gz" {
+		n = strings.TrimSuffix(n, ".ubuntu.docker.tar")
+		n = strings.TrimSuffix(n, ".docker.tar")
+		n = strings.TrimSuffix(n, ".tar")
+	}
+
+	return n
 }
 
 // TarFilename returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
@@ -29,6 +45,7 @@ func TarFilename(opts TarFileOpts) string {
 		// If applicable this will be set to something like "7" (for arm7)
 		archv = executil.ArchVersion(opts.Distro)
 	)
+
 	if archv != "" {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
@@ -39,7 +56,11 @@ func TarFilename(opts TarFileOpts) string {
 }
 
 func TarOptsFromFileName(filename string) TarFileOpts {
-	components := strings.Split(strings.TrimSuffix(filename, ".tar.gz"), "_")
+	n := WithoutExt(filename)
+	log.Println(n)
+	log.Println(n)
+	log.Println(n)
+	components := strings.Split(n, "_")
 	if len(components) != 5 {
 		return TarFileOpts{}
 	}

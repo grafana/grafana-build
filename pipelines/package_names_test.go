@@ -7,6 +7,20 @@ import (
 	"github.com/grafana/grafana-build/pipelines"
 )
 
+func TestWithoutExt(t *testing.T) {
+	names := map[string]string{
+		"grafana_v1.0.1-test_333_plan9_amd64.tar.gz":            "grafana_v1.0.1-test_333_plan9_amd64",
+		"grafana-enterprise_v1.0.1-test_333_plan9_amd64.tar.gz": "grafana-enterprise_v1.0.1-test_333_plan9_amd64",
+		"grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz": "grafana-enterprise_v1.0.1-test_333_plan9_arm-6",
+	}
+
+	for k, v := range names {
+		if n := pipelines.WithoutExt(k); n != v {
+			t.Errorf("Expected '%s' without file name to equal '%s' but got '%s'", k, v, n)
+		}
+	}
+}
+
 func TestTarFilename(t *testing.T) {
 	t.Run("It should use the correct name if Enterprise is false", func(t *testing.T) {
 		distro := executil.Distribution("plan9/amd64")
