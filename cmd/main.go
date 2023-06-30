@@ -23,6 +23,7 @@ var app = &cli.App{
 		WindowsInstallerCommand,
 		ZipCommand,
 		ValidateCommand,
+		ProImageCommand,
 	},
 }
 
