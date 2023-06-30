@@ -89,8 +89,12 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
+	taropts := TarOptsFromFileName(packageName)
+
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container().From("debian:latest").
+	service := d.Container(dagger.ContainerOpts{
+		Platform: executil.Platform(taropts.Distro),
+	}).From("debian:latest").
 		WithFile("/src/package.deb", deb).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
@@ -109,8 +113,12 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
 
+	taropts := TarOptsFromFileName(packageName)
+
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container().From("redhat/ubi8:latest").
+	service := d.Container(dagger.ContainerOpts{
+		Platform: executil.Platform(taropts.Distro),
+	}).From("redhat/ubi8:latest").
 		WithFile("/src/package.rpm", rpm).
 		WithExec([]string{"yum", "install", "-y", "/src/package.rpm"}).
 		WithWorkdir("/usr/share/grafana").
