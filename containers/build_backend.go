@@ -130,7 +130,7 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		o := goBuildOpts
 		o.Main = path.Join("pkg", "cmd", v)
 		o.Output = path.Join("bin", string(distro), binaryName(v, distro))
-		o.Tags = opts.GoTags
+		o.Tags = append(o.Tags, opts.GoTags...)
 
 		cmd := executil.GoBuildCmd(o)
 		log.Printf("Building '%s' for %s", v, distro)
