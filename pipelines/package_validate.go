@@ -83,6 +83,8 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 		Platform: executil.Platform(taropts.Distro),
 	}).Import(pkg).WithExposedPort(3000)
 
+	// TODO: Add LICENSE to containers and implement validation
+
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
