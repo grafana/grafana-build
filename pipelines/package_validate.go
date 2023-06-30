@@ -103,6 +103,20 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
+	if strings.Contains(packageName, "enterprise") {
+		exitCode, err := d.Container().
+			From("debian:latest").
+			WithFile("/src/package.deb", deb).
+			WithExec([]string{"dpkg-deb", "-R", "/src/package.deb", "/src/package"}).
+			WithWorkdir("/src/package/usr/share/grafana").
+			WithExec([]string{"grep", "-q", "Grafana Enterprise", "LICENSE"}).
+			ExitCode(ctx)
+
+		if err != nil || exitCode != 0 {
+			return nil, fmt.Errorf("failed to validate enterprise license")
+		}
+	}
+
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
