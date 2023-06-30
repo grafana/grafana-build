@@ -130,12 +130,25 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 	taropts := TarOptsFromFileName(packageName)
 
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container(dagger.ContainerOpts{
+	serviceContainer := d.Container(dagger.ContainerOpts{
 		Platform: executil.Platform(taropts.Distro),
 	}).From("redhat/ubi8:latest").
 		WithFile("/src/package.rpm", rpm).
 		WithExec([]string{"yum", "install", "-y", "/src/package.rpm"}).
-		WithWorkdir("/usr/share/grafana").
+		WithWorkdir("/usr/share/grafana")
+
+	if strings.Contains(packageName, "enterprise") {
+		exitCode, err := serviceContainer.
+			WithExec([]string{"grep", "-q", "Grafana Enterprise", "LICENSE"}).
+			ExitCode(ctx)
+
+		if err != nil || exitCode != 0 {
+			return nil, fmt.Errorf("failed to validate enterprise license")
+		}
+	}
+
+	// This grafana service runs in the background for the e2e tests
+	service := serviceContainer.
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
