@@ -93,22 +93,16 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 	taropts := TarOptsFromFileName(packageName)
 
 	// This grafana service runs in the background for the e2e tests
-	service := d.Container(dagger.ContainerOpts{
+	serviceContainer := d.Container(dagger.ContainerOpts{
 		Platform: executil.Platform(taropts.Distro),
 	}).From("debian:latest").
 		WithFile("/src/package.deb", deb).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
-		WithWorkdir("/usr/share/grafana").
-		WithExec([]string{"grafana-server"}).
-		WithExposedPort(3000)
+		WithWorkdir("/usr/share/grafana")
 
 	if strings.Contains(packageName, "enterprise") {
-		exitCode, err := d.Container().
-			From("debian:latest").
-			WithFile("/src/package.deb", deb).
-			WithExec([]string{"dpkg-deb", "-R", "/src/package.deb", "/src/package"}).
-			WithWorkdir("/src/package/usr/share/grafana").
+		exitCode, err := serviceContainer.
 			WithExec([]string{"grep", "-q", "Grafana Enterprise", "LICENSE"}).
 			ExitCode(ctx)
 
@@ -116,6 +110,11 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 			return nil, fmt.Errorf("failed to validate enterprise license")
 		}
 	}
+
+	// This grafana service runs in the background for the e2e tests
+	service := serviceContainer.
+		WithExec([]string{"grafana-server"}).
+		WithExposedPort(3000)
 
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
