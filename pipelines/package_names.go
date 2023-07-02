@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -19,7 +18,6 @@ type TarFileOpts struct {
 
 func WithoutExt(name string) string {
 	ext := filepath.Ext(name)
-	log.Println("Got ext")
 	n := strings.TrimSuffix(name, ext)
 
 	// Explicitely handle `.gz` which might will also probably have a `.tar` extension as well.
@@ -57,9 +55,6 @@ func TarFilename(opts TarFileOpts) string {
 
 func TarOptsFromFileName(filename string) TarFileOpts {
 	n := WithoutExt(filename)
-	log.Println(n)
-	log.Println(n)
-	log.Println(n)
 	components := strings.Split(n, "_")
 	if len(components) != 5 {
 		return TarFileOpts{}
@@ -95,14 +90,15 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	}
 }
 
-// DestinationName is derived from the original package name, but with a different extension.
+// ReplaceExt replaces the extension of the given package name.
 // For example, if the input package name (original) is grafana_v1.0.0_linux-arm64_1.tar.gz, then
 // derivatives should have the same name, but with a different extension.
 // This function also removes the leading directory and removes the URL scheme prefix.
-func DestinationName(original, extension string) string {
+func ReplaceExt(original, extension string) string {
+	n := strings.TrimPrefix(WithoutExt(original), "file://")
 	if extension == "" {
-		return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", ""), "file://"))
+		return filepath.Base(n)
 	}
 
-	return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", fmt.Sprintf(".%s", extension)), "file://"))
+	return filepath.Base(fmt.Sprintf("%s.%s", n, extension))
 }

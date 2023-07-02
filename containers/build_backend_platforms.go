@@ -114,6 +114,23 @@ func BuildOptsDynamic(distro executil.Distribution, buildinfo *BuildInfo) *execu
 	}
 }
 
+func BuildOptsDynamicDarwin(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
+	var (
+		os, arch = executil.OSAndArch(distro)
+	)
+
+	return &executil.GoBuildOpts{
+		ExperimentalFlags: []string{},
+		OS:                os,
+		Arch:              arch,
+		CGOEnabled:        true,
+		TrimPath:          true,
+		LDFlags: map[string][]string{
+			"-X": buildinfo.LDFlags(),
+		},
+	}
+}
+
 func BuildOptsDynamicWindows(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
 	var (
 		os, arch = executil.OSAndArch(distro)
@@ -154,8 +171,8 @@ var DistributionGoOpts = map[executil.Distribution]DistroBuildOptsFunc{
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
-	executil.DistDarwinAMD64: BuildOptsDynamic,
-	executil.DistDarwinARM64: BuildOptsDynamic,
+	executil.DistDarwinAMD64: BuildOptsDynamicDarwin,
+	executil.DistDarwinARM64: BuildOptsDynamicDarwin,
 
 	executil.DistWindowsAMD64: BuildOptsDynamicWindows,
 	executil.DistWindowsARM64: BuildOptsDynamicWindows,

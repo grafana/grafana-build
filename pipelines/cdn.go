@@ -20,7 +20,7 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	// Extract the package(s)
 	for i, v := range args.PackageInputOpts.Packages {
 		var (
-			name  = DestinationName(v, "")
+			name  = ReplaceExt(v, "")
 			targz = packages[i]
 		)
 

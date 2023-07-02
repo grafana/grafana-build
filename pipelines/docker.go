@@ -126,7 +126,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 				if base == BaseImageUbuntu {
 					ext = "ubuntu.docker.tar.gz"
 				}
-				name := DestinationName(v, ext)
+				name := ReplaceExt(v, ext)
 				img := builder.WithExec([]string{"docker", "save", tags[0], "-o", name}).File(name)
 				dst := strings.Join([]string{publishOpts.Destination, name}, "/")
 				saved[dst] = img

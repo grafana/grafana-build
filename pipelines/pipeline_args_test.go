@@ -2,7 +2,6 @@ package pipelines_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +22,6 @@ func (t *TestCLIContext) Bool(key string) bool {
 }
 
 func (t *TestCLIContext) String(key string) string {
-	log.Println("getting key", key)
 	if _, ok := t.Data[key]; !ok {
 		return ""
 	}
