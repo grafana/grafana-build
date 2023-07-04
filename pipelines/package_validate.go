@@ -97,7 +97,7 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Printf("[%s] Running docker image on platform '%s'", packageName, platform)
+	log.Printf("Validating docker image for v%s-%s using platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	// Just guessing that maybe we need to add the "PACKAGE" environment variable here to prevent weird caching collisions
@@ -127,7 +127,7 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Println("Validating deb package using debian:latest and platform", platform)
+	log.Printf("Validating deb package for v%s-%s using debian:latest and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
@@ -163,7 +163,7 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Println("Validating rpm usnig redhat/ubi8:latest on platform", platform)
+	log.Printf("Validating rpm package for v%s-%s using redhat/ubi8:latest and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
@@ -199,7 +199,7 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		archive  = containers.ExtractedArchive(d, pkg, packageName)
 	)
 
-	log.Println("Validating standalone tarball usnig ubuntu:22.10 on platform", platform)
+	log.Printf("Validating standalone tarball for v%s-%s using ubuntu:22.10 and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
