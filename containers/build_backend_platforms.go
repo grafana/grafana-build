@@ -29,7 +29,6 @@ func ZigCXX(distro executil.Distribution) string {
 	}
 
 	return fmt.Sprintf("zig c++ -target %s", target)
-
 }
 
 var DefaultBuildOpts = func(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
