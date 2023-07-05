@@ -20,7 +20,7 @@ func WithoutExt(name string) string {
 	ext := filepath.Ext(name)
 	n := strings.TrimSuffix(name, ext)
 
-	// Explicitely handle `.gz` which might will also probably have a `.tar` extension as well.
+	// Explicitly handle `.gz` which might will also probably have a `.tar` extension as well.
 	if ext == ".gz" {
 		n = strings.TrimSuffix(n, ".ubuntu.docker.tar")
 		n = strings.TrimSuffix(n, ".docker.tar")
