@@ -11,6 +11,7 @@ type (
 	GoARM     string
 	GoAMD64   string
 	Go386     string
+	LibC      int
 )
 
 const (
@@ -27,6 +28,11 @@ const (
 const (
 	Go386SSE2      Go386 = "sse2"
 	Go386SoftFloat Go386 = "softfloat"
+)
+
+const (
+	Musl LibC = iota
+	GLibC
 )
 
 type GoBuildOpts struct {
@@ -80,6 +86,9 @@ type GoBuildOpts struct {
 	// during the build. For more information about build tags, see
 	// 'go help buildconstraint'.
 	Tags []string
+
+	// LibC doesn't change how 'go build' is ran, but it does affect what base image is used.
+	LibC LibC
 }
 
 // GoBuildEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.

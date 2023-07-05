@@ -23,7 +23,7 @@ var DefaultBuildOpts = func(distro executil.Distribution, buildinfo *BuildInfo) 
 		LDFlags: map[string][]string{
 			"-X": buildinfo.LDFlags(),
 		},
-		Tags: DefaultTags,
+		LibC: executil.GLibC,
 	}
 }
 
@@ -49,6 +49,7 @@ func BuildOptsStaticARM(distro executil.Distribution, buildinfo *BuildInfo) *exe
 			"-extldflags=-static": nil,
 		},
 		Tags: DefaultTags,
+		LibC: executil.Musl,
 	}
 }
 
@@ -69,7 +70,7 @@ func BuildOptsDynamicARM(distro executil.Distribution, buildinfo *BuildInfo) *ex
 		LDFlags: map[string][]string{
 			"-X": buildinfo.LDFlags(),
 		},
-		Tags: DefaultTags,
+		LibC: executil.GLibC,
 	}
 }
 
@@ -92,6 +93,7 @@ func BuildOptsStatic(distro executil.Distribution, buildinfo *BuildInfo) *execut
 			"-extldflags=-static": nil,
 		},
 		Tags: DefaultTags,
+		LibC: executil.Musl,
 	}
 }
 
@@ -109,7 +111,7 @@ func BuildOptsDynamic(distro executil.Distribution, buildinfo *BuildInfo) *execu
 		LDFlags: map[string][]string{
 			"-X": buildinfo.LDFlags(),
 		},
-		Tags: DefaultTags,
+		LibC: executil.GLibC,
 	}
 }
 
@@ -128,7 +130,7 @@ func BuildOptsDynamicWindows(distro executil.Distribution, buildinfo *BuildInfo)
 		LDFlags: map[string][]string{
 			"-X": buildinfo.LDFlags(),
 		},
-		Tags: DefaultTags,
+		LibC: executil.GLibC,
 	}
 }
 

@@ -183,6 +183,45 @@ var PackageFlags = []cli.Flag{
 	},
 }
 
+var ProImageFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "github-token",
+		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "grafana-repo",
+		Usage:    "The Grafana repository",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana",
+	},
+	&cli.StringFlag{
+		Name:     "grafana-version",
+		Usage:    "The Grafana version",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "image-tag",
+		Usage:    "The docker image tag",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:  "release-type",
+		Usage: "The Grafana release type",
+		Value: "prerelease",
+	},
+	&cli.BoolFlag{
+		Name:  "push",
+		Usage: "Push the built image to the container registry",
+		Value: false,
+	},
+	&cli.StringFlag{
+		Name:  "registry",
+		Usage: "The container registry that the image should be pushed to. Required if --push is set.",
+		Value: "docker.io",
+	},
+}
+
 var DefaultFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "platform",
