@@ -8,19 +8,15 @@ import (
 )
 
 func NodeImage(version string) string {
-	return fmt.Sprintf("node:%s", strings.TrimPrefix(strings.TrimSpace(version), "v"))
+	return fmt.Sprintf("node:%s-slim", strings.TrimPrefix(strings.TrimSpace(version), "v"))
 }
 
 // NodeContainer returns a docker container with everything set up that is needed to build or run frontend tests.
 func NodeContainer(d *dagger.Client, base string) *dagger.Container {
-	container := d.Container().From(base)
-
-	// The Golang alpine containers don't come with make installed
-	if strings.Contains(base, "alpine") {
-		container = container.WithExec([]string{"apk", "update"})
-		container = container.WithExec([]string{"apk", "add", "make"})
-	}
-	container = container.WithEnvVariable("NODE_OPTIONS", "--max_old_space_size=8000")
+	container := d.Container().From(base).
+		WithExec([]string{"apt-get", "update", "-yq"}).
+		WithExec([]string{"apt-get", "install", "-yq", "make"}).
+		WithEnvVariable("NODE_OPTIONS", "--max_old_space_size=8000")
 
 	return container
 }

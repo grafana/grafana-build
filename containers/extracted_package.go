@@ -3,8 +3,10 @@ package containers
 import "dagger.io/dagger"
 
 // ExtractedActive returns a directory that holds an extracted tar.gz
-func ExtractedArchive(d *dagger.Client, f *dagger.File) *dagger.Directory {
+func ExtractedArchive(d *dagger.Client, f *dagger.File, name string) *dagger.Directory {
 	return d.Container().From("busybox").
+		// Workaround for now (maybe unnecessary?): set a FILE environment variable so that we don't accidentally cache
+		WithEnvVariable("FILE", name).
 		WithFile("/src/archive.tar.gz", f).
 		WithExec([]string{"mkdir", "-p", "/src/archive"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/archive.tar.gz", "-C", "/src/archive"}).

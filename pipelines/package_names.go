@@ -16,6 +16,20 @@ type TarFileOpts struct {
 	Distro  executil.Distribution
 }
 
+func WithoutExt(name string) string {
+	ext := filepath.Ext(name)
+	n := strings.TrimSuffix(name, ext)
+
+	// Explicitly handle `.gz` which might will also probably have a `.tar` extension as well.
+	if ext == ".gz" {
+		n = strings.TrimSuffix(n, ".ubuntu.docker.tar")
+		n = strings.TrimSuffix(n, ".docker.tar")
+		n = strings.TrimSuffix(n, ".tar")
+	}
+
+	return n
+}
+
 // TarFilename returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
 func TarFilename(opts TarFileOpts) string {
 	name := "grafana"
@@ -29,6 +43,7 @@ func TarFilename(opts TarFileOpts) string {
 		// If applicable this will be set to something like "7" (for arm7)
 		archv = executil.ArchVersion(opts.Distro)
 	)
+
 	if archv != "" {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
@@ -39,7 +54,8 @@ func TarFilename(opts TarFileOpts) string {
 }
 
 func TarOptsFromFileName(filename string) TarFileOpts {
-	components := strings.Split(strings.TrimSuffix(filename, ".tar.gz"), "_")
+	n := WithoutExt(filename)
+	components := strings.Split(n, "_")
 	if len(components) != 5 {
 		return TarFileOpts{}
 	}
@@ -74,14 +90,15 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	}
 }
 
-// DestinationName is derived from the original package name, but with a different extension.
+// ReplaceExt replaces the extension of the given package name.
 // For example, if the input package name (original) is grafana_v1.0.0_linux-arm64_1.tar.gz, then
 // derivatives should have the same name, but with a different extension.
 // This function also removes the leading directory and removes the URL scheme prefix.
-func DestinationName(original, extension string) string {
+func ReplaceExt(original, extension string) string {
+	n := strings.TrimPrefix(WithoutExt(original), "file://")
 	if extension == "" {
-		return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", ""), "file://"))
+		return filepath.Base(n)
 	}
 
-	return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(original, ".tar.gz", fmt.Sprintf(".%s", extension)), "file://"))
+	return filepath.Base(fmt.Sprintf("%s.%s", n, extension))
 }

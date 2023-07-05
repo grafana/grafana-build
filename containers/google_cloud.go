@@ -1,8 +1,10 @@
 package containers
 
 import (
+	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"dagger.io/dagger"
 )
@@ -96,6 +98,7 @@ func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url 
 	var (
 		container = d.Container().From(image)
 		err       error
+		r         = rand.Int()
 	)
 
 	container, err = auth.Authenticate(d, container)
@@ -103,7 +106,9 @@ func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url 
 		return nil, err
 	}
 	secret := d.SetSecret("gcs-download-url", url)
-	file := container.WithSecretVariable("GCS_DOWNLOAD_URL", secret).
+	file := container.
+		WithEnvVariable("RAND", strconv.Itoa(r)).
+		WithSecretVariable("GCS_DOWNLOAD_URL", secret).
 		WithExec([]string{"/bin/sh", "-c", "gcloud storage cp ${GCS_DOWNLOAD_URL} /src/file"}).
 		File("/src/file")
 
