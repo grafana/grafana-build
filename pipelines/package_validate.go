@@ -256,8 +256,12 @@ func validateLicense(ctx context.Context, service *dagger.Container, licensePath
 // validateVersion uses the given container and version path to validate the version for each edition (enterprise or oss)
 func validateVersion(ctx context.Context, service *dagger.Container, versionPath string, taropts TarFileOpts) error {
 	version, err := service.File(versionPath).Contents(ctx)
-	if err != nil || strings.TrimSpace(version) != taropts.Version {
-		return fmt.Errorf("failed to validate version")
+	if err != nil {
+		return err
+	}
+	
+	 if  strings.TrimSpace(version) != taropts.Version {
+		return fmt.Errorf("version in package does not match version in package name")
 	}
 
 	return nil
