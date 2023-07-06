@@ -167,9 +167,7 @@ func PackageArch(d Distribution) string {
 	case "amd64", "arm64":
 		return arch
 	case "arm":
-		if ArchVersion(d) == "7" {
-			return "armhf"
-		}
+		return "armhf"
 	}
 
 	return ""

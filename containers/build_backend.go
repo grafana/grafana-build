@@ -4,38 +4,20 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/executil"
 	"github.com/grafana/grafana-build/versions"
 )
 
-const GoImage = "golang:1.20.1-alpine"
+const (
+	GoImageAlpine = "golang:1.20.2-alpine"
+)
 
 var GrafanaCommands = []string{
 	"grafana",
 	"grafana-server",
 	"grafana-cli",
-}
-
-// BuilderPlatform returns the most optimal dagger.Platform for building the provided distribution.
-// if 'platform' is 'amd64', then we can always use the 'amd64' platform.
-// if 'platform' is 'arm64' and 'distro' is 'arm64', then we can use the 'arm64' platform. On Docker for Mac, this should be the most optimal for performance.
-// if 'platform' is 'arm64' but 'distro' is 'amd64', we have to rely on buildkit's platform emulation. This will be very slow and really shouldn't be used.
-// if 'platform' is 'arm64' but 'distro' is 'arm', then ... TBD?
-func BuilderPlatform(distro executil.Distribution, platform dagger.Platform) dagger.Platform {
-	_, arch := executil.OSAndArch(distro)
-	switch arch {
-	// If the distro's arch is arm64 then we use whatever platform is explicitly requested
-	case "arm64":
-		return platform
-	// If the distro's arch is amd64, then we always use an amd64 platform
-	case "amd64":
-		return dagger.Platform("linux/amd64")
-	default:
-		return dagger.Platform("linux/amd64")
-	}
 }
 
 func binaryName(command string, distro executil.Distribution) string {
@@ -60,17 +42,46 @@ type CompileBackendOpts struct {
 	CombinedExecutables bool
 }
 
-// CompileBackendBuilder returns the container that is completely set up to build Grafana for the given distribution.
-// * dir refers to the source tree of Grafana'; this could be a freshly cloned copy of Grafana.
-// * buildinfo will be added as build flags to the 'go build' command.
+func goBuildImage(distro executil.Distribution, opts *executil.GoBuildOpts) string {
+	os, _ := executil.OSAndArch(distro)
+
+	if os != "linux" {
+		return ViceroyImage
+	}
+
+	return GoImageAlpine
+}
+
+// This function will return the platform equivalent to the distribution.
+// However, if the distribution is a non-linux distribution, then it will always return linux/amd64.
+// In the future it would probably be more suitable to also consider returning arm64 and using the viceroy:*-arm images.
+func goBuildPlatform(distro executil.Distribution, platform dagger.Platform) dagger.Platform {
+	os, _ := executil.OSAndArch(distro)
+	// For non-linux containers we use use viceroy on linux/amd64.
+	if os != "linux" {
+		return dagger.Platform("linux/amd64")
+	}
+
+	// Otherwise we use the host's default platform.
+	return platform
+}
+
+// CompileBackendBuilder returns the dagger container that will build the requested CompileBackendOpts.
+// Goals:
+//  0. Attempt to build Grafana using the platform given by the --platform argument.
+//     The efficacy of this argument will depend on the docker buildkit capabilties, which can be checked with `docker buildx ls`.
+//  1. If building for a different OS than Linux, then we use rfratto/vicery to accomplish that.
+//     Almost all users' docker buildx capabilities will include linux/amd64, so this should at least be functional.
+//     On Mac OS (especially using Apple Silicon chips), this will be incredibly slow. A 5 minute build on linux/amd64 could take 30+ minutes on darwin/arm64.
+//  2. When building for `arm/v6` or `arm/v7` we want to build these exclusively on Alpine with musl.
+//  3. When building anything statically we only want to build them on Alpine with musl.
 func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.Container {
 	var (
 		distro    = opts.Distribution
-		platform  = opts.Platform
 		src       = opts.Source
 		buildinfo = opts.BuildInfo
+		platform  = goBuildPlatform(distro, opts.Platform)
 	)
-	log.Println("Creating Grafana backend build container for", distro, "on platform", platform)
 
 	// These options determine the CLI arguments and environment variables passed to the go build command.
 	goBuildOptsFunc, ok := DistributionGoOpts[distro]
@@ -81,13 +92,14 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 	var (
 		goBuildOpts = goBuildOptsFunc(distro, buildinfo)
 		env         = executil.GoBuildEnv(goBuildOpts)
+		image       = goBuildImage(distro, goBuildOpts)
 	)
 
-	builder := GolangContainer(d, BuilderPlatform(distro, platform), GoImage)
+	log.Println("Creating Grafana backend build container for", distro, "on platform", platform)
 
-	// We are doing a "cross build" or cross compilation if the requested platform does not match the platform we're building for.
-	isCrossBuild := !strings.Contains(string(distro), string(platform))
-	if isCrossBuild {
+	builder := GolangContainer(d, platform, image)
+
+	if image == ViceroyImage {
 		builder = ViceroyContainer(d, distro, ViceroyImage)
 	}
 
@@ -105,7 +117,7 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		WithExec(genGoArgs)
 
 	// Adding env after the previous 'WithExec' ensures that when cross-building we still use the selected platform for 'make gen-go'.
-	if isCrossBuild {
+	if image == ViceroyImage {
 		builder = WithViceroyEnv(builder, goBuildOpts)
 	}
 
@@ -126,11 +138,13 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		}
 	}
 
+	// Add the user-provided opts.GoTags to the default list of tags.
+	goBuildOpts.Tags = append(goBuildOpts.Tags, opts.GoTags...)
+
 	for _, v := range commands {
 		o := goBuildOpts
 		o.Main = path.Join("pkg", "cmd", v)
 		o.Output = path.Join("bin", string(distro), binaryName(v, distro))
-		o.Tags = opts.GoTags
 
 		cmd := executil.GoBuildCmd(o)
 		log.Printf("Building '%s' for %s", v, distro)
@@ -138,7 +152,6 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 		log.Printf("Building '%s' with command: '%+v'", v, cmd)
 		builder = builder.WithExec(cmd.Args)
 	}
-
 	return builder
 }
 

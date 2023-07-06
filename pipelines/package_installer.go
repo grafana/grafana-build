@@ -205,3 +205,25 @@ func PublishFileFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		return nil
 	}
 }
+
+func PublishDirFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, dir *dagger.Directory, opts *containers.GCPOpts, dst string) func() error {
+	return func() error {
+		log.Printf("[%s] Attempting to publish file", dst)
+		log.Printf("[%s] Acquiring semaphore", dst)
+		if err := sm.Acquire(ctx, 1); err != nil {
+			return fmt.Errorf("failed to acquire semaphore: %w", err)
+		}
+		defer sm.Release(1)
+		log.Printf("[%s] Acquired semaphore", dst)
+
+		log.Printf("[%s] Publishing file", dst)
+		out, err := containers.PublishDirectory(ctx, d, dir, opts, dst)
+		if err != nil {
+			return fmt.Errorf("[%s] error: %w", dst, err)
+		}
+		log.Printf("[%s] Done publishing file", dst)
+
+		fmt.Fprintln(Stdout, out)
+		return nil
+	}
+}

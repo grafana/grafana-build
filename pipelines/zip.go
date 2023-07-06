@@ -20,7 +20,7 @@ func Zip(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	// Extract the package(s)
 	for i, v := range args.PackageInputOpts.Packages {
 		var (
-			name  = DestinationName(v, "zip")
+			name  = ReplaceExt(v, "zip")
 			targz = packages[i]
 		)
 

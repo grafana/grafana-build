@@ -24,7 +24,7 @@ func main() {
 	dir := filepath.Dir(tarball)
 	file := client.Host().Directory(dir).File(filepath.Base(tarball))
 	out := filepath.Join(dir, "npm-artifacts")
-	artifacts := containers.ExtractedArchive(client, file).Directory("npm-artifacts")
+	artifacts := containers.ExtractedArchive(client, file, tarball).Directory("npm-artifacts")
 
 	if _, err := artifacts.Export(ctx, out); err != nil {
 		panic(err)

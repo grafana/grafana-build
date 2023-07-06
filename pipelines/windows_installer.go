@@ -74,7 +74,7 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 	for i, v := range args.PackageInputOpts.Packages {
 		var (
 			taropts = TarOptsFromFileName(v)
-			name    = DestinationName(v, "exe")
+			name    = ReplaceExt(v, "exe")
 			targz   = packages[i]
 		)
 		log.Println("Taropts from file name", v, taropts)
