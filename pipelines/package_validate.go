@@ -310,13 +310,11 @@ func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 			WithFile("/src/package.deb", pkg).
 			WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"})
 
-		err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts)
-		if err != nil {
+		if err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts); err != nil {
 			return err
 		}
 
-		err = validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts)
-		if err != nil {
+		if err := validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts); err != nil {
 			return err
 		}
 
