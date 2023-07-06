@@ -269,7 +269,7 @@ func validateVersion(ctx context.Context, service *dagger.Container, versionPath
 
 func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
 	firstName := names[0]
-	if strings.HasSuffix(firstName, ".deb") {
+	if filepath.Ext(firstName) == ".deb" {
 		return validateDebUpgrade(ctx, d, packages, names)
 	}
 
@@ -284,8 +284,8 @@ func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 	var lastopts *TarFileOpts
 	var container *dagger.Container
 	for i, name := range names {
-		if !strings.HasSuffix(name, ".deb") {
-			return fmt.Errorf("upgrade package extension mismatch")
+		if ext := filepath.Ext(name); ext != ".deb" {
+			return fmt.Errorf("expected a file ending in .deb, received '%s'", ext)
 		}
 
 		pkg := packages[i]
