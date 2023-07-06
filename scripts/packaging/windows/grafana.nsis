@@ -50,6 +50,7 @@ Section
 	File grafana/LICENSE
 	File grafana/README.md
 	File grafana/NOTICE.md
+	File winimg/grafana_icon.ico
 	File /r grafana/bin
 	File /r grafana/conf
 	File /r grafana/public
@@ -58,7 +59,7 @@ Section
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\winimg\grafana_icon.ico$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\grafana_icon.ico$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "$\"https://grafana.com$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "HelpLink" "$\"${HELPURL}$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "URLInfoAbout" "$\"${ABOUTURL}$\""
@@ -103,6 +104,7 @@ Section Uninstall
 	DELETE $INSTDIR\LICENSE
 	DELETE $INSTDIR\README.md
 	DELETE $INSTDIR\NOTICE.md
+	DELETE $INSTDIR\grafana_icon.ico
 	RMDIR /r $INSTDIR\bin
 	RMDIR /r $INSTDIR\public
 	RMDIR /r $INSTDIR\plugins-bundled
