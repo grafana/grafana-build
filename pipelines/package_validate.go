@@ -268,6 +268,7 @@ func validateVersion(ctx context.Context, service *dagger.Container, versionPath
 	return nil
 }
 
+// validateUpgrade verifies the extension of the first package and proceeds with upgrade validation for the same extension
 func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
 	firstName := names[0]
 	if filepath.Ext(firstName) == ".deb" {
@@ -281,6 +282,9 @@ func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.F
 	return fmt.Errorf("invalid upgrade package extension")
 }
 
+// validateDebUpgrade receives a list of packages and package names, the names are used to retrieve information such as distro and edition
+// the function expects all the packages to have the same distro, otherwise it outputs a distro mismatch error
+// each package is installed to the same container and the license and version files are validated to see if the installation succeeded
 func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
 	var lastopts *TarFileOpts
 	var container *dagger.Container
