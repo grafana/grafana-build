@@ -9,6 +9,13 @@ InstallDir $PROGRAMFILES64\GrafanaLabs\Grafana
 
 Outfile "grafana-setup.exe"
 Name "${APPNAME}"
+!if ${APPNAME} == "GrafanaOSS"
+    !define CONFLICT_APP "GrafanaEnterprise"
+    !define CONFLICT_APP_NAME "Grafana Enterprise"
+!else
+    !define CONFLICT_APP "GrafanaOSS"
+    !define CONFLICT_APP_NAME "Grafana OSS"
+!endif
 
 # Branding / theming
 SetFont Arial 10
@@ -31,6 +38,17 @@ AddBrandingImage left 100u
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "English"
+
+Function .onInit
+    ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${CONFLICT_APP}" "DisplayName"
+    IfErrors NoConflictPresent ConflictPresent
+    ConflictPresent:
+    Pop $0
+    MessageBox MB_OK "${CONFLICT_APP_NAME} is already installed. Please uninstall it before continuing."
+    Abort 
+    NoConflictPresent:
+    Pop $0
+FunctionEnd
 
 ; The directory page allows the user to set the install directory
 ; Page directory
