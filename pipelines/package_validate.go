@@ -54,6 +54,19 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	return grp.Wait()
 }
 
+func ValidatePackageUpgrade(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	if err != nil {
+		return err
+	}
+
+	if len(packages) < 2 {
+		return fmt.Errorf("at least two packages required for upgrade")
+	}
+
+	return validateUpgrade(ctx, d, packages, args.PackageInputOpts.Packages)
+}
+
 func distroPlatform(distro executil.Distribution) dagger.Platform {
 	platform := executil.Platform(distro)
 	if _, arch := executil.OSAndArch(distro); arch == "arm" {
@@ -222,7 +235,7 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
-// validateLicense uses the given service and license path to validate the license for each edition (enterprise or oss)
+// validateLicense uses the given container and license path to validate the license for each edition (enterprise or oss)
 func validateLicense(ctx context.Context, service *dagger.Container, licensePath string, taropts TarFileOpts) error {
 	license, err := service.File(licensePath).Contents(ctx)
 	if taropts.Edition == "enterprise" {
@@ -235,6 +248,75 @@ func validateLicense(ctx context.Context, service *dagger.Container, licensePath
 		if err != nil || !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
 			return fmt.Errorf("failed to validate open-source license")
 		}
+	}
+
+	return nil
+}
+
+// validateVersion uses the given container and version path to validate the version for each edition (enterprise or oss)
+func validateVersion(ctx context.Context, service *dagger.Container, versionPath string, taropts TarFileOpts) error {
+	version, err := service.File(versionPath).Contents(ctx)
+	if err != nil || strings.TrimSpace(version) != taropts.Version {
+		return fmt.Errorf("failed to validate version")
+	}
+
+	return nil
+}
+
+func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	firstName := names[0]
+	if strings.HasSuffix(firstName, ".deb") {
+		return validateDebUpgrade(ctx, d, packages, names)
+	}
+
+	if strings.HasSuffix(firstName, ".rpm") {
+		return nil
+	}
+
+	return fmt.Errorf("invalid upgrade package extension")
+}
+
+func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	var lastopts *TarFileOpts
+	var container *dagger.Container
+	for i, name := range names {
+		if !strings.HasSuffix(name, ".deb") {
+			return fmt.Errorf("upgrade package extension mismatch")
+		}
+
+		pkg := packages[i]
+		taropts := TarOptsFromFileName(name)
+		if container == nil {
+			container = d.Container(dagger.ContainerOpts{
+				Platform: distroPlatform(taropts.Distro),
+			}).From("debian:latest").
+				WithExec([]string{"apt-get", "update"}).
+				WithWorkdir("/usr/share/grafana")
+		}
+
+		if lastopts != nil {
+			if lastopts.Distro != taropts.Distro {
+				return fmt.Errorf("upgrade package distro mismatch")
+			}
+
+			log.Printf("Validating deb package upgrade from v%s-%s to v%s-%s using debian:latest and platform %s\n", lastopts.Version, lastopts.Edition, taropts.Version, taropts.Edition, lastopts.Distro)
+		}
+
+		container = container.
+			WithFile("/src/package.deb", pkg).
+			WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"})
+
+		err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts)
+		if err != nil {
+			return err
+		}
+
+		err = validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts)
+		if err != nil {
+			return err
+		}
+
+		lastopts = &taropts
 	}
 
 	return nil

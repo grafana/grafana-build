@@ -53,7 +53,8 @@ func TarFilename(opts TarFileOpts) string {
 	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
 
-func TarOptsFromFileName(filename string) TarFileOpts {
+func TarOptsFromFileName(path string) TarFileOpts {
+	filename := filepath.Base(path)
 	n := WithoutExt(filename)
 	components := strings.Split(n, "_")
 	if len(components) != 5 {
@@ -77,7 +78,7 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		// arm-7 should become arm/v7
 		arch = strings.Join([]string{archv[0], archv[1]}, "/")
 	}
-	edition := ""
+	edition := "oss"
 	if n := strings.Split(name, "-"); len(n) != 1 {
 		edition = n[1]
 	}
