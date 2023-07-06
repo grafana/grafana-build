@@ -76,4 +76,27 @@ func TestOptsFromFile(t *testing.T) {
 			t.Errorf("got.Distro != expect.Distro, expected '%s', got '%s'", expect.Distro, got.Distro)
 		}
 	})
+	t.Run("It should consider only the basename", func(t *testing.T) {
+		name := "somewhere/grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
+		distro := executil.Distribution("plan9/arm/v6")
+		expect := pipelines.TarFileOpts{
+			Edition: "enterprise",
+			Version: "v1.0.1-test",
+			BuildID: "333",
+			Distro:  distro,
+		}
+		got := pipelines.TarOptsFromFileName(name)
+		if got.Edition != expect.Edition {
+			t.Errorf("got.Edition != expect.Edition, expected '%s'", expect.Edition)
+		}
+		if got.Version != expect.Version {
+			t.Errorf("got.Version != expect.Version, expected '%s', got '%s'", expect.Version, got.Version)
+		}
+		if got.BuildID != expect.BuildID {
+			t.Errorf("got.BuildID != expect.BuildID, expected '%s', got '%s'", expect.BuildID, got.BuildID)
+		}
+		if got.Distro != expect.Distro {
+			t.Errorf("got.Distro != expect.Distro, expected '%s', got '%s'", expect.Distro, got.Distro)
+		}
+	})
 }

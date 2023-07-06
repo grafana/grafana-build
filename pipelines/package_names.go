@@ -39,6 +39,7 @@ func TarFilename(opts TarFileOpts) string {
 }
 
 func TarOptsFromFileName(filename string) TarFileOpts {
+	filename = filepath.Base(filename)
 	components := strings.Split(strings.TrimSuffix(filename, ".tar.gz"), "_")
 	if len(components) != 5 {
 		return TarFileOpts{}
