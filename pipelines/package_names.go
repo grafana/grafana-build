@@ -54,6 +54,7 @@ func TarFilename(opts TarFileOpts) string {
 }
 
 func TarOptsFromFileName(filename string) TarFileOpts {
+	filename = filepath.Base(filename)
 	n := WithoutExt(filename)
 	components := strings.Split(n, "_")
 	if len(components) != 5 {

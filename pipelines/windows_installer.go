@@ -84,13 +84,13 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 		}
 
 		var (
-			app     = "Grafana"
+			app     = "GrafanaOSS"
 			slug    = "grafana"
 			license = "AGPLv3.rtf" // TODO: we should probably prefer that the installer shows the license.txt in the repo instead.
 		)
 
 		if taropts.Edition == "enterprise" {
-			app = "Grafana Enterprise"
+			app = "GrafanaEnterprise"
 			slug = "grafana-enterprise"
 			license = "grafana-enterprise.rtf"
 		}
