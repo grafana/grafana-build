@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"dagger.io/dagger"
@@ -259,8 +260,8 @@ func validateVersion(ctx context.Context, service *dagger.Container, versionPath
 	if err != nil {
 		return err
 	}
-	
-	 if  strings.TrimSpace(version) != taropts.Version {
+
+	if strings.TrimSpace(version) != taropts.Version {
 		return fmt.Errorf("version in package does not match version in package name")
 	}
 
