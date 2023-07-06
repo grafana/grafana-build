@@ -9,6 +9,13 @@ InstallDir $PROGRAMFILES64\GrafanaLabs\Grafana
 
 Outfile "grafana-setup.exe"
 Name "${APPNAME}"
+!if ${APPNAME} == "GrafanaOSS"
+    !define CONFLICT_APP "GrafanaEnterprise"
+    !define CONFLICT_APP_NAME "Grafana Enterprise"
+!else
+    !define CONFLICT_APP "GrafanaOSS"
+    !define CONFLICT_APP_NAME "Grafana OSS"
+!endif
 
 # Branding / theming
 SetFont Arial 10
@@ -32,16 +39,22 @@ AddBrandingImage left 100u
 
 !insertmacro MUI_LANGUAGE "English"
 
+Function .onInit
+    ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${CONFLICT_APP}" "DisplayName"
+    IfErrors NoConflictPresent ConflictPresent
+    ConflictPresent:
+    Pop $0
+    MessageBox MB_OK "${CONFLICT_APP_NAME} is already installed. Please uninstall it before continuing."
+    Abort 
+    NoConflictPresent:
+    Pop $0
+FunctionEnd
+
 ; The directory page allows the user to set the install directory
 ; Page directory
 
 Section
-	# Preemptively stop grafana-server if it is running
-	# 'Grafana' is the name of the service in the old installer.
 	nsExec::ExecToLog 'sc stop "Grafana"'
-	Pop $0
-
-	nsExec::ExecToLog 'sc stop "grafana-server"'
 	Pop $0
 
 	SetOutPath $INSTDIR
@@ -55,6 +68,7 @@ Section
 	File grafana/LICENSE
 	File grafana/README.md
 	File grafana/NOTICE.md
+	File winimg/grafana_icon.ico
 	File /r grafana/bin
 	File /r grafana/conf
 	File /r grafana/public
@@ -63,7 +77,7 @@ Section
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\winimg\grafana_icon.ico$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\grafana_icon.ico$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "$\"https://grafana.com$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "HelpLink" "$\"${HELPURL}$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "URLInfoAbout" "$\"${ABOUTURL}$\""
@@ -95,7 +109,7 @@ Section Uninstall
 	# Remove the shortcuts
 	delete "$SMPROGRAMS\Uninstall Grafana.lnk"
 	# Stop and uninstall the Grafana service if one already exists
-	nsExec::ExecToLog '$INSTDIR\grafana-svc.exe stop'
+    nsExec::ExecToLog '$INSTDIR\grafana-svc.exe stop'
 	Pop $0
 
 	nsExec::ExecToLog '$INSTDIR\grafana-svc.exe uninstall'
@@ -108,6 +122,7 @@ Section Uninstall
 	DELETE $INSTDIR\LICENSE
 	DELETE $INSTDIR\README.md
 	DELETE $INSTDIR\NOTICE.md
+	DELETE $INSTDIR\grafana_icon.ico
 	RMDIR /r $INSTDIR\bin
 	RMDIR /r $INSTDIR\public
 	RMDIR /r $INSTDIR\plugins-bundled
@@ -120,4 +135,6 @@ Section Uninstall
 	# This is a good thing, as we want to loosely preserve the grafana.db and logs generated from previous installs.
 	# In the future we should consider giving the user the option to delete the grafana.db and logs in the uninstaller.
 	RMDIR $INSTDIR
+
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 SectionEnd

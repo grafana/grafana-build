@@ -25,6 +25,7 @@ go run ./cmd \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt &
+
 # Build the grafana-pro tar.gz package.
 go run ./cmd \
   package \
@@ -64,7 +65,11 @@ go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > rpms.txt &
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
+  --sign=false \
+  --gpg-private-key-base64=$(echo $GPG_PRIVATE_KEY | base64 -w 0) \
+  --gpg-public-key-base64=$(echo $GPG_PUBLIC_KEY | base64 -w 0) \
+  --gpg-passphrase-base64=$(echo $GPG_PASSPHRASE | base64 -w 0) > rpms.txt &
 # For Windows we distribute zips and exes
 go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \

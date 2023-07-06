@@ -11,6 +11,14 @@ nav:
   - "Why Dagger?": why-dagger.md
   - "Guides":
     - guides/building.md
+  - "Artifact types":
+    - "Overview": artifact-types/index.md
+    - "Tarball": artifact-types/tarball.md
+    - "RPM": artifact-types/rpm.md
+    - "Debian": artifact-types/deb.md
+    - "Windows installer": artifact-types/windows-installer.md
+    - "Docker image": artifact-types/docker-image.md
+    - "ZIP": artifact-types/zip.md
   - "Meta":
     - meta/docs.md
 repo_url: https://github.com/grafana/grafana-build

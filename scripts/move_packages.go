@@ -143,6 +143,7 @@ func EXEHandler(name string) []string {
 		v = strings.ReplaceAll(v, "deb", "exe")
 		v = strings.ReplaceAll(v, "amd64", "windows-amd64")
 		v = strings.ReplaceAll(v, "_", "-")
+		v = strings.ReplaceAll(v, "~", "-")
 		v = strings.ReplaceAll(v, "-windows", ".windows")
 		packages[i] = v
 	}

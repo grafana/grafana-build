@@ -1,5 +1,5 @@
 <service>
-  <id>grafana-server</id>
+  <id>Grafana</id>
   <name>Grafana Server</name>
   <description>This service runs Grafana</description>
   <executable>%BASE%\bin\grafana.exe</executable>
