@@ -239,15 +239,19 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 // validateLicense uses the given container and license path to validate the license for each edition (enterprise or oss)
 func validateLicense(ctx context.Context, service *dagger.Container, licensePath string, taropts TarFileOpts) error {
 	license, err := service.File(licensePath).Contents(ctx)
+	if err != nil {
+		return err
+	}
+
 	if taropts.Edition == "enterprise" {
-		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
-			return fmt.Errorf("failed to validate enterprise license")
+		if !strings.Contains(license, "Grafana Enterprise") {
+			return fmt.Errorf("license in package does not match edition in package name")
 		}
 	}
 
 	if taropts.Edition == "" {
-		if err != nil || !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
-			return fmt.Errorf("failed to validate open-source license")
+		if !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
+			return fmt.Errorf("license in package does not match edition in package name")
 		}
 	}
 
