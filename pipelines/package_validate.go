@@ -276,7 +276,7 @@ func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.F
 	}
 
 	if strings.HasSuffix(firstName, ".rpm") {
-		return nil
+		return validateRpmUpgrade(ctx, d, packages, names)
 	}
 
 	return fmt.Errorf("invalid upgrade package extension")
@@ -314,6 +314,52 @@ func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 		container = container.
 			WithFile("/src/package.deb", pkg).
 			WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"})
+
+		if err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts); err != nil {
+			return err
+		}
+
+		if err := validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts); err != nil {
+			return err
+		}
+
+		lastopts = &taropts
+	}
+
+	return nil
+}
+
+// validateRpmUpgrade receives a list of packages and package names, the names are used to retrieve information such as distro and edition
+// the function expects all the packages to have the same distro, otherwise it outputs a distro mismatch error
+// each package is installed to the same container and the license and version files are validated to see if the installation succeeded
+func validateRpmUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	var lastopts *TarFileOpts
+	var container *dagger.Container
+	for i, name := range names {
+		if ext := filepath.Ext(name); ext != ".rpm" {
+			return fmt.Errorf("expected a file ending in .rpm, received '%s'", ext)
+		}
+
+		pkg := packages[i]
+		taropts := TarOptsFromFileName(name)
+		if container == nil {
+			container = d.Container(dagger.ContainerOpts{
+				Platform: distroPlatform(taropts.Distro),
+			}).From("redhat/ubi8:latest").
+				WithWorkdir("/usr/share/grafana")
+		}
+
+		if lastopts != nil {
+			if lastopts.Distro != taropts.Distro {
+				return fmt.Errorf("upgrade package distro mismatch")
+			}
+
+			log.Printf("Validating rpm package upgrade from v%s-%s to v%s-%s using redhat/ubi8:latest and platform %s\n", lastopts.Version, lastopts.Edition, taropts.Version, taropts.Edition, lastopts.Distro)
+		}
+
+		container = container.
+			WithFile("/src/package.rpm", pkg).
+			WithExec([]string{"yum", "install", "-y", "--allowerasing", "/src/package.rpm"})
 
 		if err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts); err != nil {
 			return err
