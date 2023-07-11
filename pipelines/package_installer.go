@@ -13,6 +13,7 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/versions"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
@@ -54,7 +55,17 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 				fmt.Sprintf("--version=%s", tarOpts.Version),
 				fmt.Sprintf("--package=%s", "/src/"+name),
 			}
+
+			vopts = versions.OptionsFor(tarOpts.Version)
 		)
+
+		// If this is a debian installer and this version had a prerm script (introduced in v9.5)...
+		// TODO: this logic means that rpms can't also have a beforeremove. Not important at the moment because it's static (in pipelines/rpm.go) and it doesn't have beforeremove set.
+		if vopts.DebPreRM.IsSet && vopts.DebPreRM.Value && opts.PackageType == "deb" {
+			if opts.BeforeRemove != "" {
+				fpmArgs = append(fpmArgs, fmt.Sprintf("--before-remove=%s", opts.BeforeRemove))
+			}
+		}
 
 		for _, c := range opts.ConfigFiles {
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", c[1]))
@@ -62,10 +73,6 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 
 		if opts.AfterInstall != "" {
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--after-install=%s", opts.AfterInstall))
-		}
-
-		if opts.BeforeRemove != "" {
-			fpmArgs = append(fpmArgs, fmt.Sprintf("--before-remove=%s", opts.BeforeRemove))
 		}
 
 		for _, d := range opts.Depends {
@@ -115,14 +122,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			WithEnvVariable("XZ_DEFAULTS", "-T0").
 			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
 			WithExec([]string{"ls", "-al", "/src"})
-		// Fix for issue where some older versions did not have BeforeRemove or AfterInstall scripts: Still add them, but provide empty scripts that do nothing if they don't exist
-		if opts.AfterInstall != "" {
-			container = container.WithExec([]string{"touch", opts.AfterInstall})
-		}
-		// Fix for issue where some older versions did not have BeforeRemove or AfterInstall scripts: Still add them, but provide empty scripts that do nothing if they don't exist
-		if opts.BeforeRemove != "" {
-			container = container.WithExec([]string{"touch", opts.BeforeRemove})
-		}
+
 		container = container.
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
 			// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.

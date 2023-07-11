@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"dagger.io/dagger"
@@ -54,6 +55,19 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	return grp.Wait()
 }
 
+func ValidatePackageUpgrade(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	if err != nil {
+		return err
+	}
+
+	if len(packages) < 2 {
+		return fmt.Errorf("at least two packages required for upgrade")
+	}
+
+	return validateUpgrade(ctx, d, packages, args.PackageInputOpts.Packages)
+}
+
 func distroPlatform(distro executil.Distribution) dagger.Platform {
 	platform := executil.Platform(distro)
 	if _, arch := executil.OSAndArch(distro); arch == "arm" {
@@ -97,7 +111,7 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Printf("Validating docker image for v%s-%s using platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
+	log.Printf("Validating docker image for v%s%s using platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	// Just guessing that maybe we need to add the "PACKAGE" environment variable here to prevent weird caching collisions
@@ -127,7 +141,7 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Printf("Validating deb package for v%s-%s using debian:latest and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
+	log.Printf("Validating deb package for v%s%s using debian:latest and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
@@ -163,7 +177,7 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		platform = distroPlatform(taropts.Distro)
 	)
 
-	log.Printf("Validating rpm package for v%s-%s using redhat/ubi8:latest and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
+	log.Printf("Validating rpm package for v%s%s using redhat/ubi8:latest and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
@@ -199,7 +213,7 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		archive  = containers.ExtractedArchive(d, pkg, packageName)
 	)
 
-	log.Printf("Validating standalone tarball for v%s-%s using ubuntu:22.10 and platform %s\n", taropts.Version, taropts.Edition, taropts.Distro)
+	log.Printf("Validating standalone tarball for v%s%s using ubuntu:22.10 and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
@@ -222,19 +236,144 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
-// validateLicense uses the given service and license path to validate the license for each edition (enterprise or oss)
+// validateLicense uses the given container and license path to validate the license for each edition (enterprise or oss)
 func validateLicense(ctx context.Context, service *dagger.Container, licensePath string, taropts TarFileOpts) error {
 	license, err := service.File(licensePath).Contents(ctx)
+	if err != nil {
+		return err
+	}
+
 	if taropts.Edition == "enterprise" {
-		if err != nil || !strings.Contains(license, "Grafana Enterprise") {
-			return fmt.Errorf("failed to validate enterprise license")
+		if !strings.Contains(license, "Grafana Enterprise") {
+			return fmt.Errorf("license in package is not the Grafana Enterprise license agreement")
 		}
 	}
 
 	if taropts.Edition == "" {
-		if err != nil || !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
-			return fmt.Errorf("failed to validate open-source license")
+		if !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
+			return fmt.Errorf("license in package is not the Grafana open-source license agreement")
 		}
+	}
+
+	return nil
+}
+
+// validateVersion uses the given container and version path to validate the version for each edition (enterprise or oss)
+func validateVersion(ctx context.Context, service *dagger.Container, versionPath string, taropts TarFileOpts) error {
+	version, err := service.File(versionPath).Contents(ctx)
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(version) != taropts.Version {
+		return fmt.Errorf("version in package does not match version in package name")
+	}
+
+	return nil
+}
+
+// validateUpgrade verifies the extension of the first package and proceeds with upgrade validation for the same extension
+func validateUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	firstName := names[0]
+	if filepath.Ext(firstName) == ".deb" {
+		return validateDebUpgrade(ctx, d, packages, names)
+	}
+
+	if strings.HasSuffix(firstName, ".rpm") {
+		return validateRpmUpgrade(ctx, d, packages, names)
+	}
+
+	return fmt.Errorf("invalid upgrade package extension")
+}
+
+// validateDebUpgrade receives a list of packages and package names, the names are used to retrieve information such as distro and edition
+// the function expects all the packages to have the same distro, otherwise it outputs a distro mismatch error
+// each package is installed to the same container and the license and version files are validated to see if the installation succeeded
+func validateDebUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	var lastopts *TarFileOpts
+	var container *dagger.Container
+	for i, name := range names {
+		if ext := filepath.Ext(name); ext != ".deb" {
+			return fmt.Errorf("expected a file ending in .deb, received '%s'", ext)
+		}
+
+		pkg := packages[i]
+		taropts := TarOptsFromFileName(name)
+		if container == nil {
+			container = d.Container(dagger.ContainerOpts{
+				Platform: distroPlatform(taropts.Distro),
+			}).From("debian:latest").
+				WithExec([]string{"apt-get", "update"}).
+				WithWorkdir("/usr/share/grafana")
+		}
+
+		if lastopts != nil {
+			if lastopts.Distro != taropts.Distro {
+				return fmt.Errorf("upgrade package distro mismatch")
+			}
+
+			log.Printf("Validating deb package upgrade from v%s%s to v%s%s using debian:latest and platform %s\n", lastopts.Version, lastopts.Suffix, taropts.Version, taropts.Suffix, lastopts.Distro)
+		}
+
+		container = container.
+			WithFile("/src/package.deb", pkg).
+			WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"})
+
+		if err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts); err != nil {
+			return err
+		}
+
+		if err := validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts); err != nil {
+			return err
+		}
+
+		lastopts = &taropts
+	}
+
+	return nil
+}
+
+// validateRpmUpgrade receives a list of packages and package names, the names are used to retrieve information such as distro and edition
+// the function expects all the packages to have the same distro, otherwise it outputs a distro mismatch error
+// each package is installed to the same container and the license and version files are validated to see if the installation succeeded
+func validateRpmUpgrade(ctx context.Context, d *dagger.Client, packages []*dagger.File, names []string) error {
+	var lastopts *TarFileOpts
+	var container *dagger.Container
+	for i, name := range names {
+		if ext := filepath.Ext(name); ext != ".rpm" {
+			return fmt.Errorf("expected a file ending in .rpm, received '%s'", ext)
+		}
+
+		pkg := packages[i]
+		taropts := TarOptsFromFileName(name)
+		if container == nil {
+			container = d.Container(dagger.ContainerOpts{
+				Platform: distroPlatform(taropts.Distro),
+			}).From("redhat/ubi8:latest").
+				WithWorkdir("/usr/share/grafana")
+		}
+
+		if lastopts != nil {
+			if lastopts.Distro != taropts.Distro {
+				return fmt.Errorf("upgrade package distro mismatch")
+			}
+
+			log.Printf("Validating rpm package upgrade from v%s%s to v%s%s using redhat/ubi8:latest and platform %s\n", lastopts.Version, lastopts.Suffix, taropts.Version, taropts.Suffix, lastopts.Distro)
+		}
+
+		container = container.
+			WithFile("/src/package.rpm", pkg).
+			WithExec([]string{"yum", "install", "-y", "--allowerasing", "/src/package.rpm"})
+
+		if err := validateVersion(ctx, container, "/usr/share/grafana/VERSION", taropts); err != nil {
+			return err
+		}
+
+		if err := validateLicense(ctx, container, "/usr/share/grafana/LICENSE", taropts); err != nil {
+			return err
+		}
+
+		lastopts = &taropts
 	}
 
 	return nil

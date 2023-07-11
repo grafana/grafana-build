@@ -14,6 +14,7 @@ type TarFileOpts struct {
 	// Edition is the flavor text after "grafana-", like "enterprise".
 	Edition string
 	Distro  executil.Distribution
+	Suffix  string
 }
 
 func WithoutExt(name string) string {
@@ -79,8 +80,10 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		arch = strings.Join([]string{archv[0], archv[1]}, "/")
 	}
 	edition := ""
+	suffix := ""
 	if n := strings.Split(name, "-"); len(n) != 1 {
 		edition = n[1]
+		suffix = fmt.Sprintf("-%s", n[1])
 	}
 
 	return TarFileOpts{
@@ -88,6 +91,7 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		Version: version,
 		BuildID: buildID,
 		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
+		Suffix:  suffix,
 	}
 }
 
