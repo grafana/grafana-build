@@ -60,7 +60,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		)
 
 		// If this is a debian installer and this version had a prerm script (introduced in v9.5)...
-		// TODO: this logic means that rpms can't also ahve a beforeremove. Not important at the moment because it's static (in pipelines/rpm.go) and it doesn't have beforeremove set.
+		// TODO: this logic means that rpms can't also have a beforeremove. Not important at the moment because it's static (in pipelines/rpm.go) and it doesn't have beforeremove set.
 		if vopts.DebPreRM.IsSet && vopts.DebPreRM.Value && opts.PackageType == "deb" {
 			if opts.BeforeRemove != "" {
 				fpmArgs = append(fpmArgs, fmt.Sprintf("--before-remove=%s", opts.BeforeRemove))
