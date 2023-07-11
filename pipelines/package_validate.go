@@ -245,13 +245,13 @@ func validateLicense(ctx context.Context, service *dagger.Container, licensePath
 
 	if taropts.Edition == "enterprise" {
 		if !strings.Contains(license, "Grafana Enterprise") {
-			return fmt.Errorf("license in package does not match edition in package name")
+			return fmt.Errorf("license in package is not the Grafana Enterprise license agreement")
 		}
 	}
 
 	if taropts.Edition == "" {
 		if !strings.Contains(license, "GNU AFFERO GENERAL PUBLIC LICENSE") {
-			return fmt.Errorf("license in package does not match edition in package name")
+			return fmt.Errorf("license in package is not the Grafana open-source license agreement")
 		}
 	}
 
