@@ -68,6 +68,23 @@ func ValidatePackageUpgrade(ctx context.Context, d *dagger.Client, src *dagger.D
 	return validateUpgrade(ctx, d, packages, args.PackageInputOpts.Packages)
 }
 
+func ValidatePackageSignature(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	if err != nil {
+		return err
+	}
+
+	for i, name := range args.PackageInputOpts.Packages {
+		pkg := packages[i]
+		err := validateSignature(ctx, d, pkg, name, args.GPGOpts)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func distroPlatform(distro executil.Distribution) dagger.Platform {
 	platform := executil.Platform(distro)
 	if _, arch := executil.OSAndArch(distro); arch == "arm" {
@@ -376,5 +393,33 @@ func validateRpmUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 		lastopts = &taropts
 	}
 
+	return nil
+}
+
+// validateSignature uses the given package (rpm) and provided gpg public key to validate signature.
+func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, packageName string, opts *containers.GPGOpts) error {
+	if ext := filepath.Ext(packageName); ext != ".rpm" {
+		return fmt.Errorf("expected a .rpm file, received '%s'", ext)
+	}
+
+	var (
+		taropts = TarOptsFromFileName(packageName)
+	)
+
+	log.Printf("Validating rpm package signature for v%s%s and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
+
+	code, err := containers.RPMContainer(d, &containers.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64}).
+		WithFile("/src/package.rpm", rpm).
+		WithExec([]string{"rpm", "--checksig", "/src/package.rpm"}, dagger.ContainerWithExecOpts{RedirectStdout: "/tmp/checksig"}).
+		WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"}).
+		ExitCode(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if code != 0 {
+		return fmt.Errorf("failed to validate gpg signature for rpm package")
+	}
 	return nil
 }

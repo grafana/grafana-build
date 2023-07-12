@@ -137,9 +137,8 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 
 		if opts.RPMSign {
 			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
-				WithExec([]string{"rpm", "--checksig", "/src/" + name}, dagger.ContainerWithExecOpts{
-					RedirectStdout: "/tmp/checksig",
-				}).WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"})
+				WithExec([]string{"rpm", "--checksig", "/src/" + name}, dagger.ContainerWithExecOpts{RedirectStdout: "/tmp/checksig"}).
+				WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"})
 		}
 
 		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
