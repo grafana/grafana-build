@@ -410,15 +410,10 @@ func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, 
 
 	code, err := containers.RPMContainer(d, &containers.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64}).
 		WithFile("/src/package.rpm", rpm).
-		WithExec([]string{"rpm", "--checksig", "/src/package.rpm"}, dagger.ContainerWithExecOpts{RedirectStdout: "/tmp/checksig"}).
-		WithExec([]string{"grep", "-qE", "digests signatures OK|pgp.+OK", "/tmp/checksig"}).
+		WithExec([]string{"/bin/sh", "-c", "rpm --checksig /src/package.rpm | grep -qE 'digests signatures OK|pgp.+OK'"}).
 		ExitCode(ctx)
 
-	if err != nil {
-		return err
-	}
-
-	if code != 0 {
+	if err != nil || code != 0 {
 		return fmt.Errorf("failed to validate gpg signature for rpm package")
 	}
 	return nil
