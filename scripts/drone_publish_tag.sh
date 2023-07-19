@@ -103,4 +103,4 @@ go run ./cmd cdn \
 cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt npm.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
+cat assets.txt | DESTINATION=gs://grafana-prerelease go run ./scripts/move_packages.go ./dist/prerelease
