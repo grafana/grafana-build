@@ -16,6 +16,8 @@ steps:
       from_secret: dockerhub_password
 
 trigger:
+  event:
+  - push
   branch:
   - main
 ---
