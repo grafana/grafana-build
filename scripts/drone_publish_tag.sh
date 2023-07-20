@@ -31,6 +31,7 @@ go run ./cmd \
   package \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
+  --distro=linux/arm64 \
   --checksum \
   --env GO_BUILD_TAGS=pro \
   --env WIRE_TAGS=pro \
