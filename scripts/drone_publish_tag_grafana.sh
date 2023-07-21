@@ -17,8 +17,6 @@ go run ./cmd \
   --distro=windows/amd64 \
   --distro=darwin/amd64 \
   --checksum \
-  --enterprise \
-  --grafana=false \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
@@ -27,6 +25,9 @@ go run ./cmd \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
 echo "Done building tar.gz packages..."
+
+# Create the npm artifacts using only the amd64 linux package
+go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt &
 
 # Use the non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
@@ -68,15 +69,9 @@ go run ./cmd docker \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
-# Copy only the linux/amd64 edition frontends into a separate folder
-go run ./cmd cdn \
-  $(cat assets.txt | grep tar.gz | grep pro | grep -v docker | grep -v sha256 | grep linux_amd64 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
-
 wait
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt npm.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt npm.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
