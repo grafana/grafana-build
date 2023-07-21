@@ -29,7 +29,7 @@ echo "Done building tar.gz packages..."
 # Create the npm artifacts using only the amd64 linux package
 go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt &
 
-# Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
+# Use the non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
@@ -59,8 +59,6 @@ go run ./cmd windows-installer \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum > exes.txt &
-
-wait
 
 # Build a docker image for all Linux distros except armv6
 go run ./cmd docker \
