@@ -70,7 +70,7 @@ go run ./cmd docker \
 
 wait
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt npm.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
