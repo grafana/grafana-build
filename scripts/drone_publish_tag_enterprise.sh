@@ -68,15 +68,9 @@ go run ./cmd docker \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
-# Copy only the linux/amd64 edition frontends into a separate folder
-go run ./cmd cdn \
-  $(cat assets.txt | grep tar.gz | grep pro | grep -v docker | grep -v sha256 | grep linux_amd64 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
-
 wait
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt cdn.txt npm.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt npm.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
