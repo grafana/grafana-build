@@ -20,7 +20,8 @@ go run ./cmd \
   --enterprise \
   --grafana=false \
   --build-id=${DRONE_BUILD_NUMBER} \
-  --grafana-dir=${GRAFANA_DIR} \
+  --enterprise-dir=${GRAFANA_DIR} \
+  --grafana-ref=${DRONE_TAG} \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
