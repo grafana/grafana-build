@@ -20,9 +20,8 @@ go run ./cmd \
   --enterprise \
   --grafana=false \
   --build-id=${DRONE_BUILD_NUMBER} \
-  --enterprise-dir=${GRAFANA_DIR} \
-  --grafana-ref=${DRONE_TAG} \
-  --grafana-repo=https://github.com/grafana/grafana-private-mirror.git \
+  --enterprise-dir=/tmp/grafana-enterprise \
+  --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
