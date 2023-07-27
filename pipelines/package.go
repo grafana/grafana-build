@@ -28,7 +28,7 @@ var PackagedPaths = []string{
 	"plugins-bundled/",
 	"public/",
 	"npm-artifacts/",
-	"storybook",
+	"storybook/",
 }
 
 func PathsWithRoot(root string, paths []string) []string {
