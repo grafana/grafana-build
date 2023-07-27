@@ -22,7 +22,7 @@ go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --enterprise-ref=${DRONE_TAG} \
   --grafana-ref=${DRONE_TAG} \
-  --grafana-repo=https://github.com/grafana/grafana-private-mirror.git \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
