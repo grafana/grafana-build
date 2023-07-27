@@ -24,6 +24,7 @@ var app = &cli.App{
 		ZipCommand,
 		ValidateCommand,
 		ProImageCommand,
+		StorybookCommand,
 	},
 }
 
