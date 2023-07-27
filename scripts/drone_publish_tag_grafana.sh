@@ -29,6 +29,12 @@ echo "Done building tar.gz packages..."
 # Create the npm artifacts using only the amd64 linux package
 go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt &
 
+# Copy only the linux/amd64 edition storybook into a separate folder
+go run ./cmd storybook \
+  $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
+  --destination=${local_dst} \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > storybook.txt &
+
 # Use the non-windows, non-darwin packages and create deb packages from them.
 go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
@@ -71,7 +77,7 @@ go run ./cmd docker \
 
 wait
 
-cat debs.txt rpms.txt zips.txt exes.txt docker.txt npm.txt >> assets.txt
+cat debs.txt rpms.txt zips.txt exes.txt docker.txt npm.txt storybook.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-prerelease-dev go run ./scripts/move_packages.go ./dist/prerelease
+cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease

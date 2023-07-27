@@ -41,6 +41,9 @@ const (
 	// 2. name (grafana-oss | grafana-enterprise)
 	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
 
+	// 1: ersion
+	storybookFormat = "artifacts/storybook/%[1]s"
+
 	// 1: version
 	// 2: package name (@grafana-ui-10.0.0.tgz)
 	npmFormat = "artifacts/npm/%[1]s/npm-artifacts/%[2]s"
@@ -325,6 +328,17 @@ func CDNHandler(name string) []string {
 	return names
 }
 
+func StorybookHandler(name string) []string {
+	n := filepath.Base(strings.ReplaceAll(name, "/storybook", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
+	opts := pipelines.TarOptsFromFileName(n)
+
+	names := []string{
+		fmt.Sprintf(storybookFormat, opts.Version),
+	}
+
+	return names
+}
+
 // A hopefully temporary script that prints the gsutil commands that will move these artifacts into the location where they were expected previously.
 // Just pipe this into bash or exec or whatever to do the actual copying.
 // Run without redirecting stdout to verify the operations.
@@ -372,26 +386,30 @@ func main() {
 		}
 		handler := Handlers[ext]
 		if ext == "" {
+			destinations := make([]string, 0)
 			if filepath.Base(name) == "public" {
-				destinations := CDNHandler(name)
-				for _, v := range destinations {
-					dir := filepath.Join(prefix, filepath.Dir(v))
-					v := filepath.Join(prefix, v)
+				destinations = CDNHandler(name)
+			}
+			if filepath.Base(name) == "storybook" {
+				destinations = StorybookHandler(name)
+			}
+			for _, v := range destinations {
+				dir := filepath.Join(prefix, filepath.Dir(v))
+				v := filepath.Join(prefix, v)
 
-					log.Println("Creating dir", dir)
-					if err := os.MkdirAll(dir, 0700); err != nil {
-						panic(err)
-					}
-					log.Println("Copying", name, "to", v)
-					//nolint:gosec
-					cmd := exec.Command("cp", "-r", strings.TrimPrefix(name, "file://"), v)
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-					if err := cmd.Run(); err != nil {
-						panic(err)
-					}
-					//container = container.WithExec([]string{"gcloud", "storage", "cp", "-r", name, v})
+				log.Println("Creating dir", dir)
+				if err := os.MkdirAll(dir, 0700); err != nil {
+					panic(err)
 				}
+				log.Println("Copying", name, "to", v)
+				//nolint:gosec
+				cmd := exec.Command("cp", "-r", strings.TrimPrefix(name, "file://"), v)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				if err := cmd.Run(); err != nil {
+					panic(err)
+				}
+				//container = container.WithExec([]string{"gcloud", "storage", "cp", "-r", name, v})
 			}
 			continue
 		}

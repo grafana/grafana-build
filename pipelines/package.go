@@ -28,6 +28,7 @@ var PackagedPaths = []string{
 	"plugins-bundled/",
 	"public/",
 	"npm-artifacts/",
+	"storybook/",
 }
 
 func PathsWithRoot(root string, paths []string) []string {
@@ -100,6 +101,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	var (
 		frontend    = containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
 		npmPackages = containers.NPMPackages(d, src, cacheOpts, version, nodeVersion)
+		storybook   = containers.Storybook(d, src, cacheOpts, version, nodeVersion)
 	)
 
 	name := "grafana"
@@ -123,6 +125,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			WithMountedDirectory(path.Join("/src", root, "bin"), backend).
 			WithMountedDirectory(path.Join("/src", root, "public"), frontend).
 			WithMountedDirectory(path.Join("/src", root, "npm-artifacts"), npmPackages).
+			WithMountedDirectory(path.Join("/src", root, "storybook"), storybook).
 			WithWorkdir("/src")
 
 		opts := TarFileOpts{
