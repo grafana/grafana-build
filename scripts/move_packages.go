@@ -333,7 +333,7 @@ func StorybookHandler(name string) []string {
 	opts := pipelines.TarOptsFromFileName(n)
 
 	names := []string{
-		fmt.Sprintf(storybookFormat, strings.TrimPrefix(opts.Version, "v")),
+		fmt.Sprintf(storybookFormat, opts.Version),
 	}
 
 	return names

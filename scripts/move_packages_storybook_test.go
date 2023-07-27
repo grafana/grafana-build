@@ -9,19 +9,19 @@ var storybookMapping = []m{
 	{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
-			"artifacts/storybook/1.2.3",
+			"artifacts/storybook/v1.2.3",
 		},
 	},
 	{
 		input: "gs://bucket/tag/grafana-enterprise_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
-			"artifacts/storybook/1.2.3",
+			"artifacts/storybook/v1.2.3",
 		},
 	},
 	{
 		input: "gs://bucket/tag/grafana-pro_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
-			"artifacts/storybook/1.2.3",
+			"artifacts/storybook/v1.2.3",
 		},
 	},
 }
