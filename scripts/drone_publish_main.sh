@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-go run ./cmd \
+dagger run go run ./cmd \
   package \
   --distro=linux/amd64 \
   --distro=linux/arm64 \

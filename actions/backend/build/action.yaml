@@ -5,4 +5,4 @@ runs:
   using: composite
   steps:
   - shell: bash
-    run: go run ./cmd backend build
+    run: dagger run go run ./cmd backend build

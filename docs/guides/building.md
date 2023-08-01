@@ -6,7 +6,7 @@ This actually consists of various parts as you need to have a binary of Grafana 
 All of that is encompassed by the `package` command:
 
 ```
-$ go run ./cmd package --distro linux/amd64 --enterprise
+$ dagger run go run ./cmd package --distro linux/amd64 --enterprise
 ```
 
 The command above will build the backend binary for Linux on an AMD64-compatible CPU and package that up into a [single archive][tarball] with the frontend artifacts: `grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz`
@@ -20,7 +20,7 @@ If you want to use a local checkout of Grafana (for instance if you want to buil
 The following command will create a binary package for `darwin/arm64` of Grafana based on a checkout inside the `$HOME/src/github.com/grafana/grafana` folder:
 
 ```
-$ go run ./cmd package --distro darwin/arm64 --grafana-dir $HOME/src/github.com/grafana/grafana
+$ dagger run go run ./cmd package --distro darwin/arm64 --grafana-dir $HOME/src/github.com/grafana/grafana
 ```
 
 ## Platform packages
@@ -29,7 +29,7 @@ Now that you have a Grafana tarball with the main binaries and the frontend asse
 grafana-build supports a handful of these specific [artifact types](../artifact-types/index.md) but for this tutorial let's build a [Debian package][deb]:
 
 ```
-$ go run ./cmd deb --package file://$PWD/dist/grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz
+$ dagger run go run ./cmd deb --package file://$PWD/dist/grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz
 ```
 
 This will produce `grafana_10.1.0-pre_lUJuyyVXnECr_linux_amd64.deb` within the `dist` folder.
