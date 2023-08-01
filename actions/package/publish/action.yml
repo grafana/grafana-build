@@ -34,7 +34,7 @@ runs:
   steps:
   - shell: bash
     run: |
-      go run ./cmd \
+      dagger run go run ./cmd \
         --enterprise=${{ inputs.enterprise }} \
         --enterprise-ref="${{ inputs.enterprise_ref }}" \
         --grafana-ref="${{ inputs.grafana_ref }}" \

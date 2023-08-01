@@ -7,7 +7,7 @@ set -e
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # Build all of the grafana.tar.gz packages.
-go run ./cmd \
+dagger run go run ./cmd \
   package \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
@@ -30,14 +30,14 @@ go run ./cmd \
 echo "Done building tar.gz packages..."
 
 # Use the .tar.gz packages and create deb packages from them.
-go run ./cmd deb \
+dagger run go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt &
 
 # Build a docker image for all .tar.gz packages
-go run ./cmd docker \
+dagger run go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
   --checksum \
   --ubuntu-base="ubuntu:22.10" \
@@ -46,7 +46,7 @@ go run ./cmd docker \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
 # Copy only the linux/amd64 edition frontends into a separate folder
-go run ./cmd cdn \
+dagger run go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
