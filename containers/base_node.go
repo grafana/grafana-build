@@ -12,10 +12,12 @@ func NodeImage(version string) string {
 }
 
 // NodeContainer returns a docker container with everything set up that is needed to build or run frontend tests.
-func NodeContainer(d *dagger.Client, base string) *dagger.Container {
-	container := d.Container().From(base).
+func NodeContainer(d *dagger.Client, base string, platform dagger.Platform) *dagger.Container {
+	container := d.Container(dagger.ContainerOpts{
+		Platform: platform,
+	}).From(base).
 		WithExec([]string{"apt-get", "update", "-yq"}).
-		WithExec([]string{"apt-get", "install", "-yq", "make"}).
+		WithExec([]string{"apt-get", "install", "-yq", "make", "git", "g++", "python3"}).
 		WithEnvVariable("NODE_OPTIONS", "--max_old_space_size=8000")
 
 	return container

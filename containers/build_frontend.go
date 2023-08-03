@@ -15,8 +15,8 @@ func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
 		WithExec([]string{"cat", ".nvmrc"})
 }
 
-func CompileFrontend(d *dagger.Client, src *dagger.Directory, opts *YarnCacheOpts, nodeVersion string) *dagger.Directory {
-	c := NodeContainer(d, NodeImage(nodeVersion)).
+func CompileFrontend(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, opts *YarnCacheOpts, nodeVersion string) *dagger.Directory {
+	c := NodeContainer(d, NodeImage(nodeVersion), platform).
 		WithDirectory("/src", src).
 		WithWorkdir("/src")
 
@@ -59,8 +59,8 @@ type YarnInstallOpts struct {
 }
 
 // YarnInstall mounts all of the necessary files to run a `yarn install` and then runs `yarn install` to populate the cache before being reused elsewhere.
-func YarnInstall(ctx context.Context, d *dagger.Client, opts *YarnInstallOpts) error {
-	container := NodeContainer(d, NodeImage(opts.NodeVersion)).
+func YarnInstall(ctx context.Context, d *dagger.Client, platform dagger.Platform, opts *YarnInstallOpts) error {
+	container := NodeContainer(d, NodeImage(opts.NodeVersion), platform).
 		WithWorkdir("/src")
 
 	container = WithYarnCache(container, opts.CacheOpts)
