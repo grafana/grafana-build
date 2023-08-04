@@ -81,7 +81,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	}
 
 	// install and cache the node modules
-	if err := containers.YarnInstall(ctx, d, &containers.YarnInstallOpts{
+	if err := containers.YarnInstall(ctx, d, opts.Platform, &containers.YarnInstallOpts{
 		NodeVersion: nodeVersion,
 		Directories: map[string]*dagger.Directory{
 			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
@@ -99,9 +99,9 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	}
 
 	var (
-		frontend    = containers.CompileFrontend(d, src, cacheOpts, nodeVersion)
-		npmPackages = containers.NPMPackages(d, src, cacheOpts, version, nodeVersion)
-		storybook   = containers.Storybook(d, src, cacheOpts, version, nodeVersion)
+		frontend    = containers.CompileFrontend(d, opts.Platform, src, cacheOpts, nodeVersion)
+		npmPackages = containers.NPMPackages(d, opts.Platform, src, cacheOpts, version, nodeVersion)
+		storybook   = containers.Storybook(d, opts.Platform, src, cacheOpts, version, nodeVersion)
 	)
 
 	name := "grafana"

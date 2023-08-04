@@ -42,7 +42,7 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Director
 	)
 
 	log.Println("Parallel:", args.ConcurrencyOpts.Parallel)
-	
+
 	// Run them in parallel
 	for k, dir := range dirs {
 		// Join the produced destination with the protocol given by the '--destination' flag.
