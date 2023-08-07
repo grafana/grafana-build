@@ -107,6 +107,9 @@ func GoBuildEnv(opts *GoBuildOpts) map[string]string {
 
 	if opts.CGOEnabled {
 		env["CGO_ENABLED"] = "1"
+
+		// https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
+		env["CGO_CFLAGS"] = "-D_LARGEFILE64_SOURCE"
 	} else {
 		env["CGO_ENABLED"] = "0"
 	}
