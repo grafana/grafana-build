@@ -48,7 +48,7 @@ func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []strin
 		version += "-ubuntu"
 	}
 
-	if opts.Distro != "" && opts.Distro != "linux/amd64" {
+	if opts.Distro != "" {
 		_, arch := executil.OSAndArch(opts.Distro)
 		version += "-" + strings.ReplaceAll(arch, "/", "")
 	}
