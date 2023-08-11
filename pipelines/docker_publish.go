@@ -21,30 +21,34 @@ func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 	publisher := d.Container().From("docker").
 		WithUnixSocket("/var/run/docker.sock", socket)
 
-	versionRepoTags := make(map[string]map[string][]string)
-	bases := []BaseImage{BaseImageAlpine, BaseImageUbuntu}
-	for _, base := range bases {
-		for i, v := range args.PackageInputOpts.Packages {
-			tarOpts := TarOptsFromFileName(v)
-			targz := packages[i]
+	versionRepoBaseTags := make(map[string]map[string]map[BaseImage][]string)
+	for i, v := range args.PackageInputOpts.Packages {
+		base := BaseImageAlpine
+		tarOpts := TarOptsFromFileName(v)
+		targz := packages[i]
 
-			tags := GrafanaImageTags(base, args.DockerOpts.Registry, tarOpts)
-
-			publisher = publisher.
-				WithFile("/src/grafana.img", targz)
-
-			for _, tag := range tags {
-				publisher = publisher.
-					WithExec([]string{"docker", "tag", "$(docker import grafana.img)", tag}).
-					WithExec([]string{"docker", "push", tag})
-
-				repo := strings.Split(tag, ":")[0]
-				versionRepoTags[tarOpts.Version][repo] = append(versionRepoTags[tarOpts.Version][repo], tag)
-			}
+		if strings.Contains(v, "ubuntu") {
+			base = BaseImageUbuntu
 		}
 
-		for version, repoTags := range versionRepoTags {
-			for repo, tags := range repoTags {
+		tags := GrafanaImageTags(base, args.DockerOpts.Registry, tarOpts)
+
+		publisher = publisher.
+			WithFile("/src/grafana.img", targz)
+
+		for _, tag := range tags {
+			publisher = publisher.
+				WithExec([]string{"docker", "tag", "$(docker import grafana.img)", tag}).
+				WithExec([]string{"docker", "push", tag})
+
+			repo := strings.Split(tag, ":")[0]
+			versionRepoBaseTags[tarOpts.Version][repo][base] = append(versionRepoBaseTags[tarOpts.Version][repo][base], tag)
+		}
+	}
+
+	for version, repoBaseTags := range versionRepoBaseTags {
+		for repo, baseTags := range repoBaseTags {
+			for base, tags := range baseTags {
 				version := strings.TrimPrefix(version, "v")
 				if base == BaseImageUbuntu {
 					version += "-ubuntu"
