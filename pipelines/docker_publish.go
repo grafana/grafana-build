@@ -45,7 +45,8 @@ func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 
 		for _, tag := range tags {
 			publisher = publisher.
-				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("docker tag $(docker import grafana.img) %s", tag)}).
+				WithExec([]string{"/bin/sh", "-c", "docker load -i grafana.img | awk -F 'Loaded image: ' '{print $2}' > /tmp/image_tag"}).
+				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("docker tag $(cat /tmp/image_tag) %s", tag)}).
 				WithExec([]string{"docker", "push", tag})
 
 			manifest := ImageManifest(tag)
