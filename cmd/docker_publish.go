@@ -12,6 +12,7 @@ var DockerPublishCommand = &cli.Command{
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
+		DockerPublishFlags,
 		DockerFlags,
 		GCPFlags,
 		ConcurrencyFlags,
