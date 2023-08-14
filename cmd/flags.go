@@ -139,6 +139,19 @@ var DockerFlags = []cli.Flag{
 	},
 }
 
+var DockerPublishFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "username",
+		Usage:    "The username to login to the docker registry when publishing images",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "password",
+		Usage:    "The password to login to the docker registry when publishing images",
+		Required: true,
+	},
+}
+
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
 	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'",

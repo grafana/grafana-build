@@ -16,6 +16,12 @@ type DockerOpts struct {
 	// UbuntuBase is supplied as a build-arg when building the Grafana docker image.
 	// When building ubuntu versions of Grafana it uses this image as its base.
 	UbuntuBase string
+
+	// Username is supplied to login to the docker registry when publishing images.
+	Username string
+
+	// Password is supplied to login to the docker registry when publishing images.
+	Password string
 }
 
 func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
@@ -23,5 +29,7 @@ func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
 		Registry:   c.String("registry"),
 		AlpineBase: c.String("alpine-base"),
 		UbuntuBase: c.String("ubuntu-base"),
+		Username:   c.String("username"),
+		Password:   c.String("password"),
 	}
 }

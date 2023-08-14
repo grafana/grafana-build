@@ -34,8 +34,8 @@ func TestImageName(t *testing.T) {
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
-				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3",
-				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3",
+				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-amd64",
+				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-amd64",
 			},
 		},
 		{
@@ -60,8 +60,8 @@ func TestImageName(t *testing.T) {
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
-				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-ubuntu",
-				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-ubuntu",
+				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
+				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
 			},
 		},
 		{
@@ -86,7 +86,7 @@ func TestImageName(t *testing.T) {
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
-				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3",
+				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-amd64",
 			},
 		},
 		{
@@ -110,7 +110,7 @@ func TestImageName(t *testing.T) {
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
-				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-ubuntu",
+				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
 			},
 		},
 		{
