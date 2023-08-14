@@ -3,10 +3,13 @@ package pipelines
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 )
 
 func ImageManifest(tag string) string {
@@ -18,48 +21,84 @@ func ImageManifest(tag string) string {
 // DockerPublish is a pipeline that uses a grafana.docker.tar.gz as input and publishes a Docker image to a container registry or repository.
 // Grafana's Dockerfile should support supplying a tar.gz using a --build-arg.
 func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
+	opts := args.DockerOpts
 	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
 	if err != nil {
 		return err
 	}
 
-	socket := d.Host().UnixSocket("/var/run/docker.sock")
-	publisher := d.Container().From("docker").
-		WithUnixSocket("/var/run/docker.sock", socket).
-		WithExec([]string{"docker", "login", args.DockerOpts.Registry, "-u", args.DockerOpts.Username, "-p", args.DockerOpts.Password})
+	var (
+		wg = &errgroup.Group{}
+		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+	)
 
 	manifestTags := make(map[string][]string)
-	for i, v := range args.PackageInputOpts.Packages {
+	for i, name := range args.PackageInputOpts.Packages {
 		base := BaseImageAlpine
-		tarOpts := TarOptsFromFileName(v)
-		targz := packages[i]
-
-		if strings.Contains(v, "ubuntu") {
+		tarOpts := TarOptsFromFileName(name)
+		if strings.Contains(name, "ubuntu") {
 			base = BaseImageUbuntu
 		}
 
-		tags := GrafanaImageTags(base, args.DockerOpts.Registry, tarOpts)
-
-		publisher = publisher.
-			WithFile("grafana.img", targz)
-
+		tags := GrafanaImageTags(base, opts.Registry, tarOpts)
 		for _, tag := range tags {
-			publisher = publisher.
-				WithExec([]string{"/bin/sh", "-c", "docker load -i grafana.img | awk -F 'Loaded image: ' '{print $2}' > /tmp/image_tag"}).
-				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("docker tag $(cat /tmp/image_tag) %s", tag)}).
-				WithExec([]string{"docker", "push", tag})
-
 			manifest := ImageManifest(tag)
 			manifestTags[manifest] = append(manifestTags[manifest], tag)
+			wg.Go(PublishPackageImageFunc(ctx, sm, d, packages[i], tag, opts))
 		}
 	}
 
-	for manifest, tags := range manifestTags {
-		publisher = publisher.
-			WithExec(append([]string{"docker", "manifest", "create", manifest}, tags...)).
-			WithExec([]string{"docker", "manifest", "push", manifest})
+	if err := wg.Wait(); err != nil {
+		return err
 	}
 
-	_, err = publisher.ExitCode(ctx)
-	return err
+	for manifest, tags := range manifestTags {
+		wg.Go(PublishDockerManifestFunc(ctx, sm, d, manifest, tags, opts))
+	}
+
+	return wg.Wait()
+}
+
+func PublishPackageImageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, pkg *dagger.File, tag string, opts *containers.DockerOpts) func() error {
+	return func() error {
+		log.Printf("[%s] Attempting to publish image", tag)
+		log.Printf("[%s] Acquiring semaphore", tag)
+		if err := sm.Acquire(ctx, 1); err != nil {
+			return fmt.Errorf("failed to acquire semaphore: %w", err)
+		}
+		defer sm.Release(1)
+		log.Printf("[%s] Acquired semaphore", tag)
+
+		log.Printf("[%s] Publishing image", tag)
+		out, err := containers.PublishPackageImage(ctx, d, pkg, tag, opts)
+		if err != nil {
+			return fmt.Errorf("[%s] error: %w", tag, err)
+		}
+		log.Printf("[%s] Done publishing image", tag)
+
+		fmt.Fprintln(Stdout, out)
+		return nil
+	}
+}
+
+func PublishDockerManifestFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, manifest string, tags []string, opts *containers.DockerOpts) func() error {
+	return func() error {
+		log.Printf("[%s] Attempting to publish manifest", manifest)
+		log.Printf("[%s] Acquiring semaphore", manifest)
+		if err := sm.Acquire(ctx, 1); err != nil {
+			return fmt.Errorf("failed to acquire semaphore: %w", err)
+		}
+		defer sm.Release(1)
+		log.Printf("[%s] Acquired semaphore", manifest)
+
+		log.Printf("[%s] Publishing manifest", manifest)
+		out, err := containers.PublishDockerManifest(ctx, d, manifest, tags, opts)
+		if err != nil {
+			return fmt.Errorf("[%s] error: %w", manifest, err)
+		}
+		log.Printf("[%s] Done publishing manifest", manifest)
+
+		fmt.Fprintln(Stdout, out)
+		return nil
+	}
 }
