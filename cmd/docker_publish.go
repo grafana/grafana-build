@@ -7,7 +7,7 @@ import (
 
 var DockerPublishCommand = &cli.Command{
 	Name:   "publish",
-	Action: PipelineActionWithPackageInput(pipelines.DockerPublish),
+	Action: PipelineActionWithPackageInput(pipelines.PublishDocker),
 	Usage:  "Using a grafana.docker.tar.gz as input (ideally one built using the 'package' command), publish a docker image and manifest",
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
