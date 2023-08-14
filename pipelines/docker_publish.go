@@ -34,6 +34,7 @@ func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 
 	manifestTags := make(map[string][]string)
 	for i, name := range args.PackageInputOpts.Packages {
+		// For each package we retrieve the tags grafana-image-tags and grafana-oss-image-tags, or grafana-enterprise-image-tags
 		base := BaseImageAlpine
 		tarOpts := TarOptsFromFileName(name)
 		if strings.Contains(name, "ubuntu") {
@@ -42,6 +43,8 @@ func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 
 		tags := GrafanaImageTags(base, opts.Registry, tarOpts)
 		for _, tag := range tags {
+			// For each tag we publish an image and add the tag to the list of tags for a specific manifest
+			// Since each package has a maximum of 2 tags, this for loop will only run twice on a worst case scenario
 			manifest := ImageManifest(tag)
 			manifestTags[manifest] = append(manifestTags[manifest], tag)
 			wg.Go(PublishPackageImageFunc(ctx, sm, d, packages[i], tag, opts))
@@ -49,10 +52,12 @@ func DockerPublish(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 	}
 
 	if err := wg.Wait(); err != nil {
+		// Wait for all images to be published
 		return err
 	}
 
 	for manifest, tags := range manifestTags {
+		// Publish each manifest
 		wg.Go(PublishDockerManifestFunc(ctx, sm, d, manifest, tags, opts))
 	}
 
