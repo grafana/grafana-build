@@ -150,6 +150,11 @@ var DockerPublishFlags = []cli.Flag{
 		Usage:    "The password to login to the docker registry when publishing images",
 		Required: true,
 	},
+	&cli.StringFlag{
+		Name:  "registry",
+		Usage: "Prefix the image name with the registry provided",
+		Value: "docker.io",
+	},
 }
 
 var FlagDistros = &cli.StringSliceFlag{

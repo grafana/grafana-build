@@ -7,8 +7,9 @@ import (
 
 var PackageCommand = &cli.Command{
 	Name:        "package",
-	Action:      PipelineAction(pipelines.PublishPackage),
+	Action:      PipelineAction(pipelines.BuildPackage),
 	Description: "Creates a grafana.tar.gz for the given distributions (--distro) placed in the destination directory (--destination)",
+	Subcommands: []*cli.Command{PackagePublishCommand},
 	Flags: JoinFlagsWithDefault(
 		GrafanaFlags,
 		PackageFlags,
