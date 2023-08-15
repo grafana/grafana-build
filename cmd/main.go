@@ -25,6 +25,7 @@ var app = &cli.App{
 		ValidateCommand,
 		ProImageCommand,
 		StorybookCommand,
+		NPMCommand,
 	},
 }
 

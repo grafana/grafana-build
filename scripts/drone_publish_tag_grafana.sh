@@ -26,8 +26,11 @@ dagger run go run ./cmd \
 
 echo "Done building tar.gz packages..."
 
-# Create the npm artifacts using only the amd64 linux package
-go run ./scripts/copy_npm $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 -m 1) > npm.txt &
+# Copy only the linux/amd64 edition npm artifacts into a separate folder
+dagger run go run ./cmd npm \
+  $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
+  --destination=${local_dst} \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > npm.txt &
 
 # Copy only the linux/amd64 edition storybook into a separate folder
 dagger run go run ./cmd storybook \
