@@ -15,6 +15,7 @@ type TarFileOpts struct {
 	Edition string
 	Distro  executil.Distribution
 	Suffix  string
+	Channel string
 }
 
 func WithoutExt(name string) string {
@@ -86,12 +87,21 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		suffix = fmt.Sprintf("-%s", n[1])
 	}
 
+	channel := "stable"
+	if n := strings.Split(version, "-"); len(n) != 1 {
+		channel = "nightly"
+		if n[1] == "preview" {
+			channel = "preview"
+		}
+	}
+
 	return TarFileOpts{
 		Edition: edition,
 		Version: version,
 		BuildID: buildID,
 		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
 		Suffix:  suffix,
+		Channel: channel,
 	}
 }
 
