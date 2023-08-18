@@ -87,21 +87,13 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		suffix = fmt.Sprintf("-%s", n[1])
 	}
 
-	channel := executil.Stable
-	if n := strings.Split(version, "-"); len(n) != 1 {
-		channel = executil.Nightly
-		if n[1] == string(executil.Preview) {
-			channel = executil.Preview
-		}
-	}
-
 	return TarFileOpts{
 		Edition: edition,
 		Version: version,
 		BuildID: buildID,
 		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
 		Suffix:  suffix,
-		Channel: channel,
+		Channel: executil.GetVersionChannel(version),
 	}
 }
 

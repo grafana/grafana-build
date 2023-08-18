@@ -39,6 +39,10 @@ func GetLatestVersion(ctx context.Context, d *dagger.Client, channel executil.Ve
 
 // IsLatest compares versions and returns true if the version provided is grater or equal the latest version on the channel.
 func IsLatest(ctx context.Context, d *dagger.Client, channel executil.VersionChannel, version string) (bool, error) {
+	if versionChannel := executil.GetVersionChannel(version); versionChannel != channel {
+		return false, nil
+	}
+
 	latest, err := GetLatestVersion(ctx, d, channel)
 	if err != nil {
 		return false, err
