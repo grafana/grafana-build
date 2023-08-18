@@ -28,15 +28,9 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		dst := strings.Join([]string{args.PublishOpts.Destination, name, "public"}, "/")
 
 		log.Println("Copying frontend assets for", name, "to", dst)
-		folder := fmt.Sprintf("/src/%s", name)
 
 		// gcloud rsync the public folder to ['dst']/public
-		public := d.Container().From("busybox").
-			WithFile("/src/grafana.tar.gz", targz).
-			WithExec([]string{"mkdir", "-p", folder}).
-			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", folder}).
-			Directory(folder + "/public")
-
+		public := containers.ExtractedArchive(d, targz, name).Directory("public")
 		dst, err := containers.PublishDirectory(ctx, d, public, args.GCPOpts, dst)
 		if err != nil {
 			return err

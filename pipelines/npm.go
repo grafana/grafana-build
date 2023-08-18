@@ -27,15 +27,9 @@ func NPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		dst := strings.Join([]string{args.PublishOpts.Destination, name, "npm-artifacts"}, "/")
 
 		log.Println("Copying npm artifacts for", name, "to", dst)
-		folder := fmt.Sprintf("/src/%s", name)
 
 		// gcloud rsync the artifacts folder to ['dst']/npm-artifacts
-		artifacts := d.Container().From("busybox").
-			WithFile("/src/grafana.tar.gz", targz).
-			WithExec([]string{"mkdir", "-p", folder}).
-			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", folder}).
-			Directory(folder + "/npm-artifacts")
-
+		artifacts := containers.ExtractedArchive(d, targz, name).Directory("npm-artifacts")
 		dst, err := containers.PublishDirectory(ctx, d, artifacts, args.GCPOpts, dst)
 		if err != nil {
 			return err
