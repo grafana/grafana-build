@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/executil"
 )
 
 // GetPackageJSONVersion gets the "version" field from package.json in the 'src' directory.
@@ -24,7 +25,7 @@ func GetPackageJSONVersion(ctx context.Context, d *dagger.Client, src *dagger.Di
 }
 
 // GetLatestVersion gets the "version" field from https://grafana.com/api/grafana/versions/<channel>.
-func GetLatestVersion(ctx context.Context, d *dagger.Client, channel string) (string, error) {
+func GetLatestVersion(ctx context.Context, d *dagger.Client, channel executil.VersionChannel) (string, error) {
 	c := d.Container().From("alpine").
 		WithExec([]string{"apk", "--update", "add", "jq"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl https://grafana.com/api/grafana/versions/%s | jq -r .version", channel)})
@@ -37,7 +38,7 @@ func GetLatestVersion(ctx context.Context, d *dagger.Client, channel string) (st
 }
 
 // IsLatest compares versions and returns true if the version provided is grater or equal the latest version on the channel.
-func IsLatest(ctx context.Context, d *dagger.Client, channel string, version string) (bool, error) {
+func IsLatest(ctx context.Context, d *dagger.Client, channel executil.VersionChannel, version string) (bool, error) {
 	latest, err := GetLatestVersion(ctx, d, channel)
 	if err != nil {
 		return false, err
