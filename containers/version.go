@@ -36,7 +36,7 @@ func GetLatestVersion(ctx context.Context, d *dagger.Client, channel string) (st
 	return c.Stderr(ctx)
 }
 
-// IsLatest uses compares versions and returns true if the version provided is grater or equal the latest version on the channel.
+// IsLatest compares versions and returns true if the version provided is grater or equal the latest version on the channel.
 func IsLatest(ctx context.Context, d *dagger.Client, channel string, version string) (bool, error) {
 	latest, err := GetLatestVersion(ctx, d, channel)
 	if err != nil {
