@@ -89,6 +89,15 @@ text = "ST1001"
 linters = ["staticcheck"]
 text = "SA1019: strings.Title"
 
+# ExitCode is deprecated with 0.7.x
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: container"
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+path = "ci/"
+text = "SA1019"
+
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
 text = "use fake service and real access control evaluator instead"
