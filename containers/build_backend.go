@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	GoImageAlpine = "golang:1.20.7-alpine"
+	GoImageAlpine = "golang:1.21-alpine"
 )
 
 var GrafanaCommands = []string{
