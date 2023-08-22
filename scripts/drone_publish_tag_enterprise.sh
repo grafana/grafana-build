@@ -35,7 +35,7 @@ dagger run go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt &
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run go run ./cmd rpm \
@@ -46,20 +46,20 @@ dagger run go run ./cmd rpm \
   --sign=false \
   --gpg-private-key-base64=$(echo $GPG_PRIVATE_KEY | base64 -w 0) \
   --gpg-public-key-base64=$(echo $GPG_PUBLIC_KEY | base64 -w 0) \
-  --gpg-passphrase-base64=$(echo $GPG_PASSPHRASE | base64 -w 0) > rpms.txt &
+  --gpg-passphrase-base64=$(echo $GPG_PASSPHRASE | base64 -w 0) > rpms.txt
 
 # For Windows we distribute zips and exes
 dagger run go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > zips.txt &
+  --checksum > zips.txt
 
 dagger run go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --checksum > exes.txt &
+  --checksum > exes.txt
 
 # Build a docker image for all Linux distros except armv6
 dagger run go run ./cmd docker \
@@ -68,9 +68,7 @@ dagger run go run ./cmd docker \
   --ubuntu-base="ubuntu:22.10" \
   --alpine-base="alpine:3.18.0" \
   --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
-
-wait
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt
 
 cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
 
