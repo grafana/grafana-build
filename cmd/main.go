@@ -26,6 +26,7 @@ var app = &cli.App{
 		ProImageCommand,
 		StorybookCommand,
 		NPMCommand,
+		ArtifactsCommand,
 	},
 }
 
