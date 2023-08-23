@@ -25,6 +25,19 @@ dagger run --silent go run ./cmd \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
+dagger run --silent go run ./cmd \
+  package \
+  --yarn-cache=${YARN_CACHE_FOLDER} \
+  --distro=linux/arm/v7 \
+  --checksum \
+  --build-id=${DRONE_BUILD_NUMBER} \
+  --grafana-dir=${GRAFANA_DIR} \
+  --github-token=${GITHUB_TOKEN} \
+  --version=${DRONE_TAG} \
+  --edition=rpi \
+  --destination=${local_dst} \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
+
 echo "Done building tar.gz packages..."
 cat assets.txt
 
@@ -39,7 +52,7 @@ dagger run --silent go run ./cmd storybook \
 
 # Use the non-windows, non-darwin packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin  | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt

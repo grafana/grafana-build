@@ -38,14 +38,15 @@ func BuildPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 			// If the user has manually set the edition flag, then override it with their selection.
 			// Temporary fix: to avoid creating a --grafana and a --enterprise package with a conflicting name, only allow
 			// overriding the 'edition' if we're building enterprise.
-			if e := args.PackageOpts.Edition; e != "" {
-				edition = e
-			}
 			s, err := args.GrafanaOpts.Enterprise(ctx, src, d)
 			if err != nil {
 				return err
 			}
 			src = s
+		}
+
+		if e := args.PackageOpts.Edition; e != "" {
+			edition = e
 		}
 
 		opts := PackageOpts{
