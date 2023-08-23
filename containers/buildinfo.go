@@ -18,7 +18,7 @@ type BuildInfo struct {
 
 func (b *BuildInfo) LDFlags() []string {
 	return []string{
-		fmt.Sprintf("main.version=%s", b.Version),
+		fmt.Sprintf("main.version=%s", strings.TrimPrefix(b.Version, "v")),
 		fmt.Sprintf("main.commit=%s", b.Commit),
 		fmt.Sprintf("main.buildstamp=%d", b.Timestamp.Unix()),
 		fmt.Sprintf("main.buildBranch=%s", b.Branch),
