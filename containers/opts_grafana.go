@@ -31,6 +31,7 @@ type GrafanaOpts struct {
 	GitHubToken   string
 	Env           map[string]string
 	GoTags        []string
+	GoVersion     string
 
 	// Version will be set by the '--version' flag if provided, and returned in the 'Version' function.
 	// If not set, then the version function will attempt to retrieve the version from Grafana's package.json or some other method.
@@ -52,6 +53,7 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		buildID        = c.String("build-id")
 		gitHubToken    = c.String("github-token")
 		goTags         = c.StringSlice("go-tags")
+		goVersion      = c.String("go-version")
 	)
 
 	if buildID == "" {
@@ -98,6 +100,7 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		GitHubToken:      gitHubToken,
 		Env:              env,
 		GoTags:           goTags,
+		GoVersion:        goVersion,
 		YarnCacheHostDir: c.String("yarn-cache"),
 	}, nil
 }
