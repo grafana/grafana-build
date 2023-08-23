@@ -144,6 +144,11 @@ func OSAndArch(d Distribution) (string, string) {
 	return p[0], p[1]
 }
 
+func FullArch(d Distribution) string {
+	p := strings.Split(string(d), "/")
+	return strings.Join(p[1:], "/")
+}
+
 func ArchVersion(d Distribution) string {
 	p := strings.Split(string(d), "/")
 	if len(p) < 3 {
