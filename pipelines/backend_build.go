@@ -25,8 +25,9 @@ type GrafanaCompileOpts struct {
 	Version string
 
 	// Env is an optional map of environment variables (keyed by literal variable name to value) to set in the build container(s).
-	Env    map[string]string
-	GoTags []string
+	Env       map[string]string
+	GoTags    []string
+	GoVersion string
 
 	// Edition is just used for logging / visualization purposes
 	Edition string
@@ -38,7 +39,7 @@ func (o *GrafanaCompileOpts) BuildInfo(ctx context.Context, d *dagger.Client) (*
 	return containers.GetBuildInfo(ctx, d, o.Source, o.Version)
 }
 
-func (o *GrafanaCompileOpts) BackendCompileOpts(ctx context.Context, d *dagger.Client) (*containers.CompileBackendOpts, error) {
+func (o *GrafanaCompileOpts) BackendCompileOpts(ctx context.Context, d *dagger.Client, gops *GrafanaCompileOpts) (*containers.CompileBackendOpts, error) {
 	buildinfo, err := o.BuildInfo(ctx, d)
 	if err != nil {
 		return nil, err
@@ -49,6 +50,7 @@ func (o *GrafanaCompileOpts) BackendCompileOpts(ctx context.Context, d *dagger.C
 		Distribution: o.Distribution,
 		Platform:     o.Platform,
 		BuildInfo:    buildinfo,
+		GoVersion:    gops.GoVersion,
 	}, nil
 }
 
@@ -66,11 +68,11 @@ func GrafanaBackendBuildDirectory(ctx context.Context, d *dagger.Client, opts *G
 
 	var (
 		cacheKey = "go-mod-" + version
-		cacheDir = containers.DownloadGolangDependencies(d, platform, src.File("go.mod"), src.File("go.sum"))
+		cacheDir = containers.DownloadGolangDependencies(d, platform, src.File("go.mod"), src.File("go.sum"), opts.GoVersion)
 		cache    = d.CacheVolume(cacheKey)
 	)
 
-	backendCompileOpts, err := opts.BackendCompileOpts(ctx, d)
+	backendCompileOpts, err := opts.BackendCompileOpts(ctx, d, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +141,7 @@ func GrafanaBackendBuild(ctx context.Context, d *dagger.Client, src *dagger.Dire
 			Version:          args.GrafanaOpts.Version,
 			Env:              args.GrafanaOpts.Env,
 			GoTags:           args.GrafanaOpts.GoTags,
+			GoVersion:        args.GrafanaOpts.GoVersion,
 			YarnCacheHostDir: args.GrafanaOpts.YarnCacheHostDir,
 		}
 		container, err := GrafanaBackendBuildDirectory(ctx, d, opts)

@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	GoURL        = "https://go.dev/dl/go1.20.2.linux-%s.tar.gz"
+	GoURL        = "https://go.dev/dl/go%s.linux-%s.tar.gz"
 	ViceroyImage = "rfratto/viceroy:v0.3.0"
 )
 
 // ViceroyContainer returns a dagger container with everything set up that is needed to build Grafana's Go backend
 // with CGO using Viceroy, which makes setting up the C compiler toolchain easier.
-func ViceroyContainer(d *dagger.Client, distro executil.Distribution, base string) *dagger.Container {
+func ViceroyContainer(d *dagger.Client, distro executil.Distribution, base string, goVersion string) *dagger.Container {
 	opts := dagger.ContainerOpts{
 		Platform: "linux/amd64",
 	}
@@ -25,7 +25,7 @@ func ViceroyContainer(d *dagger.Client, distro executil.Distribution, base strin
 	// * amd64
 	// * armv6l
 	// * arm64
-	goURL := fmt.Sprintf(GoURL, "amd64")
+	goURL := fmt.Sprintf(GoURL, goVersion, "amd64")
 	container := d.Container(opts).From(base)
 
 	// Install Go manually, and install make, git, and curl from the package manager.
