@@ -38,21 +38,125 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		return err
 	}
 
-	files := make(map[string]*dagger.File, len(packages))
+	debs := make(map[string]*dagger.File, len(packages))
+
 	for i, v := range args.PackageInputOpts.Packages {
-		dst := strings.Join([]string{args.PublishOpts.Destination, GetPackageInstallerName(v, opts)}, "/")
-		file, err := BuildPackageInstaller(ctx, v, packages[i], opts)
-		if err != nil {
-			return err
+		var (
+			tarOpts = TarOptsFromFileName(v)
+			name    = filepath.Base(strings.TrimPrefix(strings.ReplaceAll(v, ".tar.gz", fmt.Sprintf(".%s", opts.PackageType)), "file://"))
+			fpmArgs = []string{
+				"fpm",
+				"--input-type=dir",
+				"--chdir=/pkg",
+				fmt.Sprintf("--output-type=%s", opts.PackageType),
+				"--vendor=\"Grafana Labs\"",
+				"--url=https://grafana.com",
+				"--maintainer=contact@grafana.com",
+				fmt.Sprintf("--version=%s", tarOpts.Version),
+				fmt.Sprintf("--package=%s", "/src/"+name),
+			}
+
+			vopts = versions.OptionsFor(tarOpts.Version)
+		)
+
+		// If this is a debian installer and this version had a prerm script (introduced in v9.5)...
+		// TODO: this logic means that rpms can't also have a beforeremove. Not important at the moment because it's static (in pipelines/rpm.go) and it doesn't have beforeremove set.
+		if vopts.DebPreRM.IsSet && vopts.DebPreRM.Value && opts.PackageType == "deb" {
+			if opts.BeforeRemove != "" {
+				fpmArgs = append(fpmArgs, fmt.Sprintf("--before-remove=%s", opts.BeforeRemove))
+			}
 		}
-		files[dst] = file
+
+		for _, c := range opts.ConfigFiles {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", c[1]))
+		}
+
+		if opts.AfterInstall != "" {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--after-install=%s", opts.AfterInstall))
+		}
+
+		for _, d := range opts.Depends {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--depends=%s", d))
+		}
+
+		fpmArgs = append(fpmArgs, opts.ExtraArgs...)
+
+		if arch := executil.PackageArch(tarOpts.Distro); arch != "" {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
+		}
+
+		if tarOpts.Edition == "enterprise" {
+			fpmArgs = append(fpmArgs, "--description=\"Grafana Enterprise\"")
+			fpmArgs = append(fpmArgs, "--conflicts=grafana")
+		} else {
+			fpmArgs = append(fpmArgs, "--description=Grafana")
+			fpmArgs = append(fpmArgs, "--license=agpl3")
+		}
+
+		if tarOpts.Edition != "" {
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--name=grafana-%s", tarOpts.Edition))
+		} else {
+			fpmArgs = append(fpmArgs, "--name=grafana")
+		}
+
+		// The last fpm arg which is required to say, "use the PWD to build the package".
+		fpmArgs = append(fpmArgs, ".")
+
+		var (
+			// fpm is going to create us a package that is going to essentially rsync the folders from the package into the filesystem.
+			// These paths are the paths where grafana package contents will be placed.
+			packagePaths = []string{
+				"/pkg/usr/sbin",
+				"/pkg/usr/share",
+				// init.d scripts are service management scripts that start/stop/restart/enable the grafana service without systemd.
+				// these are likely to be deprecated as systemd is now the default pretty much everywhere.
+				"/pkg/etc/init.d",
+				// holds default environment variables for the grafana-server service
+				opts.EnvFolder,
+				// /etc/grafana is empty in the installation, but is set up by the postinstall script and must be created first.
+				"/pkg/etc/grafana",
+				// these are our systemd unit files that allow systemd to start/stop/restart/enable the grafana service.
+				"/pkg/usr/lib/systemd/system",
+			}
+		)
+
+		container := opts.Container.
+			WithFile("/src/grafana.tar.gz", packages[i]).
+			WithEnvVariable("XZ_DEFAULTS", "-T0").
+			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
+			WithExec([]string{"ls", "-al", "/src"})
+
+		container = container.
+			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
+			// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
+			WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
+			WithExec([]string{"cp", "-r", "/src", "/pkg/usr/share/grafana"})
+
+		for _, conf := range opts.ConfigFiles {
+			container = container.WithExec(append([]string{"cp", "-r"}, conf...))
+		}
+
+		container = container.WithExec(fpmArgs)
+
+		if opts.RPMSign {
+			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
+				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("rpm --checksig %s | grep -qE 'digests signatures OK|pgp.+OK'", "/src/"+name)})
+
+			code, err := container.ExitCode(ctx)
+			if err != nil || code != 0 {
+				return fmt.Errorf("failed to validate gpg signature for rpm package")
+			}
+		}
+
+		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
+		debs[dst] = container.File("/src/" + name)
 	}
 
 	var (
 		wg = &errgroup.Group{}
 		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
 	)
-	for dst, file := range files {
+	for dst, file := range debs {
 		wg.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
 			Destination: dst,
 			File:        file,
@@ -62,122 +166,6 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 	}
 
 	return wg.Wait()
-}
-
-func GetPackageInstallerName(tgz string, opts InstallerOpts) string {
-	return filepath.Base(strings.TrimPrefix(strings.ReplaceAll(tgz, ".tar.gz", fmt.Sprintf(".%s", opts.PackageType)), "file://"))
-}
-
-func BuildPackageInstaller(ctx context.Context, tgz string, pkg *dagger.File, opts InstallerOpts) (*dagger.File, error) {
-	var (
-		tarOpts = TarOptsFromFileName(tgz)
-		name    = GetPackageInstallerName(tgz, opts)
-		fpmArgs = []string{
-			"fpm",
-			"--input-type=dir",
-			"--chdir=/pkg",
-			fmt.Sprintf("--output-type=%s", opts.PackageType),
-			"--vendor=\"Grafana Labs\"",
-			"--url=https://grafana.com",
-			"--maintainer=contact@grafana.com",
-			fmt.Sprintf("--version=%s", tarOpts.Version),
-			fmt.Sprintf("--package=%s", "/src/"+name),
-		}
-
-		vopts = versions.OptionsFor(tarOpts.Version)
-	)
-
-	// If this is a debian installer and this version had a prerm script (introduced in v9.5)...
-	// TODO: this logic means that rpms can't also have a beforeremove. Not important at the moment because it's static (in pipelines/rpm.go) and it doesn't have beforeremove set.
-	if vopts.DebPreRM.IsSet && vopts.DebPreRM.Value && opts.PackageType == "deb" {
-		if opts.BeforeRemove != "" {
-			fpmArgs = append(fpmArgs, fmt.Sprintf("--before-remove=%s", opts.BeforeRemove))
-		}
-	}
-
-	for _, c := range opts.ConfigFiles {
-		fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", c[1]))
-	}
-
-	if opts.AfterInstall != "" {
-		fpmArgs = append(fpmArgs, fmt.Sprintf("--after-install=%s", opts.AfterInstall))
-	}
-
-	for _, d := range opts.Depends {
-		fpmArgs = append(fpmArgs, fmt.Sprintf("--depends=%s", d))
-	}
-
-	fpmArgs = append(fpmArgs, opts.ExtraArgs...)
-
-	if arch := executil.PackageArch(tarOpts.Distro); arch != "" {
-		fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
-	}
-
-	// Honestly we don't care about making fpm installers for non-enterprise or non-grafana flavors of grafana
-	if tarOpts.Edition == "enterprise" {
-		fpmArgs = append(fpmArgs, "--description=\"Grafana Enterprise\"")
-		fpmArgs = append(fpmArgs, "--conflicts=grafana")
-	} else {
-		fpmArgs = append(fpmArgs, "--description=Grafana")
-		fpmArgs = append(fpmArgs, "--license=agpl3")
-	}
-
-	if tarOpts.Edition != "" {
-		fpmArgs = append(fpmArgs, fmt.Sprintf("--name=grafana-%s", tarOpts.Edition))
-	} else {
-		fpmArgs = append(fpmArgs, "--name=grafana")
-	}
-
-	// The last fpm arg which is required to say, "use the PWD to build the package".
-	fpmArgs = append(fpmArgs, ".")
-
-	var (
-		// fpm is going to create us a package that is going to essentially rsync the folders from the package into the filesystem.
-		// These paths are the paths where grafana package contents will be placed.
-		packagePaths = []string{
-			"/pkg/usr/sbin",
-			"/pkg/usr/share",
-			// init.d scripts are service management scripts that start/stop/restart/enable the grafana service without systemd.
-			// these are likely to be deprecated as systemd is now the default pretty much everywhere.
-			"/pkg/etc/init.d",
-			// holds default environment variables for the grafana-server service
-			opts.EnvFolder,
-			// /etc/grafana is empty in the installation, but is set up by the postinstall script and must be created first.
-			"/pkg/etc/grafana",
-			// these are our systemd unit files that allow systemd to start/stop/restart/enable the grafana service.
-			"/pkg/usr/lib/systemd/system",
-		}
-	)
-
-	container := opts.Container.
-		WithFile("/src/grafana.tar.gz", pkg).
-		WithEnvVariable("XZ_DEFAULTS", "-T0").
-		WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
-		WithExec([]string{"ls", "-al", "/src"})
-
-	container = container.
-		WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
-		// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
-		WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
-		WithExec([]string{"cp", "-r", "/src", "/pkg/usr/share/grafana"})
-
-	for _, conf := range opts.ConfigFiles {
-		container = container.WithExec(append([]string{"cp", "-r"}, conf...))
-	}
-
-	container = container.WithExec(fpmArgs)
-
-	if opts.RPMSign {
-		container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("rpm --checksig %s | grep -qE 'digests signatures OK|pgp.+OK'", "/src/"+name)})
-
-		code, err := container.ExitCode(ctx)
-		if err != nil || code != 0 {
-			return nil, fmt.Errorf("failed to validate gpg signature for rpm package")
-		}
-	}
-
-	return container.File("/src/" + name), nil
 }
 
 type SyncWriter struct {
