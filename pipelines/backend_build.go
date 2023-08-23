@@ -113,6 +113,7 @@ func GrafanaBackendBuildDirectories(ctx context.Context, d *dagger.Client, opts 
 			BuildInfo:    buildinfo,
 			Env:          env,
 			GoTags:       tags,
+			GoVersion:    opts.GoVersion,
 		}
 
 		dirs[distro] = containers.CompileBackend(d, opts)
