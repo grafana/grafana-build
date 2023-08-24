@@ -40,9 +40,9 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/privkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/passkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/pubkeys"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY_BASE64\" | base64 -d > /root/.rpmdb/privkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE_BASE64\" | base64 -d > /root/.rpmdb/passkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY_BASE64\" | base64 -d > /root/.rpmdb/pubkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY_BASE64\" > /root/.rpmdb/privkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE_BASE64\" > /root/.rpmdb/passkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY_BASE64\" > /root/.rpmdb/pubkeys/grafana.key"}).
 		WithNewFile("/root/.rpmmacros", dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 			Contents:    RPMMacros,
