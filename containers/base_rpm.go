@@ -1,8 +1,9 @@
 package containers
 
 import (
-	"dagger.io/dagger"
 	"encoding/base64"
+
+	"dagger.io/dagger"
 )
 
 const RPMMacros = `
