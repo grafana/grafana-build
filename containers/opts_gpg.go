@@ -10,7 +10,7 @@ type GPGOpts struct {
 	Sign                bool
 	GPGPrivateKeyBase64 string
 	GPGPublicKeyBase64  string
-	GPGPassphraseBase64 string
+	GPGPassphrase       string
 }
 
 func GPGOptsFromFlags(c cliutil.CLIContext) *GPGOpts {
@@ -18,6 +18,6 @@ func GPGOptsFromFlags(c cliutil.CLIContext) *GPGOpts {
 		Sign:                c.Bool("sign"),
 		GPGPrivateKeyBase64: strings.ReplaceAll(c.String("gpg-private-key-base64"), "\n", ""),
 		GPGPublicKeyBase64:  strings.ReplaceAll(c.String("gpg-public-key-base64"), "\n", ""),
-		GPGPassphraseBase64: c.String("gpg-passphrase-base64"),
+		GPGPassphrase:       c.String("gpg-passphrase"),
 	}
 }
