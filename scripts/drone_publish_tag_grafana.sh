@@ -51,9 +51,9 @@ dagger run --silent go run ./cmd rpm \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --sign=true \
-  --gpg-private-key-base64=${GPG_PRIVATE_KEY} \
-  --gpg-public-key-base64=${GPG_PUBLIC_KEY} \
-  --gpg-passphrase-base64=${GPG_PASSPHRASE} > rpms.txt
+  --gpg-private-key-base64="${GPG_PRIVATE_KEY}" \
+  --gpg-public-key-base64="${GPG_PUBLIC_KEY}" \
+  --gpg-passphrase="${GPG_PASSPHRASE}" > rpms.txt
 
 # For Windows we distribute zips and exes
 dagger run --silent go run ./cmd zip \

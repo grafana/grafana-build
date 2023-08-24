@@ -187,7 +187,7 @@ var GPGFlags = []cli.Flag{
 		Usage: "Provides a private key encoded in base64 for GPG signing",
 	},
 	&cli.StringFlag{
-		Name:  "gpg-passphrase-base64",
+		Name:  "gpg-passphrase",
 		Usage: "Provides a private key passphrase encoded in base64 for GPG signing",
 	},
 	&cli.BoolFlag{
