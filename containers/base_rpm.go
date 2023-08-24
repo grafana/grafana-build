@@ -1,6 +1,9 @@
 package containers
 
-import "dagger.io/dagger"
+import (
+	"dagger.io/dagger"
+	"encoding/base64"
+)
 
 const RPMMacros = `
 %_signature gpg
@@ -21,8 +24,13 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 	if !opts.Sign {
 		return container
 	}
-	gpgPublicKeyBase64Secret := d.SetSecret("gpg-public-key-base64", opts.GPGPublicKeyBase64)
-	gpgPrivateKeyBase64Secret := d.SetSecret("gpg-private-key-base64", opts.GPGPrivateKeyBase64)
+	var gpgPublicKeyBase64Secret, gpgPrivateKeyBase64Secret *dagger.Secret
+	if decodedGPGPublicKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64); err != nil {
+		gpgPublicKeyBase64Secret = d.SetSecret("gpg-public-key-base64", string(decodedGPGPublicKeyBase64Secret))
+	}
+	if decodedGPGPrivateKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64); err != nil {
+		gpgPrivateKeyBase64Secret = d.SetSecret("gpg-private-key-base64", string(decodedGPGPrivateKeyBase64Secret))
+	}
 	gpgPassphraseBase64Secret := d.SetSecret("gpg-passphrase-base64", opts.GPGPassphraseBase64)
 	return container.
 		WithSecretVariable("GPG_PUBLIC_KEY_BASE64", gpgPublicKeyBase64Secret).
