@@ -1,0 +1,19 @@
+# This workflow calls a reusable workflow to publish TechDocs to the Backstage ops GCS bucket.
+name: Publish TechDocs
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/publish-docs.yml'
+
+jobs:
+  publish-docs:
+    uses: grafana/shared-workflows/.github/workflows/publish-techdocs.yaml@main
+    secrets: inherit
+    with:
+      namespace: default
+      kind: component
+      name: grafana-build
