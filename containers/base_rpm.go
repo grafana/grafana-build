@@ -3,6 +3,7 @@ package containers
 import (
 	"encoding/base64"
 	"log"
+	"time"
 
 	"dagger.io/dagger"
 )
@@ -26,26 +27,35 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 	if !opts.Sign {
 		return container
 	}
-	var gpgPublicKeyBase64Secret, gpgPrivateKeyBase64Secret *dagger.Secret
-	if decodedGPGPublicKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64); err == nil {
-		gpgPublicKeyBase64Secret = d.SetSecret("gpg-public-key", string(decodedGPGPublicKeyBase64Secret))
+	var gpgPublicKeySecret, gpgPrivateKeySecret, gpgPassphraseSecret *dagger.Secret
+
+	if sec, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64); err == nil {
+		gpgPublicKeySecret = d.SetSecret("gpg-public-key", string(sec))
 	} else {
 		log.Printf("gpg-public-key-base64 cannot be decoded %s", err.Error())
 	}
-	if decodedGPGPrivateKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64); err == nil {
-		gpgPrivateKeyBase64Secret = d.SetSecret("gpg-private-key", string(decodedGPGPrivateKeyBase64Secret))
+
+	if sec, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64); err == nil {
+		gpgPrivateKeySecret = d.SetSecret("gpg-private-key", string(sec))
 	} else {
 		log.Printf("gpg-private-key-base64 cannot be decoded %s", err.Error())
 	}
-	gpgPassphraseBase64Secret := d.SetSecret("gpg-passphrase-base64", opts.GPGPassphraseBase64)
+
+	if sec, err := base64.StdEncoding.DecodeString(opts.GPGPassphraseBase64); err == nil {
+		gpgPassphraseSecret = d.SetSecret("gpg-passphrase-base64", string(sec))
+	} else {
+		log.Printf("gpg-private-key-base64 cannot be decoded %s", err.Error())
+	}
+
 	return container.
 		WithExec([]string{"apt-get", "install", "-yq", "gnupg2"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/privkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/passkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/pubkeys"}).
-		WithSecretVariable("GPG_PUBLIC_KEY", gpgPublicKeyBase64Secret).
-		WithSecretVariable("GPG_PRIVATE_KEY", gpgPrivateKeyBase64Secret).
-		WithSecretVariable("GPG_PASSPHRASE", gpgPassphraseBase64Secret).
+		WithEnvVariable("now", time.Now().String()).
+		WithSecretVariable("GPG_PUBLIC_KEY", gpgPublicKeySecret).
+		WithSecretVariable("GPG_PRIVATE_KEY", gpgPrivateKeySecret).
+		WithSecretVariable("GPG_PASSPHRASE", gpgPassphraseSecret).
 		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY\" > /root/.rpmdb/privkeys/grafana.key"}).
 		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE\" > /root/.rpmdb/passkeys/grafana.key"}).
 		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY\" > /root/.rpmdb/pubkeys/grafana.key"}).
