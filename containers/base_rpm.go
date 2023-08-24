@@ -1,11 +1,6 @@
 package containers
 
-import (
-	"encoding/base64"
-	"log"
-
-	"dagger.io/dagger"
-)
+import "dagger.io/dagger"
 
 const RPMMacros = `
 %_signature gpg
@@ -26,17 +21,8 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 	if !opts.Sign {
 		return container
 	}
-	var gpgPublicKeyBase64Secret, gpgPrivateKeyBase64Secret *dagger.Secret
-	if decodedGPGPublicKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64); err != nil {
-		gpgPublicKeyBase64Secret = d.SetSecret("gpg-public-key-base64", string(decodedGPGPublicKeyBase64Secret))
-	} else {
-		log.Println("gpg-public-key-base64 cannot be decoded %w", err)
-	}
-	if decodedGPGPrivateKeyBase64Secret, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64); err != nil {
-		gpgPrivateKeyBase64Secret = d.SetSecret("gpg-private-key-base64", string(decodedGPGPrivateKeyBase64Secret))
-	} else {
-		log.Println("gpg-private-key-base64 cannot be decoded %w", err)
-	}
+	gpgPublicKeyBase64Secret := d.SetSecret("gpg-public-key-base64", opts.GPGPublicKeyBase64)
+	gpgPrivateKeyBase64Secret := d.SetSecret("gpg-private-key-base64", opts.GPGPrivateKeyBase64)
 	gpgPassphraseBase64Secret := d.SetSecret("gpg-passphrase-base64", opts.GPGPassphraseBase64)
 	return container.
 		WithSecretVariable("GPG_PUBLIC_KEY_BASE64", gpgPublicKeyBase64Secret).
@@ -46,9 +32,9 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/privkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/passkeys"}).
 		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/pubkeys"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY_BASE64\" > /root/.rpmdb/privkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE_BASE64\" > /root/.rpmdb/passkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY_BASE64\" > /root/.rpmdb/pubkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY_BASE64\" | base64 -d > /root/.rpmdb/privkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE_BASE64\" | base64 -d > /root/.rpmdb/passkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY_BASE64\" | base64 -d > /root/.rpmdb/pubkeys/grafana.key"}).
 		WithNewFile("/root/.rpmmacros", dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 			Contents:    RPMMacros,
