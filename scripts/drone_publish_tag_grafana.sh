@@ -50,7 +50,7 @@ dagger run --silent go run ./cmd rpm \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --sign=false \
+  --sign=true \
   --gpg-private-key-base64=$(echo $GPG_PRIVATE_KEY | base64 -w 0) \
   --gpg-public-key-base64=$(echo $GPG_PUBLIC_KEY | base64 -w 0) \
   --gpg-passphrase-base64=$(echo $GPG_PASSPHRASE | base64 -w 0) > rpms.txt
