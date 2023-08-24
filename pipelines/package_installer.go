@@ -52,7 +52,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 				"--vendor=\"Grafana Labs\"",
 				"--url=https://grafana.com",
 				"--maintainer=contact@grafana.com",
-				fmt.Sprintf("--version=%s", tarOpts.Version),
+				fmt.Sprintf("--version=%s", strings.TrimPrefix(tarOpts.Version, "v")),
 				fmt.Sprintf("--package=%s", "/src/"+name),
 			}
 
