@@ -41,7 +41,7 @@ func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
 		log.Printf("gpg-private-key-base64 cannot be decoded %s", err.Error())
 	}
 
-	gpgPassphraseSecret = d.SetSecret("gpg-passphrase-base64", string(opts.GPGPassphraseBase64))
+	gpgPassphraseSecret = d.SetSecret("gpg-passphrase-base64", opts.GPGPassphraseBase64)
 
 	return container.
 		WithExec([]string{"apt-get", "install", "-yq", "gnupg2"}).
