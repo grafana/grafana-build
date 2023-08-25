@@ -33,6 +33,7 @@ echo "Done building tar.gz packages..."
 # Use the non-windows, non-darwin packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
+  --parallel=4 \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
@@ -40,6 +41,7 @@ dagger run --silent go run ./cmd deb \
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
+  --parallel=4 \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
