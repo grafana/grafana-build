@@ -34,10 +34,9 @@ var GCPFlags = []cli.Flag{
 // NPMFlags are used in commands that need to authenticate with package registries to publish NPM packages
 var NPMFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:     "registry",
-		Usage:    "The package registry to publish packages",
-		Required: true,
-		Value:    "registry.npmjs.org",
+		Name:  "registry",
+		Usage: "The package registry to publish packages",
+		Value: "registry.npmjs.org",
 	},
 	&cli.StringFlag{
 		Name:     "token",

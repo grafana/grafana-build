@@ -8,6 +8,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/executil"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
@@ -60,7 +61,7 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			base = BaseImageUbuntu
 		}
 
-		isLatest, err := containers.IsLatest(ctx, d, "stable", tarOpts.Version)
+		isLatest, err := containers.IsLatestGrafana(ctx, d, executil.Stable, tarOpts.Version)
 		if err != nil {
 			return err
 		}

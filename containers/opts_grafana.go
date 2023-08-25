@@ -113,7 +113,7 @@ func (g *GrafanaOpts) DetectVersion(ctx context.Context, client *dagger.Client, 
 	}
 
 	log.Println("Version not provided; getting version from package.json...")
-	v, err := GetPackageJSONVersion(ctx, client, grafanaDir)
+	v, err := GetJSONValue(ctx, client, grafanaDir, "package.json", "version")
 	if err != nil {
 		return "", err
 	}
