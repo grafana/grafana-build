@@ -12,8 +12,16 @@ import (
 // PublishNPM publishes a npm package to the given destination.
 func PublishNPM(ctx context.Context, d *dagger.Client, pkg *dagger.File, opts *NPMOpts) (string, error) {
 	src := ExtractedArchive(d, pkg, "pkg.tgz")
+
 	version, err := GetJSONValue(ctx, d, src, "package.json", "version")
+	if err != nil {
+		return "", err
+	}
+
 	name, err := GetJSONValue(ctx, d, src, "package.json", "name")
+	if err != nil {
+		return "", err
+	}
 
 	isLatestStable, err := IsLatestGrafana(ctx, d, executil.Stable, version)
 	if err != nil {
