@@ -50,7 +50,7 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 		return err
 	}
 
-	if err := ExitError(ctx, uploader); err != nil {
+	if _, err := ExitError(ctx, uploader); err != nil {
 		return err
 	}
 

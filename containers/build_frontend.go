@@ -2,6 +2,7 @@ package containers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"dagger.io/dagger"
@@ -76,8 +77,12 @@ func YarnInstall(ctx context.Context, d *dagger.Client, platform dagger.Platform
 	container = container.
 		WithExec([]string{"yarn", "install", "--immutable"})
 
-	if e, err := container.ExitCode(ctx); err != nil {
-		return fmt.Errorf("exit code '%d', error: %s", e, err.Error())
+	if _, err := container.Sync(context.Background()); err != nil {
+		var e *dagger.ExecError
+		if errors.As(err, &e) {
+			return fmt.Errorf("exit code '%d', error: %w", e.ExitCode, err)
+		}
+		return err
 	}
 
 	return nil

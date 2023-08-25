@@ -55,9 +55,11 @@ func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, 
 }
 
 func revParseShort(ctx context.Context, container *dagger.Container) (string, error) {
+	var err error
 	c := container.WithExec([]string{"rev-parse", "--short", "HEAD"})
 
-	if err := ExitError(ctx, c); err != nil {
+	c, err = ExitError(ctx, c)
+	if err != nil {
 		return "", err
 	}
 
@@ -70,9 +72,11 @@ func revParseShort(ctx context.Context, container *dagger.Container) (string, er
 }
 
 func revParseBranch(ctx context.Context, container *dagger.Container) (string, error) {
+	var err error
 	c := container.WithExec([]string{"rev-parse", "--abbrev-ref", "HEAD"})
 
-	if err := ExitError(ctx, c); err != nil {
+	c, err = ExitError(ctx, c)
+	if err != nil {
 		return "", err
 	}
 

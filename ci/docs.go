@@ -47,7 +47,7 @@ func buildTechDocs(ctx context.Context, dc *dagger.Client) error {
 		WithWorkdir("/src").
 		WithMountedDirectory("/src", src)
 	techdocContainer = techdocContainer.WithExec([]string{"build"})
-	if _, err := techdocContainer.ExitCode(ctx); err != nil {
+	if _, err := techdocContainer.Sync(ctx); err != nil {
 		return err
 	}
 
@@ -63,7 +63,7 @@ func buildTechDocs(ctx context.Context, dc *dagger.Client) error {
 		WithExec([]string{"gcloud", "auth", "list"}).
 		WithExec([]string{"gsutil", "-m", "rsync", "-d", "-r", "/data", fmt.Sprintf("gs://%s/%s", backstageBucketName, targetPathPrefix)})
 
-	if _, err := gcsContainer.ExitCode(ctx); err != nil {
+	if _, err := gcsContainer.Sync(ctx); err != nil {
 		return fmt.Errorf("failed to upload techdocs: %w", err)
 	}
 	return nil

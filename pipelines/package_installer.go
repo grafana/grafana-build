@@ -139,9 +139,9 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
 				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("rpm --checksig %s | grep -qE 'digests signatures OK|pgp.+OK'", "/src/"+name)})
 
-			code, err := container.ExitCode(ctx)
-			if err != nil || code != 0 {
-				return fmt.Errorf("failed to validate gpg signature for rpm package")
+			container, err = containers.ExitError(ctx, container)
+			if err != nil {
+				return fmt.Errorf("failed to validate gpg signature for rpm package: %w", err)
 			}
 		}
 

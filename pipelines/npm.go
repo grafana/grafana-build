@@ -26,5 +26,6 @@ func NPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	)
 
 	c := containers.NodeContainer(d, "18.12.0", args.Platform).WithMountedDirectory("/src", pkgdir)
-	return containers.ExitError(ctx, c)
+	_, err = containers.ExitError(ctx, c)
+	return err
 }

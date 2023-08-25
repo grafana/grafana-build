@@ -15,7 +15,7 @@ func lintProject(ctx context.Context, dc *dagger.Client) error {
 		WithMountedDirectory("/src", workDir).
 		WithExec([]string{"golangci-lint", "run"})
 
-	if _, err := container.ExitCode(ctx); err != nil {
+	if _, err := container.Sync(ctx); err != nil {
 		return err
 	}
 	return nil

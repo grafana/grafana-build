@@ -65,7 +65,7 @@ func mainAction(cctx *cli.Context) (rerr error) {
 		WithMountedDirectory("/src", workDir).
 		WithWorkdir("/src").
 		WithExec([]string{"go", "test", "./...", "-v"}).
-		ExitCode(ctx); err != nil {
+		Sync(ctx); err != nil {
 		return fmt.Errorf("tests failed: %w", err)
 	}
 

@@ -76,7 +76,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 		})
 	}
 
-	if err := containers.ExitError(ctx, container); err != nil {
+	if _, err := containers.ExitError(ctx, container); err != nil {
 		return fmt.Errorf("container did not exit successfully: %w", err)
 	}
 

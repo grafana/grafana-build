@@ -1,6 +1,6 @@
-FROM golang:1.20-alpine
+FROM golang:1.21-alpine
 
-ARG DAGGER_VERSION=v0.6.4
+ARG DAGGER_VERSION=v0.8.4
 
 WORKDIR /src
 RUN apk add --no-cache git docker wget bash
