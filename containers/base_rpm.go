@@ -49,7 +49,6 @@ func GPGContainer(d *dagger.Client, opts *GPGOpts) (*dagger.Container, error) {
 			Contents:    RPMMacros,
 		}).
 		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"}), nil
-
 }
 
 func RPMContainer(d *dagger.Client) *dagger.Container {
