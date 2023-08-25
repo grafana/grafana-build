@@ -1,3 +1,5 @@
 grafana
 grafana-*
 dist
+.git
+.github

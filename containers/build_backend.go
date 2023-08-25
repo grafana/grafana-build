@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana-build/versions"
 )
 
-const (
-	GoImageAlpine = "golang:1.20.7-alpine"
-)
+func GetGoImageAlpine(version string) string {
+	return fmt.Sprintf("golang:%s-alpine", version)
+}
 
 var GrafanaCommands = []string{
 	"grafana",
@@ -38,18 +38,20 @@ type CompileBackendOpts struct {
 	BuildInfo    *BuildInfo
 	Env          map[string]string
 	GoTags       []string
+	GoVersion    string
 
 	CombinedExecutables bool
 }
 
-func goBuildImage(distro executil.Distribution, opts *executil.GoBuildOpts) string {
-	os, _ := executil.OSAndArch(distro)
+func goBuildImage(distro executil.Distribution, opts *executil.GoBuildOpts, goVersion string) string {
+	os, arch := executil.OSAndArch(distro)
 
-	if os != "linux" {
+	// For arm/v7 and arm/v6 we want to use viceroy
+	if os != "linux" || arch == "arm" {
 		return ViceroyImage
 	}
 
-	return GoImageAlpine
+	return GetGoImageAlpine(goVersion)
 }
 
 // This function will return the platform equivalent to the distribution.
@@ -92,15 +94,15 @@ func CompileBackendBuilder(d *dagger.Client, opts *CompileBackendOpts) *dagger.C
 	var (
 		goBuildOpts = goBuildOptsFunc(distro, buildinfo)
 		env         = executil.GoBuildEnv(goBuildOpts)
-		image       = goBuildImage(distro, goBuildOpts)
+		image       = goBuildImage(distro, goBuildOpts, opts.GoVersion)
 	)
 
-	log.Println("Creating Grafana backend build container for", distro, "on platform", platform)
+	log.Println("Creating Grafana backend build container for", distro, "on platform", platform, "using", opts.GoVersion)
 
 	builder := GolangContainer(d, platform, image)
 
 	if image == ViceroyImage {
-		builder = ViceroyContainer(d, distro, ViceroyImage)
+		builder = ViceroyContainer(d, distro, ViceroyImage, opts.GoVersion)
 	}
 
 	genGoArgs := []string{"make", "gen-go"}

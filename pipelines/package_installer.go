@@ -52,7 +52,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 				"--vendor=\"Grafana Labs\"",
 				"--url=https://grafana.com",
 				"--maintainer=contact@grafana.com",
-				fmt.Sprintf("--version=%s", tarOpts.Version),
+				fmt.Sprintf("--version=%s", strings.TrimPrefix(tarOpts.Version, "v")),
 				fmt.Sprintf("--package=%s", "/src/"+name),
 			}
 
@@ -93,7 +93,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		} else {
 			fpmArgs = append(fpmArgs, "--name=grafana")
 			fpmArgs = append(fpmArgs, "--description=Grafana")
-			fpmArgs = append(fpmArgs, "--license=agpl3")
+			fpmArgs = append(fpmArgs, "--license=AGPLv3")
 		}
 
 		// The last fpm arg which is required to say, "use the PWD to build the package".

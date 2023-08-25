@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -104,13 +105,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 		storybook   = containers.Storybook(d, opts.Platform, src, cacheOpts, version, nodeVersion)
 	)
 
-	name := "grafana"
-	if edition != "" {
-		name = fmt.Sprintf("%s-%s", name, edition)
-	}
-
-	root := fmt.Sprintf("%s-%s", name, version)
-
+	root := fmt.Sprintf("grafana-%s", strings.TrimPrefix(version, "v"))
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
 
 	paths := PackagedPaths

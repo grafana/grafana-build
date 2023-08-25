@@ -6,6 +6,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const defaultGoVersion = "1.21.0"
+
 var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
 	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs",
@@ -130,6 +132,12 @@ var GrafanaFlags = []cli.Flag{
 		Usage: "Sets the go `-tags` flag when compiling the backend",
 	},
 	&cli.StringFlag{
+		Name:     "go-version",
+		Usage:    "The version of Go to be used for building the Grafana backend",
+		Required: false,
+		Value:    defaultGoVersion,
+	},
+	&cli.StringFlag{
 		Name:  "yarn-cache",
 		Usage: "If there is a yarn cache directory, then mount that when running 'yarn install' instead of creating a cache directory",
 	},
@@ -194,7 +202,7 @@ var GPGFlags = []cli.Flag{
 		Usage: "Provides a private key encoded in base64 for GPG signing",
 	},
 	&cli.StringFlag{
-		Name:  "gpg-passphrase-base64",
+		Name:  "gpg-passphrase",
 		Usage: "Provides a private key passphrase encoded in base64 for GPG signing",
 	},
 	&cli.BoolFlag{

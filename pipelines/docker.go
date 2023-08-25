@@ -49,7 +49,7 @@ func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []strin
 	}
 
 	if opts.Distro != "" {
-		_, arch := executil.OSAndArch(opts.Distro)
+		arch := executil.FullArch(opts.Distro)
 		version += "-" + strings.ReplaceAll(arch, "/", "")
 	}
 

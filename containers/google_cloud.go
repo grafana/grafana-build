@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -23,13 +24,20 @@ type GCPServiceAccount struct {
 }
 
 func (a *GCPServiceAccount) Authenticate(d *dagger.Client, c *dagger.Container) (*dagger.Container, error) {
-	container := c.WithMountedFile(
-		"/opt/service_account.json",
-		d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
-	)
+	if a.DaggerFile == nil && a.JSONFile == "" {
+		return nil, fmt.Errorf("GCPServiceAccount authentication missed JSONFile AND DaggerFile")
+	}
+	var container *dagger.Container
+
+	if a.JSONFile != "" {
+		container = c.WithMountedFile(
+			"/opt/service_account.json",
+			d.Host().Directory(filepath.Dir(a.JSONFile)).File(filepath.Base(a.JSONFile)),
+		)
+	}
 
 	if a.DaggerFile != nil {
-		container = container.WithMountedFile("/opt/service_account.json", a.DaggerFile)
+		container = c.WithMountedFile("/opt/service_account.json", a.DaggerFile)
 	}
 
 	return container.WithExec([]string{"gcloud", "auth", "activate-service-account", "--key-file", "/opt/service_account.json"}), nil

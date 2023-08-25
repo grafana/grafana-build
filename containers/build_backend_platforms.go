@@ -56,8 +56,8 @@ func BuildOptsDynamicARM(distro executil.Distribution, buildinfo *BuildInfo) *ex
 	)
 
 	return &executil.GoBuildOpts{
-		CC:                ZigCC(distro),
-		CXX:               ZigCXX(distro),
+		// CC:                ZigCC(distro),
+		// CXX:               ZigCXX(distro),
 		ExperimentalFlags: []string{},
 		OS:                os,
 		Arch:              "arm",

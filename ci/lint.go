@@ -9,7 +9,7 @@ import (
 
 func lintProject(ctx context.Context, dc *dagger.Client) error {
 	workDir := dc.Host().Directory(".")
-	container := dc.Container(containerOpts).
+	container := dc.Container().
 		From("golangci/golangci-lint:v1.52.2").
 		WithWorkdir("/src").
 		WithMountedDirectory("/src", workDir).
