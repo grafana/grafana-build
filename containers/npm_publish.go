@@ -63,7 +63,12 @@ func PublishNPM(ctx context.Context, d *dagger.Client, pkg *dagger.File, opts *N
 		WithEnvVariable("NAME", name).
 		WithExec([]string{"npm", "set", fmt.Sprintf("//%s/:_authToken", opts.Registry), opts.Token})
 
+	// Get all published versions of this package
 	out, err := c.WithExec([]string{"npm", "view", name, "versions"}).Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	if !strings.Contains(out, fmt.Sprintf("'%s'", version)) {
 		// Publish only if this version is not published already
 		c = c.WithExec([]string{"npm", "publish", "/pkg.tgz", fmt.Sprintf("--registry https://%s", opts.Registry), "--tag", tag})
