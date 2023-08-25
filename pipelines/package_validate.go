@@ -406,7 +406,12 @@ func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, 
 
 	log.Printf("Validating rpm package signature for v%s%s and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
-	container := containers.RPMContainer(d, &containers.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64}).
+	container, err := containers.GPGContainer(d, &containers.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64})
+	if err != nil {
+		return err
+	}
+
+	container = container.
 		WithFile("/src/package.rpm", rpm).
 		WithExec([]string{"/bin/sh", "-c", "rpm --checksig /src/package.rpm | grep -qE 'digests signatures OK|pgp.+OK'"})
 

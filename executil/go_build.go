@@ -100,8 +100,7 @@ func GoBuildEnv(opts *GoBuildOpts) map[string]string {
 
 	env := map[string]string{"GOOS": os, "GOARCH": arch}
 
-	switch arch {
-	case "arm":
+	if arch == "arm" {
 		env["GOARM"] = string(opts.GoARM)
 	}
 
