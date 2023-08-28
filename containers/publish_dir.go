@@ -25,7 +25,7 @@ func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory,
 		return err
 	}
 
-	if err := ExitError(ctx, uploader); err != nil {
+	if _, err := ExitError(ctx, uploader); err != nil {
 		return err
 	}
 

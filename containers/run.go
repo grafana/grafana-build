@@ -14,32 +14,22 @@ var (
 
 // ExitError functionally replaces '(*container).ExitCode' in a more usable way.
 // It will return an error with the container's stderr and stdout if the exit code is not zero.
-func ExitError(ctx context.Context, container *dagger.Container) error {
-	code, err := container.ExitCode(ctx)
-	if err != nil {
-		return err
+func ExitError(ctx context.Context, container *dagger.Container) (*dagger.Container, error) {
+	container, err := container.Sync(ctx)
+	if err == nil {
+		return container, nil
 	}
 
-	if code == 0 {
-		return nil
+	var e *dagger.ExecError
+	if errors.As(err, &e) {
+		return container, fmt.Errorf("%w\nstdout: %s\nstderr: %s", ErrorNonZero, e.Stdout, e.Stderr)
 	}
-
-	stdout, err := container.Stdout(ctx)
-	if err != nil {
-		return fmt.Errorf("could not retrieve container's stdout: %w: %d", ErrorNonZero, code)
-	}
-
-	stderr, err := container.Stderr(ctx)
-	if err != nil {
-		return fmt.Errorf("could not retrieve container's stderr: %w: %d\nstdout: %s", ErrorNonZero, code, stdout)
-	}
-
-	return fmt.Errorf("%w\nstdout: %s\nstderr: %s", ErrorNonZero, stdout, stderr)
+	return container, err
 }
 
 func Run(ctx context.Context, containers []*dagger.Container) error {
 	for _, v := range containers {
-		if err := ExitError(ctx, v); err != nil {
+		if _, err := ExitError(ctx, v); err != nil {
 			return err
 		}
 	}

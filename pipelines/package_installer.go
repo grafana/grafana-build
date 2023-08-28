@@ -30,15 +30,35 @@ type InstallerOpts struct {
 	Container    *dagger.Container
 }
 
-// Uses the grafana package given by the '--package' argument and creates a installer.
-// It accepts publish args, so you can place the file in a local or remote destination.
-func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, opts InstallerOpts) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
-	if err != nil {
-		return err
+type InstallerFunc func(ctx context.Context, d *dagger.Client, args PipelineArgs, opts InstallerOpts) error
+
+func PublishInstallers(ctx context.Context, d *dagger.Client, args PipelineArgs, packages map[string]*dagger.File) error {
+	var (
+		wg = &errgroup.Group{}
+		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+	)
+
+	for dst, file := range packages {
+		wg.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
+			Destination: dst,
+			File:        file,
+			GCPOpts:     args.GCPOpts,
+			PublishOpts: args.PublishOpts,
+		}))
 	}
 
-	debs := make(map[string]*dagger.File, len(packages))
+	return wg.Wait()
+}
+
+// Uses the grafana package given by the '--package' argument and creates a installer.
+// It accepts publish args, so you can place the file in a local or remote destination.
+func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, opts InstallerOpts) (map[string]*dagger.File, error) {
+	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	installers := make(map[string]*dagger.File, len(packages))
 
 	for i, v := range args.PackageInputOpts.Packages {
 		var (
@@ -67,8 +87,9 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			}
 		}
 
+		// These paths need to be absolute when installed on the machine and not the package structure.
 		for _, c := range opts.ConfigFiles {
-			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", c[1]))
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", strings.TrimPrefix(c[1], "/pkg")))
 		}
 
 		if opts.AfterInstall != "" {
@@ -120,8 +141,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		container := opts.Container.
 			WithFile("/src/grafana.tar.gz", packages[i]).
 			WithEnvVariable("XZ_DEFAULTS", "-T0").
-			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
-			WithExec([]string{"ls", "-al", "/src"})
+			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"})
 
 		container = container.
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
@@ -135,34 +155,11 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 
 		container = container.WithExec(fpmArgs)
 
-		if opts.RPMSign {
-			container = container.WithExec([]string{"rpm", "--addsign", "/src/" + name}).
-				WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("rpm --checksig %s | grep -qE 'digests signatures OK|pgp.+OK'", "/src/"+name)})
-
-			code, err := container.ExitCode(ctx)
-			if err != nil || code != 0 {
-				return fmt.Errorf("failed to validate gpg signature for rpm package")
-			}
-		}
-
 		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
-		debs[dst] = container.File("/src/" + name)
+		installers[dst] = container.File("/src/" + name)
 	}
 
-	var (
-		wg = &errgroup.Group{}
-		sm = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
-	)
-	for dst, file := range debs {
-		wg.Go(PublishFileFunc(ctx, sm, d, &containers.PublishFileOpts{
-			Destination: dst,
-			File:        file,
-			GCPOpts:     args.GCPOpts,
-			PublishOpts: args.PublishOpts,
-		}))
-	}
-
-	return wg.Wait()
+	return installers, nil
 }
 
 type SyncWriter struct {

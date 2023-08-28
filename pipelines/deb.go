@@ -10,7 +10,7 @@ import (
 // Deb uses the grafana package given by the '--package' argument and creates a .deb installer.
 // It accepts publish args, so you can place the file in a local or remote destination.
 func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	return PackageInstaller(ctx, d, args, InstallerOpts{
+	installers, err := PackageInstaller(ctx, d, args, InstallerOpts{
 		PackageType: "deb",
 		ConfigFiles: [][]string{
 			{"/src/packaging/deb/default/grafana-server", "/pkg/etc/default/grafana-server"},
@@ -29,4 +29,14 @@ func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		EnvFolder: "/pkg/etc/default",
 		Container: containers.FPMContainer(d),
 	})
+
+	if err != nil {
+		return err
+	}
+
+	if err := PublishInstallers(ctx, d, args, installers); err != nil {
+		return err
+	}
+
+	return nil
 }
