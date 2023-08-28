@@ -18,6 +18,17 @@ func ImageManifest(tag string) string {
 	return manifest[:lastDash]
 }
 
+func LatestManifest(tag string) string {
+	suffix := ""
+	if strings.Contains(tag, "ubuntu") {
+		suffix = "-ubuntu"
+	}
+
+	manifest := strings.ReplaceAll(tag, "-image-tags", "")
+	manifestImage := strings.Split(manifest, ":")[0]
+	return strings.Join([]string{manifestImage, fmt.Sprintf("latest%s", suffix)}, ":")
+}
+
 // PublishDocker is a pipeline that uses a grafana.docker.tar.gz as input and publishes a Docker image to a container registry or repository.
 // Grafana's Dockerfile should support supplying a tar.gz using a --build-arg.
 func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
@@ -47,6 +58,12 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			// Since each package has a maximum of 2 tags, this for loop will only run twice on a worst case scenario
 			manifest := ImageManifest(tag)
 			manifestTags[manifest] = append(manifestTags[manifest], tag)
+
+			if opts.Latest {
+				manifest := LatestManifest(tag)
+				manifestTags[manifest] = append(manifestTags[manifest], tag)
+			}
+
 			wg.Go(PublishPackageImageFunc(ctx, sm, d, packages[i], tag, opts))
 		}
 	}

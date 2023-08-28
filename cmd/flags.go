@@ -31,6 +31,25 @@ var GCPFlags = []cli.Flag{
 	},
 }
 
+// NPMFlags are used in commands that need to authenticate with package registries to publish NPM packages
+var NPMFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "registry",
+		Usage: "The package registry to publish packages",
+		Value: "registry.npmjs.org",
+	},
+	&cli.StringFlag{
+		Name:     "token",
+		Usage:    "Provides a token to use to authenticate with the package registry",
+		Required: true,
+	},
+	&cli.StringSliceFlag{
+		Name:     "tag",
+		Usage:    "Provides the tags to use when publishing packages",
+		Required: true,
+	},
+}
+
 // PublishFlags are flags that are used in commands that create artifacts.
 // Anything that creates an artifact should have the option to specify a local folder destination or a remote destination.
 var PublishFlags = []cli.Flag{
@@ -162,6 +181,10 @@ var DockerPublishFlags = []cli.Flag{
 		Name:  "registry",
 		Usage: "Prefix the image name with the registry provided",
 		Value: "docker.io",
+	},
+	&cli.BoolFlag{
+		Name:  "latest",
+		Usage: "Tags the published images as latest",
 	},
 }
 

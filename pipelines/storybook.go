@@ -28,15 +28,9 @@ func Storybook(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		dst := strings.Join([]string{args.PublishOpts.Destination, name, "storybook"}, "/")
 
 		log.Println("Copying storybook assets for", name, "to", dst)
-		folder := fmt.Sprintf("/src/%s", name)
 
 		// gcloud rsync the storybook folder to ['dst']/storybook
-		storybook := d.Container().From("busybox").
-			WithFile("/src/grafana.tar.gz", targz).
-			WithExec([]string{"mkdir", "-p", folder}).
-			WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", folder}).
-			Directory(folder + "/storybook")
-
+		storybook := containers.ExtractedArchive(d, targz, name).Directory("storybook")
 		dst, err := containers.PublishDirectory(ctx, d, storybook, args.GCPOpts, dst)
 		if err != nil {
 			return err

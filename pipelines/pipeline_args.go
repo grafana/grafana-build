@@ -56,6 +56,9 @@ type PipelineArgs struct {
 
 	// ProImageOpts will be populated if ProImageFlags are enabled on the current sub-command.
 	ProImageOpts *containers.ProImageOpts
+
+	// NPMOpts will be populated if NPMFlags are enabled on the current sub-command.
+	NPMOpts *containers.NPMOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -83,5 +86,6 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		GCPOpts:          containers.GCPOptsFromFlags(c),
 		ConcurrencyOpts:  ConcurrencyOptsFromFlags(c),
 		ProImageOpts:     containers.ProImageOptsFromFlags(c),
+		NPMOpts:          containers.NPMOptsFromFlags(c),
 	}, nil
 }
