@@ -8,18 +8,9 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/executil"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
-
-func DockerChannelFromFileName(name string) string {
-	taropts := TarOptsFromFileName(name)
-	if taropts.Channel == "stable" {
-		return "latest"
-	}
-	return "main"
-}
 
 func ImageManifest(tag string) string {
 	manifest := strings.ReplaceAll(tag, "-image-tags", "")
@@ -27,7 +18,7 @@ func ImageManifest(tag string) string {
 	return manifest[:lastDash]
 }
 
-func ChannelManifest(tag string, base BaseImage, channel string) string {
+func LatestManifest(tag string, base BaseImage) string {
 	suffix := ""
 	if base == BaseImageUbuntu {
 		suffix = "-ubuntu"
@@ -35,7 +26,7 @@ func ChannelManifest(tag string, base BaseImage, channel string) string {
 
 	manifest := strings.ReplaceAll(tag, "-image-tags", "")
 	manifestImage := strings.Split(manifest, ":")[0]
-	return strings.Join([]string{manifestImage, fmt.Sprintf("%s%s", channel, suffix)}, ":")
+	return strings.Join([]string{manifestImage, fmt.Sprintf("latest%s", suffix)}, ":")
 }
 
 // PublishDocker is a pipeline that uses a grafana.docker.tar.gz as input and publishes a Docker image to a container registry or repository.
@@ -61,11 +52,6 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			base = BaseImageUbuntu
 		}
 
-		isLatest, err := containers.IsLatestGrafana(ctx, d, executil.Stable, tarOpts.Version)
-		if err != nil {
-			return err
-		}
-
 		tags := GrafanaImageTags(base, opts.Registry, tarOpts)
 		for _, tag := range tags {
 			// For each tag we publish an image and add the tag to the list of tags for a specific manifest
@@ -73,9 +59,8 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			manifest := ImageManifest(tag)
 			manifestTags[manifest] = append(manifestTags[manifest], tag)
 
-			if isLatest && tarOpts.Channel != "preview" {
-				channel := DockerChannelFromFileName(name)
-				manifest := ChannelManifest(tag, base, channel)
+			if opts.Latest {
+				manifest := LatestManifest(tag, base)
 				manifestTags[manifest] = append(manifestTags[manifest], tag)
 			}
 

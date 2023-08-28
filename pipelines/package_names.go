@@ -15,7 +15,6 @@ type TarFileOpts struct {
 	Edition string
 	Distro  executil.Distribution
 	Suffix  string
-	Channel executil.VersionChannel
 }
 
 func WithoutExt(name string) string {
@@ -93,7 +92,6 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		BuildID: buildID,
 		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
 		Suffix:  suffix,
-		Channel: executil.GetVersionChannel(version),
 	}
 }
 

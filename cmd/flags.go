@@ -43,6 +43,14 @@ var NPMFlags = []cli.Flag{
 		Usage:    "Provides a token to use to authenticate with the package registry",
 		Required: true,
 	},
+	&cli.BoolFlag{
+		Name:  "latest",
+		Usage: "Tags the published packages as latest",
+	},
+	&cli.BoolFlag{
+		Name:  "next",
+		Usage: "Tags the published packages as next",
+	},
 }
 
 // PublishFlags are flags that are used in commands that create artifacts.
@@ -176,6 +184,10 @@ var DockerPublishFlags = []cli.Flag{
 		Name:  "registry",
 		Usage: "Prefix the image name with the registry provided",
 		Value: "docker.io",
+	},
+	&cli.BoolFlag{
+		Name:  "latest",
+		Usage: "Tags the published images as latest",
 	},
 }
 
