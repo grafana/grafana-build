@@ -2,7 +2,7 @@ package containers
 
 import (
 	"encoding/base64"
-	"log"
+	"fmt"
 	"time"
 
 	"dagger.io/dagger"
@@ -20,44 +20,40 @@ const RPMMacros = `
 	%{?_gpg_digest_algo:--digest-algo %{_gpg_digest_algo}} %{__plaintext_filename}
 `
 
-func RPMContainer(d *dagger.Client, opts *GPGOpts) *dagger.Container {
-	container := FPMContainer(d).
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-yq", "rpm"})
-	if !opts.Sign {
-		return container
-	}
-	var gpgPublicKeySecret, gpgPrivateKeySecret, gpgPassphraseSecret *dagger.Secret
+func GPGContainer(d *dagger.Client, opts *GPGOpts) (*dagger.Container, error) {
+	container := RPMContainer(d)
 
-	if sec, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64); err == nil {
-		gpgPublicKeySecret = d.SetSecret("gpg-public-key", string(sec))
-	} else {
-		log.Printf("gpg-public-key-base64 cannot be decoded %s", err.Error())
+	pubKey, err := base64.StdEncoding.DecodeString(opts.GPGPublicKeyBase64)
+	if err != nil {
+		return nil, fmt.Errorf("gpg-private-key-base64 cannot be decoded %w", err)
 	}
 
-	if sec, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64); err == nil {
-		gpgPrivateKeySecret = d.SetSecret("gpg-private-key", string(sec))
-	} else {
-		log.Printf("gpg-private-key-base64 cannot be decoded %s", err.Error())
+	privKey, err := base64.StdEncoding.DecodeString(opts.GPGPrivateKeyBase64)
+	if err != nil {
+		return nil, fmt.Errorf("gpg-private-key-base64 cannot be decoded %w", err)
 	}
 
-	gpgPassphraseSecret = d.SetSecret("gpg-passphrase", opts.GPGPassphrase)
+	var (
+		gpgPassphraseSecret = d.SetSecret("gpg-passphrase", opts.GPGPassphrase)
+		gpgPrivateKeySecret = d.SetSecret("gpg-private-key", string(privKey))
+		gpgPublicKeySecret  = d.SetSecret("gpg-public-key", string(pubKey))
+	)
 
 	return container.
-		WithExec([]string{"apt-get", "install", "-yq", "gnupg2"}).
-		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/privkeys"}).
-		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/passkeys"}).
-		WithExec([]string{"mkdir", "-p", "/root/.rpmdb/pubkeys"}).
-		WithEnvVariable("now", time.Now().String()).
-		WithSecretVariable("GPG_PUBLIC_KEY", gpgPublicKeySecret).
-		WithSecretVariable("GPG_PRIVATE_KEY", gpgPrivateKeySecret).
-		WithSecretVariable("GPG_PASSPHRASE", gpgPassphraseSecret).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PRIVATE_KEY\" > /root/.rpmdb/privkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PASSPHRASE\" > /root/.rpmdb/passkeys/grafana.key"}).
-		WithExec([]string{"/bin/sh", "-c", "echo \"$GPG_PUBLIC_KEY\" > /root/.rpmdb/pubkeys/grafana.key"}).
+		WithEnvVariable("CACHE_DISABLE", time.Now().String()).
+		WithMountedSecret("/root/.rpmdb/privkeys/grafana.key", gpgPrivateKeySecret).
+		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
+		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
 		WithNewFile("/root/.rpmmacros", dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 			Contents:    RPMMacros,
 		}).
-		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"})
+		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"}), nil
+}
+
+func RPMContainer(d *dagger.Client) *dagger.Container {
+	container := FPMContainer(d).
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-yq", "rpm", "gnupg2"})
+	return container
 }

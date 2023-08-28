@@ -112,8 +112,9 @@ func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
 		return nil, err
 	}
 
-	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
-		return nil, fmt.Errorf("%d: %w", code, err)
+	container, err = ExitError(context.Background(), container)
+	if err != nil {
+		return nil, err
 	}
 
 	return container.Directory("src"), nil
@@ -130,8 +131,9 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 		return nil, err
 	}
 
-	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
-		return nil, fmt.Errorf("%d: %w", code, err)
+	container, err = ExitError(context.Background(), container)
+	if err != nil {
+		return nil, err
 	}
 
 	return container.Directory("src"), nil
@@ -156,8 +158,9 @@ func CloneWithSSHAuth(d *dagger.Client, sshKeyPath, url, ref string) (*dagger.Di
 		return nil, err
 	}
 
-	if code, err := container.ExitCode(context.Background()); err != nil || code != 0 {
-		return nil, fmt.Errorf("%d: %w", code, err)
+	container, err = ExitError(context.Background(), container)
+	if err != nil {
+		return nil, err
 	}
 
 	return container.Directory("src"), nil

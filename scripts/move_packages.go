@@ -409,7 +409,6 @@ func main() {
 				if err := cmd.Run(); err != nil {
 					panic(err)
 				}
-				//container = container.WithExec([]string{"gcloud", "storage", "cp", "-r", name, v})
 			}
 			continue
 		}
@@ -430,7 +429,6 @@ func main() {
 			if err := cmd.Run(); err != nil {
 				panic(err)
 			}
-			//container = container.WithExec([]string{"gcloud", "storage", "cp", name, v})
 		}
 	}
 

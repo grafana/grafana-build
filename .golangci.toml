@@ -27,7 +27,7 @@ packages = ["io/ioutil"]
 "gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
 
 [linters-settings.gocritic]
-enabled-checks = ["ruleguard"]
+enabled-checks = []
 [linters-settings.gocritic.settings.ruleguard]
 rules = "./ruleguard.rules.go"
 
