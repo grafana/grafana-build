@@ -3,7 +3,6 @@ package containers
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"dagger.io/dagger"
 )
@@ -22,21 +21,16 @@ func PublishNPM(ctx context.Context, d *dagger.Client, pkg *dagger.File, opts *N
 		return "", err
 	}
 
-	major := strings.Split(version, ".")[0]
-	minor := strings.Split(version, ".")[1]
-	tag := fmt.Sprintf("latest-%s.%s", major, minor)
+	token := d.SetSecret("npm-token", opts.Token)
 
 	c := d.Container().From(NodeImage("lts")).
 		WithFile("/pkg.tgz", pkg).
-		WithExec([]string{"npm", "set", fmt.Sprintf("//%s/:_authToken", opts.Registry), opts.Token}).
-		WithExec([]string{"npm", "publish", "/pkg.tgz", fmt.Sprintf("--registry https://%s", opts.Registry), "--tag", tag})
+		WithSecretVariable("NPM_TOKEN", token).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("npm set //%s/:_authToken $NPM_TOKEN", opts.Registry)}).
+		WithExec([]string{"npm", "publish", "/pkg.tgz", fmt.Sprintf("--registry https://%s", opts.Registry), "--tag", opts.Tags[0]})
 
-	if opts.Latest {
-		c = c.WithExec([]string{"npm", "dist-tag", "add", fmt.Sprintf("%s@%s", name, version), "latest"})
-	}
-
-	if opts.Next {
-		c = c.WithExec([]string{"npm", "dist-tag", "add", fmt.Sprintf("%s@%s", name, version), "next"})
+	for _, tag := range opts.Tags[1:] {
+		c = c.WithExec([]string{"npm", "dist-tag", "add", fmt.Sprintf("%s@%s", name, version), tag})
 	}
 
 	return c.Stdout(ctx)

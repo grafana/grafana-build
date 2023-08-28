@@ -43,13 +43,10 @@ var NPMFlags = []cli.Flag{
 		Usage:    "Provides a token to use to authenticate with the package registry",
 		Required: true,
 	},
-	&cli.BoolFlag{
-		Name:  "latest",
-		Usage: "Tags the published packages as latest",
-	},
-	&cli.BoolFlag{
-		Name:  "next",
-		Usage: "Tags the published packages as next",
+	&cli.StringSliceFlag{
+		Name:     "tag",
+		Usage:    "Provides the tags to use when publishing packages",
+		Required: true,
 	},
 }
 
