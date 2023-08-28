@@ -18,9 +18,9 @@ func ImageManifest(tag string) string {
 	return manifest[:lastDash]
 }
 
-func LatestManifest(tag string, base BaseImage) string {
+func LatestManifest(tag string) string {
 	suffix := ""
-	if base == BaseImageUbuntu {
+	if strings.Contains(tag, "ubuntu") {
 		suffix = "-ubuntu"
 	}
 
@@ -60,7 +60,7 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			manifestTags[manifest] = append(manifestTags[manifest], tag)
 
 			if opts.Latest {
-				manifest := LatestManifest(tag, base)
+				manifest := LatestManifest(tag)
 				manifestTags[manifest] = append(manifestTags[manifest], tag)
 			}
 
