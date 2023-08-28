@@ -87,8 +87,9 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			}
 		}
 
+		// These paths need to be absolute when installed on the machine and not the package structure.
 		for _, c := range opts.ConfigFiles {
-			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", c[1]))
+			fpmArgs = append(fpmArgs, fmt.Sprintf("--config-files=%s", strings.TrimPrefix(c[1], "/pkg")))
 		}
 
 		if opts.AfterInstall != "" {
