@@ -195,7 +195,7 @@ func DebHandler(name string) []string {
 			arch = "armhf"
 		}
 		// If we're building for arm then we also copy the same thing, but with the name '-rpi'. for osme reason?
-		names = []string{fullName, fullName + "-rpi"}
+		names = []string{fullName + "-rpi"}
 	}
 
 	dst := []string{}
