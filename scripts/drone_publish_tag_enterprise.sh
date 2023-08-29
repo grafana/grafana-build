@@ -81,4 +81,4 @@ dagger run --silent go run ./cmd docker \
 cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
-# cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
+cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
