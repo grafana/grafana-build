@@ -19,6 +19,7 @@ import (
 )
 
 type InstallerOpts struct {
+	NameOverride string
 	PackageType  string
 	ConfigFiles  [][]string
 	AfterInstall string
@@ -106,16 +107,22 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 			fpmArgs = append(fpmArgs, fmt.Sprintf("--architecture=%s", arch))
 		}
 
+		packageName := "grafana"
 		// Honestly we don't care about making fpm installers for non-enterprise or non-grafana flavors of grafana
 		if tarOpts.Edition == "enterprise" {
-			fpmArgs = append(fpmArgs, fmt.Sprintf("--name=grafana-%s", tarOpts.Edition))
+			packageName = fmt.Sprintf("grafana-%s", tarOpts.Edition)
 			fpmArgs = append(fpmArgs, "--description=\"Grafana Enterprise\"")
 			fpmArgs = append(fpmArgs, "--conflicts=grafana")
 		} else {
-			fpmArgs = append(fpmArgs, "--name=grafana")
 			fpmArgs = append(fpmArgs, "--description=Grafana")
 			fpmArgs = append(fpmArgs, "--license=AGPLv3")
 		}
+
+		if n := opts.NameOverride; n != "" {
+			packageName = n
+		}
+
+		fpmArgs = append(fpmArgs, fmt.Sprintf("--name=%s", packageName))
 
 		// The last fpm arg which is required to say, "use the PWD to build the package".
 		fpmArgs = append(fpmArgs, ".")
@@ -141,7 +148,8 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		container := opts.Container.
 			WithFile("/src/grafana.tar.gz", packages[i]).
 			WithEnvVariable("XZ_DEFAULTS", "-T0").
-			WithExec([]string{"tar", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"})
+			WithExec([]string{"tar", "--exclude=storybook", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
+			WithExec([]string{"rm", "/src/grafana.tar.gz"})
 
 		container = container.
 			WithExec(append([]string{"mkdir", "-p"}, packagePaths...)).
@@ -154,8 +162,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		}
 
 		container = container.WithExec(fpmArgs)
-
-		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
+		dst := strings.Join([]string{args.PublishOpts.Destination, strings.ReplaceAll(name, tarOpts.Name, packageName)}, "/")
 		installers[dst] = container.File("/src/" + name)
 	}
 

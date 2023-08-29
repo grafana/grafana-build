@@ -12,11 +12,15 @@ import (
 )
 
 type PackageInputOpts struct {
+	// Name is used when overriding the artifact that is being produced. This is used in very specific scenarios where
+	// the source package's name does not match the package's metadata name.
+	Name     string
 	Packages []string
 }
 
 func PackageInputOptsFromFlags(c cliutil.CLIContext) *PackageInputOpts {
 	return &PackageInputOpts{
+		Name:     c.String("name"),
 		Packages: c.StringSlice("package"),
 	}
 }

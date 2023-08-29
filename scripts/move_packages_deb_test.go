@@ -22,6 +22,17 @@ var debMapping = []m{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_arm-7.deb",
 		output: []string{
 			"artifacts/downloads/v1.2.3/oss/release/grafana_1.2.3_armhf.deb",
+		},
+	},
+	{
+		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_arm-7.deb",
+		output: []string{
+			"artifacts/downloads/v1.2.3/oss/release/grafana_1.2.3_armhf.deb",
+		},
+	},
+	{
+		input: "gs://bucket/tag/grafana-rpi_v1.2.3_102_linux_arm-7.deb",
+		output: []string{
 			"artifacts/downloads/v1.2.3/oss/release/grafana-rpi_1.2.3_armhf.deb",
 		},
 	},
@@ -29,7 +40,6 @@ var debMapping = []m{
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_arm-7.deb.sha256",
 		output: []string{
 			"artifacts/downloads/v1.2.3/oss/release/grafana_1.2.3_armhf.deb.sha256",
-			"artifacts/downloads/v1.2.3/oss/release/grafana-rpi_1.2.3_armhf.deb.sha256",
 		},
 	},
 	{
@@ -72,6 +82,11 @@ var debMapping = []m{
 		input: "gs://bucket/tag/grafana-enterprise_v1.2.3_102_linux_arm-7.deb",
 		output: []string{
 			"artifacts/downloads/v1.2.3/enterprise/release/grafana-enterprise_1.2.3_armhf.deb",
+		},
+	},
+	{
+		input: "gs://bucket/tag/grafana-enterprise-rpi_v1.2.3_102_linux_arm-7.deb",
+		output: []string{
 			"artifacts/downloads/v1.2.3/enterprise/release/grafana-enterprise-rpi_1.2.3_armhf.deb",
 		},
 	},
@@ -79,7 +94,6 @@ var debMapping = []m{
 		input: "gs://bucket/tag/grafana-enterprise_v1.2.3_102_linux_arm-7.deb.sha256",
 		output: []string{
 			"artifacts/downloads/v1.2.3/enterprise/release/grafana-enterprise_1.2.3_armhf.deb.sha256",
-			"artifacts/downloads/v1.2.3/enterprise/release/grafana-enterprise-rpi_1.2.3_armhf.deb.sha256",
 		},
 	},
 	{

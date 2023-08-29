@@ -11,7 +11,8 @@ import (
 // It accepts publish args, so you can place the file in a local or remote destination.
 func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	installers, err := PackageInstaller(ctx, d, args, InstallerOpts{
-		PackageType: "deb",
+		NameOverride: args.PackageInputOpts.Name,
+		PackageType:  "deb",
 		ConfigFiles: [][]string{
 			{"/src/packaging/deb/default/grafana-server", "/pkg/etc/default/grafana-server"},
 			{"/src/packaging/deb/init.d/grafana-server", "/pkg/etc/init.d/grafana-server"},

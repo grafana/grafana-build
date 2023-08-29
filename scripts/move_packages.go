@@ -185,6 +185,14 @@ func DebHandler(name string) []string {
 			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 			enterprise2 = "-enterprise2"
 		}
+
+		if edition == "rpi" {
+			edition = "oss"
+		}
+
+		if edition == "enterprise-rpi" {
+			edition = "enterprise"
+		}
 	}
 
 	names := []string{fullName}
@@ -195,7 +203,7 @@ func DebHandler(name string) []string {
 			arch = "armhf"
 		}
 		// If we're building for arm then we also copy the same thing, but with the name '-rpi'. for osme reason?
-		names = []string{fullName, fullName + "-rpi"}
+		names = []string{fullName}
 	}
 
 	dst := []string{}

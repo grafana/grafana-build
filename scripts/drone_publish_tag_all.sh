@@ -7,7 +7,7 @@ set -e
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # Build all of the grafana.tar.gz packages.
-dagger run go run ./cmd \
+dagger run --silent go run ./cmd \
   package \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
@@ -27,7 +27,7 @@ dagger run go run ./cmd \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt &
 
 # Build the grafana-pro tar.gz package.
-dagger run go run ./cmd \
+dagger run --silent go run ./cmd \
   package \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
@@ -58,21 +58,21 @@ dagger run go run ./cmd npm \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > npm.txt &
 
 # Copy only the linux/amd64 edition storybook into a separate folder
-dagger run go run ./cmd storybook \
+dagger run --silent go run ./cmd storybook \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v enterprise | grep -v pro | grep -v sha256 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > storybook.txt &
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
-dagger run go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
+dagger run --silent go run ./cmd deb \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt &
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
-dagger run go run ./cmd rpm \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | awk '{print "--package=" $0}') \
+dagger run --silent go run ./cmd rpm \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
@@ -82,20 +82,20 @@ dagger run go run ./cmd rpm \
   --gpg-passphrase="${$GPG_PASSPHRASE}" > rpms.txt &
 
 # For Windows we distribute zips and exes
-dagger run go run ./cmd zip \
+dagger run --silent go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum > zips.txt &
 
-dagger run go run ./cmd windows-installer \
+dagger run --silent go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum > exes.txt &
 
 # Build a docker image for all Linux distros except armv6
-dagger run go run ./cmd docker \
+dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
   --ubuntu-base="ubuntu:22.10" \
@@ -104,7 +104,7 @@ dagger run go run ./cmd docker \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
 # Copy only the linux/amd64 edition frontends into a separate folder
-dagger run go run ./cmd cdn \
+dagger run --silent go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep pro | grep linux | grep amd64 | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &

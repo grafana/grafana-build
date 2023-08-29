@@ -12,11 +12,16 @@ var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
 	Usage: "Path to a grafana.tar.gz package used as input. This command will process each package provided separately and produce an equal number of applicable outputs",
 }
+var FlagNameOverride = &cli.StringFlag{
+	Name:  "name",
+	Usage: "Overrides any calculation for name in the package with the value provided here",
+}
 
 // PackageInputFlags are used for commands that require a grafana package as input.
 // These commands are exclusively used outside of the CI process and are typically used in the CD process where a grafana.tar.gz has already been created.
 var PackageInputFlags = []cli.Flag{
 	FlagPackage,
+	FlagNameOverride,
 }
 
 // GCPFlags are used in commands that need to authenticate with Google Cloud platform using the Google Cloud SDK
