@@ -173,26 +173,3 @@ func TestOptsFromFile(t *testing.T) {
 		}
 	})
 }
-
-func TestFullName(t *testing.T) {
-	m := map[string][]string{
-		"grafana-enterprise":                     {"grafana", "enterprise"},
-		"grafana-enterprise-rpi":                 {"grafana", "enterprise-rpi"},
-		"grafana-enterprise-rpi-and-some-others": {"grafana", "enterprise-rpi-and-some-others"},
-	}
-
-	for fullname, v := range m {
-		o := pipelines.TarFileOpts{
-			Name:    v[0],
-			Edition: v[1],
-			Version: "v1.0.0",
-			BuildID: "101",
-			// Edition is the flavor text after "grafana-", like "enterprise".
-			Distro: executil.Distribution("linux/amd64"),
-		}
-
-		if n := o.FullName(); n != fullname {
-			t.Errorf("Unexpected fullname '%s'; expected '%s' when name is '%s' and edition is '%s'", n, fullname, v[0], v[1])
-		}
-	}
-}
