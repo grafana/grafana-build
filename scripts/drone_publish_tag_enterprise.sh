@@ -6,7 +6,7 @@ set -e
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
 
-# # Build all of the grafana.tar.gz packages.
+# Build all of the grafana.tar.gz packages.
 dagger run --silent go run ./cmd \
   package \
   --yarn-cache=${YARN_CACHE_FOLDER} \
@@ -33,7 +33,6 @@ echo "Done building tar.gz packages..."
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-7 | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --parallel=16 \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
@@ -41,7 +40,6 @@ dagger run --silent go run ./cmd deb \
 # Use the armv7 package to build the `rpi` specific version.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --parallel=16 \
   --name=grafana-enterprise-rpi \
   --checksum \
   --destination=${local_dst} \
@@ -50,7 +48,6 @@ dagger run --silent go run ./cmd deb \
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --parallel=16 \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
@@ -84,4 +81,4 @@ dagger run --silent go run ./cmd docker \
 cat debs.txt rpms.txt zips.txt exes.txt docker.txt >> assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
+# cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease

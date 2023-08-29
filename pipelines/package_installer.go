@@ -162,8 +162,7 @@ func PackageInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs, 
 		}
 
 		container = container.WithExec(fpmArgs)
-
-		dst := strings.Join([]string{args.PublishOpts.Destination, name}, "/")
+		dst := strings.Join([]string{args.PublishOpts.Destination, strings.ReplaceAll(name, tarOpts.Name, packageName)}, "/")
 		installers[dst] = container.File("/src/" + name)
 	}
 

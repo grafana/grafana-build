@@ -9,6 +9,8 @@ import (
 )
 
 type TarFileOpts struct {
+	// Name is the name of the product in the package. 99% of the time, this will be "grafana" or "grafana-enterprise".
+	Name    string
 	Version string
 	BuildID string
 	// Edition is the flavor text after "grafana-", like "enterprise".
@@ -82,11 +84,12 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	edition := ""
 	suffix := ""
 	if n := strings.Split(name, "-"); len(n) != 1 {
-		edition = n[1]
+		edition = strings.Join(n[1:], "-")
 		suffix = fmt.Sprintf("-%s", n[1])
 	}
 
 	return TarFileOpts{
+		Name:    name,
 		Edition: edition,
 		Version: version,
 		BuildID: buildID,

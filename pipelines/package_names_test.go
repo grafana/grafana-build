@@ -86,6 +86,20 @@ func TestTarFilename(t *testing.T) {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
+	t.Run("It should support editions with multiple hyphens", func(t *testing.T) {
+		distro := executil.Distribution("plan9/arm/v6")
+		opts := pipelines.TarFileOpts{
+			Edition: "enterprise-rpi",
+			Version: "v1.0.1-test",
+			BuildID: "333",
+			Distro:  distro,
+		}
+
+		expected := "grafana-enterprise-rpi_v1.0.1-test_333_plan9_arm-6.tar.gz"
+		if name := pipelines.TarFilename(opts); name != expected {
+			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
+		}
+	})
 }
 
 func TestOptsFromFile(t *testing.T) {
@@ -135,4 +149,50 @@ func TestOptsFromFile(t *testing.T) {
 			t.Errorf("got.Distro != expect.Distro, expected '%s', got '%s'", expect.Distro, got.Distro)
 		}
 	})
+	t.Run("It should support editions with multiple hyphens", func(t *testing.T) {
+		name := "somewhere/grafana-enterprise-rpi_v1.0.1-test_333_plan9_arm-6.tar.gz"
+		distro := executil.Distribution("plan9/arm/v6")
+		expect := pipelines.TarFileOpts{
+			Edition: "enterprise-rpi",
+			Version: "v1.0.1-test",
+			BuildID: "333",
+			Distro:  distro,
+		}
+		got := pipelines.TarOptsFromFileName(name)
+		if got.Edition != expect.Edition {
+			t.Errorf("got.Edition != expect.Edition, expected '%s', got '%s'", expect.Edition, got.Edition)
+		}
+		if got.Version != expect.Version {
+			t.Errorf("got.Version != expect.Version, expected '%s', got '%s'", expect.Version, got.Version)
+		}
+		if got.BuildID != expect.BuildID {
+			t.Errorf("got.BuildID != expect.BuildID, expected '%s', got '%s'", expect.BuildID, got.BuildID)
+		}
+		if got.Distro != expect.Distro {
+			t.Errorf("got.Distro != expect.Distro, expected '%s', got '%s'", expect.Distro, got.Distro)
+		}
+	})
+}
+
+func TestFullName(t *testing.T) {
+	m := map[string][]string{
+		"grafana-enterprise":                     {"grafana", "enterprise"},
+		"grafana-enterprise-rpi":                 {"grafana", "enterprise-rpi"},
+		"grafana-enterprise-rpi-and-some-others": {"grafana", "enterprise-rpi-and-some-others"},
+	}
+
+	for fullname, v := range m {
+		o := pipelines.TarFileOpts{
+			Name:    v[0],
+			Edition: v[1],
+			Version: "v1.0.0",
+			BuildID: "101",
+			// Edition is the flavor text after "grafana-", like "enterprise".
+			Distro: executil.Distribution("linux/amd64"),
+		}
+
+		if n := o.FullName(); n != fullname {
+			t.Errorf("Unexpected fullname '%s'; expected '%s' when name is '%s' and edition is '%s'", n, fullname, v[0], v[1])
+		}
+	}
 }
