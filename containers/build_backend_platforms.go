@@ -56,8 +56,8 @@ func BuildOptsDynamicARM(distro executil.Distribution, buildinfo *BuildInfo) *ex
 	)
 
 	return &executil.GoBuildOpts{
-		// CC:                ZigCC(distro),
-		// CXX:               ZigCXX(distro),
+		CC:                "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc",
+		CXX:               "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-cpp",
 		ExperimentalFlags: []string{},
 		OS:                os,
 		Arch:              "arm",
