@@ -46,7 +46,6 @@ type CompileBackendOpts struct {
 func goBuildImage(distro executil.Distribution, opts *executil.GoBuildOpts, goVersion string) string {
 	os, _ := executil.OSAndArch(distro)
 
-	// For arm/v7 and arm/v6 we want to use viceroy
 	if os != "linux" {
 		return ViceroyImage
 	}
