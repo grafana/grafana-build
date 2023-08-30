@@ -50,7 +50,6 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		AfterInstall: "/src/packaging/rpm/control/postinst",
 		Depends: []string{
 			"/sbin/service",
-			"chkconfig",
 			"fontconfig",
 			"freetype",
 			"urw-fonts",
