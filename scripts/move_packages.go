@@ -186,6 +186,14 @@ func DebHandler(name string) []string {
 			enterprise2 = "-enterprise2"
 		}
 
+		if edition == "pro-rpi" {
+			// "pro" in this case is called "enterprise2"
+			fullName = "grafana-enterprise2-rpi"
+			edition = "enterprise2"
+			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
+			enterprise2 = "-enterprise2"
+		}
+
 		if edition == "rpi" {
 			edition = "oss"
 		}
