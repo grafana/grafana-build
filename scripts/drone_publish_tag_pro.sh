@@ -6,31 +6,31 @@ set -e
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
 
-# # Build all of the grafana.tar.gz packages.
-# dagger run --silent go run ./cmd \
-#   package \
-#   --yarn-cache=${YARN_CACHE_FOLDER} \
-#   --distro=linux/amd64 \
-#   --distro=linux/arm64 \
-#   --distro=linux/arm/v6 \
-#   --distro=linux/arm/v7 \
-#   --distro=darwin/amd64 \
-#   --distro=windows/amd64 \
-#   --env GO_BUILD_TAGS=pro \
-#   --env WIRE_TAGS=pro \
-#   --go-tags=pro \
-#   --edition=pro \
-#   --checksum \
-#   --enterprise \
-#   --grafana=false \
-#   --build-id=${DRONE_BUILD_NUMBER} \
-#   --enterprise-ref=${DRONE_TAG} \
-#   --grafana-ref=${DRONE_TAG} \
-#   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
-#   --github-token=${GITHUB_TOKEN} \
-#   --version=${DRONE_TAG} \
-#   --destination=${local_dst} \
-#   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
+# Build all of the grafana.tar.gz packages.
+dagger run --silent go run ./cmd \
+  package \
+  --yarn-cache=${YARN_CACHE_FOLDER} \
+  --distro=linux/amd64 \
+  --distro=linux/arm64 \
+  --distro=linux/arm/v6 \
+  --distro=linux/arm/v7 \
+  --distro=darwin/amd64 \
+  --distro=windows/amd64 \
+  --env GO_BUILD_TAGS=pro \
+  --env WIRE_TAGS=pro \
+  --go-tags=pro \
+  --edition=pro \
+  --checksum \
+  --enterprise \
+  --grafana=false \
+  --build-id=${DRONE_BUILD_NUMBER} \
+  --enterprise-ref=${DRONE_TAG} \
+  --grafana-ref=${DRONE_TAG} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
+  --github-token=${GITHUB_TOKEN} \
+  --version=${DRONE_TAG} \
+  --destination=${local_dst} \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
 echo "Done building tar.gz packages..."
 
