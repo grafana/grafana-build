@@ -97,6 +97,12 @@ var debMapping = []m{
 		},
 	},
 	{
+		input: "gs://bucket/tag/grafana-pro-rpi_v1.2.3_102_linux_arm-7.deb",
+		output: []string{
+			"artifacts/downloads-enterprise2/v1.2.3/enterprise2/release/grafana-enterprise2-rpi_1.2.3_armhf.deb",
+		},
+	},
+	{
 		input: "gs://bucket/tag/grafana-pro_v1.2.3-pre.4_102_linux_amd64.deb",
 		output: []string{
 			"artifacts/downloads-enterprise2/v1.2.3-pre.4/enterprise2/release/grafana-enterprise2_1.2.3~pre.4_amd64.deb",
