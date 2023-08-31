@@ -23,6 +23,7 @@ func Deb(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		Depends: []string{
 			"adduser",
 			"libfontconfig1",
+			"musl",
 		},
 		ExtraArgs: []string{
 			"--deb-no-default-config-files",
