@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	proName = "enterprise2"
 	// 1: The version (with a v prefix)
 	// 2: The "edition". Options: 'oss', 'pro', 'enterprise'.
 	// 3: The full name. 'grafana', 'grafana-enterprise', 'grafana-pro
@@ -128,7 +129,7 @@ func RPMHandler(name string) []string {
 	if edition == "pro" {
 		// "pro" in this case is called "enterprise2"
 		fullName = "grafana-enterprise2"
-		edition = "enterprise2"
+		edition = proName
 		// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 		enterprise2 = "-enterprise2"
 		// and has an period separator {version}.{arch} instead of {version}_{arch}
@@ -181,7 +182,7 @@ func DebHandler(name string) []string {
 		if edition == "pro" {
 			// "pro" in this case is called "enterprise2"
 			fullName = "grafana-enterprise2"
-			edition = "enterprise2"
+			edition = proName
 			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 			enterprise2 = "-enterprise2"
 		}
@@ -189,7 +190,7 @@ func DebHandler(name string) []string {
 		if edition == "pro-rpi" {
 			// "pro" in this case is called "enterprise2"
 			fullName = "grafana-enterprise2-rpi"
-			edition = "enterprise2"
+			edition = proName
 			// and is in the 'downloads-enterprise2' folder instead of 'downloads'
 			enterprise2 = "-enterprise2"
 		}
@@ -247,7 +248,7 @@ func TarGZHandler(name string) []string {
 		if edition == "pro" {
 			enterprise2 = "-enterprise2"
 			fullName = "grafana-enterprise2"
-			edition = "enterprise2"
+			edition = proName
 		}
 	}
 
@@ -300,7 +301,7 @@ func DockerHandler(name string) []string {
 	if opts.Edition != "" {
 		edition = opts.Edition
 		if edition == "pro" {
-			edition = "enterprise2"
+			edition = proName
 		}
 	}
 
