@@ -34,7 +34,13 @@ func NPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(os.Stdout, dst)
+		entries, err := artifacts.Entries(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			fmt.Fprintln(os.Stdout, dst+"/"+entry)
+		}
 	}
 	return nil
 }

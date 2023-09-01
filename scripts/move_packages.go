@@ -47,7 +47,7 @@ const (
 
 	// 1: version
 	// 2: package name (@grafana-ui-10.0.0.tgz)
-	npmFormat = "artifacts/npm/%[1]s/npm-artifacts/%[2]s"
+	npmFormat = "artifacts/npm/v%[1]s/npm-artifacts/%[2]s"
 
 	sha256Ext = ".sha256"
 	grafana   = "grafana"
@@ -68,9 +68,14 @@ var Handlers = map[string]HandlerFunc{
 
 func NPMHandler(name string) []string {
 	var (
-		version = os.Getenv("DRONE_TAG")
+		version = strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
 		file    = filepath.Base(name)
 	)
+
+	// The version part of the filename should start with a v:
+	if !strings.Contains(file, "v"+version) {
+		file = strings.Replace(file, version, "v"+version, 1)
+	}
 
 	return []string{fmt.Sprintf(npmFormat, version, file)}
 }
