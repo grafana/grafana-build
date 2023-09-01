@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ver=nightly-${DRONE_COMMIT_SHA:0:8}
+ver="nightly-${DRONE_COMMIT_SHA:0:8}"
 dst="${DESTINATION}/nightly/${ver}"
 set -e
 
