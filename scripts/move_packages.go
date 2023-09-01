@@ -72,6 +72,11 @@ func NPMHandler(name string) []string {
 		file    = filepath.Base(name)
 	)
 
+	// The version part of the filename should start with a v:
+	if !strings.Contains(file, "v"+version) {
+		file = strings.Replace(file, version, "v"+version, 1)
+	}
+
 	return []string{fmt.Sprintf(npmFormat, version, file)}
 }
 
