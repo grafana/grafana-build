@@ -26,9 +26,8 @@ func ImageTag(registry, org, repo, version string) string {
 
 // GrafanaImageTag returns the name of the grafana docker image based on the tar package name.
 // To maintain backwards compatibility, we must keep this the same as it was before.
-func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []string {
+func GrafanaImageTags(base BaseImage, org string, registry string, opts TarFileOpts) []string {
 	var (
-		org     = "grafana"
 		repos   = []string{"grafana-image-tags", "grafana-oss-image-tags"}
 		version = opts.Version
 
@@ -88,7 +87,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		for _, base := range bases {
 			var (
 				platform  = executil.Platform(tarOpts.Distro)
-				tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
+				tags      = GrafanaImageTags(base, opts.Org, opts.Registry, tarOpts)
 				baseImage = opts.AlpineBase
 				socket    = d.Host().UnixSocket("/var/run/docker.sock")
 			)

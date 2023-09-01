@@ -130,7 +130,7 @@ func TestImageName(t *testing.T) {
 	for n, test := range cases {
 		t.Run(fmt.Sprintf("[%d / %d] %s", n+1, len(cases), test.Description), func(t *testing.T) {
 			expect := sort.StringSlice(test.Tags)
-			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, "docker.io", test.TarOpts))
+			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, "grafana", "docker.io", test.TarOpts))
 
 			for i := range expect {
 				e := expect[i]

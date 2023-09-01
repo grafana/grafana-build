@@ -23,6 +23,9 @@ type DockerOpts struct {
 	// Password is supplied to login to the docker registry when publishing images.
 	Password string
 
+	// Org overrides the organization when when publishing images.
+	Org string
+
 	// Latest is supplied to also tag as latest when publishing images.
 	Latest bool
 }
@@ -34,6 +37,7 @@ func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
 		UbuntuBase: c.String("ubuntu-base"),
 		Username:   c.String("username"),
 		Password:   c.String("password"),
+		Org:        c.String("org"),
 		Latest:     c.Bool("latest"),
 	}
 }
