@@ -211,11 +211,8 @@ func DebHandler(name string) []string {
 
 	names := []string{fullName}
 	goos, arch := executil.OSAndArch(opts.Distro)
-	arm := executil.ArchVersion(opts.Distro)
 	if arch == "arm" {
-		if arm == "7" {
-			arch = "armhf"
-		}
+		arch = "armhf"
 		// If we're building for arm then we also copy the same thing, but with the name '-rpi'. for osme reason?
 		names = []string{fullName}
 	}
