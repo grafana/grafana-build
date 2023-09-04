@@ -39,7 +39,7 @@ dagger run --silent go run ./cmd deb \
 
 # Use the armv7 package to build the `rpi` specific version.
 dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-6 | awk '{print "--package=" $0}') \
   --name=grafana-enterprise-rpi \
   --checksum \
   --destination=${local_dst} \
