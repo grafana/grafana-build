@@ -70,6 +70,33 @@ func BuildOptsDynamicARM(distro executil.Distribution, buildinfo *BuildInfo) *ex
 	}
 }
 
+// BuildOptsStaticARM builds Grafana statically for the armv6/v7 architectures (not aarch64/arm64)
+func BuildOptsStaticARM(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
+	var (
+		os, _ = executil.OSAndArch(distro)
+		arm   = executil.ArchVersion(distro)
+	)
+
+	return &executil.GoBuildOpts{
+		CC:                "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc",
+		CXX:               "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-cpp",
+		ExperimentalFlags: []string{},
+		OS:                os,
+		Arch:              "arm",
+		GoARM:             executil.GoARM(arm),
+		CGOEnabled:        true,
+		TrimPath:          true,
+		LDFlags: map[string][]string{
+			"-w":                  nil,
+			"-s":                  nil,
+			"-X":                  buildinfo.LDFlags(),
+			"-linkmode=external":  nil,
+			"-extldflags=-static": nil,
+		},
+		Tags: DefaultTags,
+	}
+}
+
 func BuildOptsStatic(distro executil.Distribution, buildinfo *BuildInfo) *executil.GoBuildOpts {
 	var (
 		os, arch = executil.OSAndArch(distro)
@@ -160,9 +187,9 @@ var ZigTargets = map[executil.Distribution]string{
 
 var DistributionGoOpts = map[executil.Distribution]DistroBuildOptsFunc{
 	// The Linux distros should all have an equivalent zig target in the ZigTargets map
-	executil.DistLinuxARM:          BuildOptsDynamicARM,
-	executil.DistLinuxARMv6:        BuildOptsDynamicARM,
-	executil.DistLinuxARMv7:        BuildOptsDynamicARM,
+	executil.DistLinuxARM:          BuildOptsStaticARM,
+	executil.DistLinuxARMv6:        BuildOptsStaticARM,
+	executil.DistLinuxARMv7:        BuildOptsStaticARM,
 	executil.DistLinuxARM64:        BuildOptsStatic,
 	executil.DistLinuxARM64Dynamic: BuildOptsDynamic,
 	executil.DistLinuxAMD64:        BuildOptsStatic,
