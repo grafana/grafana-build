@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 ver="nightly-${DRONE_COMMIT_SHA:0:8}"
-dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://${DRONE_WORKSPACE}/dist/"
 set -e
 
