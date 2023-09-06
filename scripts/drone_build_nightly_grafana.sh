@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ver="nightly-${DRONE_COMMIT_SHA:0:8}"
-local_dst="file://${DRONE_WORKSPACE}/dist/"
+local_dst="file://${DRONE_WORKSPACE}/dist"
 set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
