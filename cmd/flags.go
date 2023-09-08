@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const defaultGoVersion = "1.21.0"
+const defaultGoVersion = "1.21.1"
 
 var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
