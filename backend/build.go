@@ -8,6 +8,6 @@ import (
 )
 
 // Build uses the given dagger.Container and runs the commands necessary to build the Grafana backend binaries.
-func Build(ctx context.Context, d *dagger.Client, c *dagger.Container, opts *pipeline.BuildOpts) (*dagger.File, error) {
+func Build(ctx context.Context, d *dagger.Client, c *dagger.Container, args []pipeline.Argument) (*dagger.File, error) {
 	return nil, nil
 }

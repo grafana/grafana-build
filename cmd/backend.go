@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
@@ -17,7 +18,7 @@ var FlagIntegration = &cli.BoolFlag{
 	Value: false,
 }
 
-var FlagDatabase = &ChoiceFlag{
+var FlagDatabase = &flags.ChoiceFlag{
 	Name:    "database",
 	Usage:   "Which database to use, only valid when --integration=true",
 	Choices: pipelines.IntegrationDatabases,

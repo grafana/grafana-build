@@ -9,6 +9,8 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
+	"github.com/grafana/grafana-build/daggerutil"
+	"github.com/grafana/grafana-build/git"
 	"github.com/grafana/grafana-build/stringutil"
 )
 
@@ -125,7 +127,7 @@ func (g *GrafanaOpts) DetectVersion(ctx context.Context, client *dagger.Client, 
 func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory, client *dagger.Client) (*dagger.Directory, error) {
 	// If GrafanaDir was provided, then we can just use that one.
 	if path := g.EnterpriseDir; path != "" {
-		src, err := HostDir(client, path)
+		src, err := daggerutil.HostDir(client, path)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +141,7 @@ func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory,
 	// If GitHubToken was not set from flag
 	if ght == "" {
 		log.Println("Looking up github token from 'GITHUB_TOKEN' environment variable or '$XDG_HOME/.gh'")
-		token, err := LookupGitHubToken(ctx)
+		token, err := git.LookupGitHubToken(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +152,7 @@ func (g *GrafanaOpts) Enterprise(ctx context.Context, grafana *dagger.Directory,
 	}
 
 	log.Printf("Cloning Grafana Enterprise...")
-	src, err := CloneWithGitHubToken(client, ght, g.EnterpriseRepo, g.EnterpriseRef)
+	src, err := git.CloneWithGitHubToken(client, ght, g.EnterpriseRepo, g.EnterpriseRef)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +166,7 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 	// If GrafanaDir was provided, then we can just use that one.
 	if path := g.GrafanaDir; path != "" {
 		log.Println("Using local Grafana found at", path)
-		src, err := HostDir(client, path)
+		src, err := daggerutil.HostDir(client, path)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +180,7 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 	// If GitHubToken was not set from flag
 	if ght == "" {
 		log.Println("Looking up github token from 'GITHUB_TOKEN' environment variable or '$XDG_HOME/.gh'")
-		token, err := LookupGitHubToken(ctx)
+		token, err := git.LookupGitHubToken(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +191,7 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 	}
 
 	log.Printf("Cloning Grafana...")
-	src, err := CloneWithGitHubToken(client, ght, g.GrafanaRepo, g.GrafanaRef)
+	src, err := git.CloneWithGitHubToken(client, ght, g.GrafanaRepo, g.GrafanaRef)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
+	"github.com/grafana/grafana-build/errorutil"
 )
 
 // PublishOpts fields are selectively used based on the protocol field of the destination.
@@ -50,7 +51,7 @@ func publishGCSFile(ctx context.Context, d *dagger.Client, file *dagger.File, op
 		return err
 	}
 
-	if _, err := ExitError(ctx, uploader); err != nil {
+	if _, err := errorutil.ExitError(ctx, uploader); err != nil {
 		return err
 	}
 

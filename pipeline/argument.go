@@ -26,13 +26,15 @@ type Argument struct {
 	ArgumentType ArgumentType
 	Name         string
 	Description  string
-	ValueFunc    func(ctx context.Context, c cliutil.CLIContext, d *dagger.Client) (any, error)
-	Flags        []cli.Flag
-	Required     bool
+	// ValueFunc defines the behavior for how this artifact is populated.
+	// Maybe this could be an interface instead.
+	ValueFunc func(ctx context.Context, c cliutil.CLIContext, d *dagger.Client) (any, error)
+	Flags     []cli.Flag
+	Required  bool
 }
 
-func (a *Argument) Directory(c *cli.Context, d *dagger.Client) (*dagger.Directory, error) {
-	value, err := a.ValueFunc(c, d)
+func (a *Argument) Directory(ctx context.Context, c *cli.Context, d *dagger.Client) (*dagger.Directory, error) {
+	value, err := a.ValueFunc(ctx, c, d)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +46,8 @@ func (a *Argument) Directory(c *cli.Context, d *dagger.Client) (*dagger.Director
 	return dir, nil
 }
 
-func (a *Argument) MustDirectory(c *cli.Context, d *dagger.Client) *dagger.Directory {
-	v, err := a.Directory(c, d)
+func (a *Argument) MustDirectory(ctx context.Context, c *cli.Context, d *dagger.Client) *dagger.Directory {
+	v, err := a.Directory(ctx, c, d)
 	if err != nil {
 		panic(err)
 	}
@@ -53,8 +55,8 @@ func (a *Argument) MustDirectory(c *cli.Context, d *dagger.Client) *dagger.Direc
 	return v
 }
 
-func (a *Argument) String(c *cli.Context, d *dagger.Client) (string, error) {
-	value, err := a.ValueFunc(c, d)
+func (a *Argument) String(ctx context.Context, c *cli.Context, d *dagger.Client) (string, error) {
+	value, err := a.ValueFunc(ctx, c, d)
 	if err != nil {
 		return "", err
 	}
@@ -66,8 +68,8 @@ func (a *Argument) String(c *cli.Context, d *dagger.Client) (string, error) {
 	return v, nil
 }
 
-func (a *Argument) MustString(c *cli.Context, d *dagger.Client) string {
-	v, err := a.String(c, d)
+func (a *Argument) MustString(ctx context.Context, c *cli.Context, d *dagger.Client) string {
+	v, err := a.String(ctx, c, d)
 	if err != nil {
 		panic(err)
 	}
@@ -75,8 +77,8 @@ func (a *Argument) MustString(c *cli.Context, d *dagger.Client) string {
 	return v
 }
 
-func (a *Argument) Int64(c *cli.Context, d *dagger.Client) (int64, error) {
-	value, err := a.ValueFunc(c, d)
+func (a *Argument) Int64(ctx context.Context, c *cli.Context, d *dagger.Client) (int64, error) {
+	value, err := a.ValueFunc(ctx, c, d)
 	if err != nil {
 		return 0, err
 	}
@@ -88,8 +90,8 @@ func (a *Argument) Int64(c *cli.Context, d *dagger.Client) (int64, error) {
 	return v, nil
 }
 
-func (a *Argument) MustInt64(c *cli.Context, d *dagger.Client) int64 {
-	v, err := a.Int64(c, d)
+func (a *Argument) MustInt64(ctx context.Context, c *cli.Context, d *dagger.Client) int64 {
+	v, err := a.Int64(ctx, c, d)
 	if err != nil {
 		panic(err)
 	}
@@ -97,8 +99,8 @@ func (a *Argument) MustInt64(c *cli.Context, d *dagger.Client) int64 {
 	return v
 }
 
-func (a *Argument) Bool(c *cli.Context, d *dagger.Client) (bool, error) {
-	value, err := a.ValueFunc(c, d)
+func (a *Argument) Bool(ctx context.Context, c *cli.Context, d *dagger.Client) (bool, error) {
+	value, err := a.ValueFunc(ctx, c, d)
 	if err != nil {
 		return false, err
 	}
@@ -110,8 +112,8 @@ func (a *Argument) Bool(c *cli.Context, d *dagger.Client) (bool, error) {
 	return v, nil
 }
 
-func (a *Argument) MustBool(c *cli.Context, d *dagger.Client) bool {
-	v, err := a.Bool(c, d)
+func (a *Argument) MustBool(ctx context.Context, c *cli.Context, d *dagger.Client) bool {
+	v, err := a.Bool(ctx, c, d)
 	if err != nil {
 		panic(err)
 	}
@@ -119,8 +121,8 @@ func (a *Argument) MustBool(c *cli.Context, d *dagger.Client) bool {
 	return v
 }
 
-func (a *Argument) File(c *cli.Context, d *dagger.Client) (*dagger.File, error) {
-	value, err := a.ValueFunc(c, d)
+func (a *Argument) File(ctx context.Context, c *cli.Context, d *dagger.Client) (*dagger.File, error) {
+	value, err := a.ValueFunc(ctx, c, d)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +134,8 @@ func (a *Argument) File(c *cli.Context, d *dagger.Client) (*dagger.File, error) 
 	return dir, nil
 }
 
-func (a *Argument) MustFile(c *cli.Context, d *dagger.Client) *dagger.File {
-	v, err := a.File(c, d)
+func (a *Argument) MustFile(ctx context.Context, c *cli.Context, d *dagger.Client) *dagger.File {
+	v, err := a.File(ctx, c, d)
 	if err != nil {
 		panic(err)
 	}

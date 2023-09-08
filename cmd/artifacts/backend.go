@@ -12,8 +12,9 @@ var Backend = &pipeline.Artifact{
 		ArgumentEnterpriseDirectory,
 		ArgumentGoImage,
 	},
-	Builder:     backend.Builder,
-	BuildFunc:   backend.Build,
+	Builder:   backend.Builder,
+	BuildFunc: backend.Build,
+
 	Publisher:   nil,
 	PublishFunc: nil,
 }

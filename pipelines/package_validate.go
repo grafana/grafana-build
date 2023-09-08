@@ -9,6 +9,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/errorutil"
 	"github.com/grafana/grafana-build/executil"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
@@ -415,7 +416,7 @@ func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, 
 		WithFile("/src/package.rpm", rpm).
 		WithExec([]string{"/bin/sh", "-c", "rpm --checksig /src/package.rpm | grep -qE 'digests signatures OK|pgp.+OK'"})
 
-	if _, err := containers.ExitError(ctx, container); err != nil {
+	if _, err := errorutil.ExitError(ctx, container); err != nil {
 		return fmt.Errorf("failed to validate gpg signature for rpm package: %w", err)
 	}
 	return nil

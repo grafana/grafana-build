@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/errorutil"
 )
 
 type BuildInfo struct {
@@ -58,7 +59,7 @@ func revParseShort(ctx context.Context, container *dagger.Container) (string, er
 	var err error
 	c := container.WithExec([]string{"rev-parse", "--short", "HEAD"})
 
-	c, err = ExitError(ctx, c)
+	c, err = errorutil.ExitError(ctx, c)
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +76,7 @@ func revParseBranch(ctx context.Context, container *dagger.Container) (string, e
 	var err error
 	c := container.WithExec([]string{"rev-parse", "--abbrev-ref", "HEAD"})
 
-	c, err = ExitError(ctx, c)
+	c, err = errorutil.ExitError(ctx, c)
 	if err != nil {
 		return "", err
 	}
