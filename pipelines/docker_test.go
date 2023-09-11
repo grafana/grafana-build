@@ -1,6 +1,7 @@
 package pipelines_test
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"testing"
@@ -14,10 +15,13 @@ func TestImageName(t *testing.T) {
 	// Be sure that if you add additional test cases to this that you don't use formatting or concatenation; it should be obvious when looking at the test
 	// what the expected output should be. And that value should not change based on another value.
 	type tc struct {
-		Description string
-		Tags        []string
-		BaseImage   pipelines.BaseImage
-		TarOpts     pipelines.TarFileOpts
+		Description  string
+		Tags         []string
+		BaseImage    pipelines.BaseImage
+		TarOpts      pipelines.TarFileOpts
+		Format       string
+		UbuntuFormat string
+		Error        error
 	}
 
 	var (
@@ -32,7 +36,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/amd64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageAlpine,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageAlpine,
 			Tags: []string{
 				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-amd64",
 				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-amd64",
@@ -45,7 +51,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageAlpine,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageAlpine,
 			Tags: []string{
 				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-arm64",
 				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-arm64",
@@ -58,7 +66,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/amd64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageUbuntu,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
 				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
@@ -71,7 +81,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageUbuntu,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-ubuntu-arm64",
 				"docker.io/grafana/grafana-oss-image-tags:1.2.3-test.1.2.3-ubuntu-arm64",
@@ -84,7 +96,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/amd64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageAlpine,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageAlpine,
 			Tags: []string{
 				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-amd64",
 			},
@@ -96,7 +110,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageAlpine,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageAlpine,
 			Tags: []string{
 				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-arm64",
 			},
@@ -108,7 +124,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/amd64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageUbuntu,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-ubuntu-amd64",
 			},
@@ -120,7 +138,9 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
-			BaseImage: pipelines.BaseImageUbuntu,
+			Format:       pipelines.DefaultTagFormat,
+			UbuntuFormat: pipelines.DefaultUbuntuTagFormat,
+			BaseImage:    pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-ubuntu-arm64",
 			},
@@ -130,8 +150,14 @@ func TestImageName(t *testing.T) {
 	for n, test := range cases {
 		t.Run(fmt.Sprintf("[%d / %d] %s", n+1, len(cases), test.Description), func(t *testing.T) {
 			expect := sort.StringSlice(test.Tags)
-			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, "docker.io", test.TarOpts))
+			res, err := pipelines.GrafanaImageTags(test.BaseImage, "docker.io", test.Format, test.UbuntuFormat, test.TarOpts)
+			if err != nil && test.Error != nil {
+				if !errors.Is(err, test.Error) {
+					t.Fatalf("Received error is not '%s'; received '%s'", test.Error.Error(), err.Error())
+				}
+			}
 
+			// res = slices.Sort(res)
 			for i := range expect {
 				e := expect[i]
 				r := res[i]

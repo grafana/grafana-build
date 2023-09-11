@@ -1,8 +1,10 @@
 package pipelines
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"log"
 	"strings"
 
@@ -13,6 +15,11 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+const (
+	DefaultTagFormat       = "{{ .version }}-{{ .arch }}"
+	DefaultUbuntuTagFormat = "{{ .version }}-ubuntu-{{ .arch }}"
+)
+
 type BaseImage int
 
 const (
@@ -20,17 +27,54 @@ const (
 	BaseImageAlpine
 )
 
-func ImageTag(registry, org, repo, version string) string {
-	return fmt.Sprintf("%s/%s/%s:%s", registry, org, repo, version)
+type ImageTagOpts struct {
+	Registry string
+	Org      string
+	Repo     string
+
+	TarOpts TarFileOpts
+}
+
+func (i *ImageTagOpts) ValuesMap() map[string]string {
+	arch := executil.FullArch(i.TarOpts.Distro)
+	arch = strings.ReplaceAll(arch, "/", "")
+
+	return map[string]string{
+		"arch":    arch,
+		"version": strings.TrimPrefix(i.TarOpts.Version, "v"),
+		"buildID": i.TarOpts.BuildID,
+	}
+}
+
+func ImageVersion(format string, values map[string]string) (string, error) {
+	tmpl, err := template.New("version").Parse(format)
+	if err != nil {
+		return "", err
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err := tmpl.Execute(buf, values); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func ImageTag(format string, opts *ImageTagOpts) (string, error) {
+	version, err := ImageVersion(format, opts.ValuesMap())
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s/%s/%s:%s", opts.Registry, opts.Org, opts.Repo, version), nil
 }
 
 // GrafanaImageTag returns the name of the grafana docker image based on the tar package name.
 // To maintain backwards compatibility, we must keep this the same as it was before.
-func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []string {
+func GrafanaImageTags(base BaseImage, registry, tagFormat, ubuntuTagFormat string, opts TarFileOpts) ([]string, error) {
 	var (
-		org     = "grafana"
-		repos   = []string{"grafana-image-tags", "grafana-oss-image-tags"}
-		version = opts.Version
+		org   = "grafana"
+		repos = []string{"grafana-image-tags", "grafana-oss-image-tags"}
 
 		edition = opts.Edition
 	)
@@ -40,25 +84,28 @@ func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []strin
 		repos = []string{fmt.Sprintf("grafana-%s-image-tags", edition)}
 	}
 
-	// For some unknown reason, versions in docker hub do not have a 'v'.
-	// I think this was something that was established a long time ago and just stuck.
-	version = strings.TrimPrefix(version, "v")
-
-	if base == BaseImageUbuntu {
-		version += "-ubuntu"
-	}
-
-	if opts.Distro != "" {
-		arch := executil.FullArch(opts.Distro)
-		version += "-" + strings.ReplaceAll(arch, "/", "")
-	}
-
 	tags := make([]string, len(repos))
+
 	for i, repo := range repos {
-		tags[i] = ImageTag(registry, org, repo, version)
+		format := tagFormat
+		if base == BaseImageUbuntu {
+			format = ubuntuTagFormat
+		}
+
+		tag, err := ImageTag(format, &ImageTagOpts{
+			Registry: registry,
+			Org:      org,
+			Repo:     repo,
+			TarOpts:  opts,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tags[i] = tag
 	}
 
-	return tags
+	return tags, nil
 }
 
 // Docker is a pipeline that uses a grafana.tar.gz as input and creates a Docker image using that same Grafana's Dockerfile.
@@ -88,10 +135,14 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		for _, base := range bases {
 			var (
 				platform  = executil.Platform(tarOpts.Distro)
-				tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
 				baseImage = opts.AlpineBase
 				socket    = d.Host().UnixSocket("/var/run/docker.sock")
 			)
+
+			tags, err := GrafanaImageTags(base, opts.Registry, opts.TagFormat, opts.UbuntuTagFormat, tarOpts)
+			if err != nil {
+				return err
+			}
 
 			if base == BaseImageUbuntu {
 				baseImage = opts.UbuntuBase
