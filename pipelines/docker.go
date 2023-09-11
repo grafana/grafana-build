@@ -71,13 +71,35 @@ func ImageTag(format string, opts *ImageTagOpts) (string, error) {
 
 // GrafanaImageTag returns the name of the grafana docker image based on the tar package name.
 // To maintain backwards compatibility, we must keep this the same as it was before.
-func GrafanaImageTags(base BaseImage, registry, tagFormat, ubuntuTagFormat string, opts TarFileOpts) ([]string, error) {
+func GrafanaImageTags(base BaseImage, dockerOpts *containers.DockerOpts, tarOpts TarFileOpts) ([]string, error) {
 	var (
-		org   = "grafana"
 		repos = []string{"grafana-image-tags", "grafana-oss-image-tags"}
 
-		edition = opts.Edition
+		edition = tarOpts.Edition
+
+		org        = dockerOpts.Org
+		registry   = dockerOpts.Registry
+		repository = dockerOpts.Repository
+		format     = dockerOpts.TagFormat
 	)
+
+	if base == BaseImageUbuntu {
+		format = dockerOpts.UbuntuTagFormat
+	}
+
+	if repository != "" {
+		tag, err := ImageTag(format, &ImageTagOpts{
+			Registry: registry,
+			Org:      org,
+			Repo:     repository,
+			TarOpts:  tarOpts,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return []string{tag}, nil
+	}
 
 	if edition != "" {
 		// Non-grafana repositories only create images in 1 repository instead of 2. Reason unknown.
@@ -87,16 +109,11 @@ func GrafanaImageTags(base BaseImage, registry, tagFormat, ubuntuTagFormat strin
 	tags := make([]string, len(repos))
 
 	for i, repo := range repos {
-		format := tagFormat
-		if base == BaseImageUbuntu {
-			format = ubuntuTagFormat
-		}
-
 		tag, err := ImageTag(format, &ImageTagOpts{
 			Registry: registry,
 			Org:      org,
 			Repo:     repo,
-			TarOpts:  opts,
+			TarOpts:  tarOpts,
 		})
 		if err != nil {
 			return nil, err
@@ -139,7 +156,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 				socket    = d.Host().UnixSocket("/var/run/docker.sock")
 			)
 
-			tags, err := GrafanaImageTags(base, opts.Registry, opts.TagFormat, opts.UbuntuTagFormat, tarOpts)
+			tags, err := GrafanaImageTags(base, opts, tarOpts)
 			if err != nil {
 				return err
 			}

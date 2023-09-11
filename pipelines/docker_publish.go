@@ -52,7 +52,7 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			base = BaseImageUbuntu
 		}
 
-		tags, err := GrafanaImageTags(base, opts.Registry, opts.TagFormat, opts.UbuntuTagFormat, tarOpts)
+		tags, err := GrafanaImageTags(base, opts, tarOpts)
 		if err != nil {
 			return err
 		}

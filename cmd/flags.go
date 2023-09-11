@@ -182,6 +182,15 @@ var DockerFlags = []cli.Flag{
 		Usage: "Provide a go template for formatting the docker tag(s)",
 		Value: pipelines.DefaultUbuntuTagFormat,
 	},
+	&cli.StringFlag{
+		Name:  "org",
+		Usage: "Overrides the organization of the images",
+		Value: "grafana",
+	},
+	&cli.StringFlag{
+		Name:  "repo",
+		Usage: "Overrides the repository of the images",
+	},
 }
 
 var DockerPublishFlags = []cli.Flag{
@@ -199,6 +208,15 @@ var DockerPublishFlags = []cli.Flag{
 		Name:  "registry",
 		Usage: "Prefix the image name with the registry provided",
 		Value: "docker.io",
+	},
+	&cli.StringFlag{
+		Name:  "org",
+		Usage: "Overrides the organization of the images",
+		Value: "grafana",
+	},
+	&cli.StringFlag{
+		Name:  "repo",
+		Usage: "Overrides the repository of the images",
 	},
 	&cli.BoolFlag{
 		Name:  "latest",
