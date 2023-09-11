@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
+
+# This script runs in Grafana's CI when a commit is made to a 'v[0-9].*' branch.
+
+dst="${DESTINATION}/${DRONE_BUILD_EVENT}/${DRONE_BRANCH}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 set -e
 
@@ -22,7 +25,6 @@ dagger run --silent go run ./cmd \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
