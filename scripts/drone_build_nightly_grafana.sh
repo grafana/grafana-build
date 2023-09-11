@@ -68,7 +68,7 @@ dagger run --silent go run ./cmd windows-installer \
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --repo="grafana-nightly" \
+  --repo="grafana-dev" \
   --ubuntu-base="ubuntu:22.10" \
   --alpine-base="alpine:3.18.0" \
   --destination=${local_dst} \
