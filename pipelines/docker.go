@@ -26,19 +26,17 @@ func ImageTag(registry, org, repo, version string) string {
 
 // GrafanaImageTag returns the name of the grafana docker image based on the tar package name.
 // To maintain backwards compatibility, we must keep this the same as it was before.
-func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []string {
+func GrafanaImageTags(base BaseImage, dockerOpts *containers.DockerOpts, tarOpts TarFileOpts) []string {
 	var (
-		org     = "grafana"
-		repos   = []string{"grafana-image-tags", "grafana-oss-image-tags"}
-		version = opts.Version
+		repos = []string{"grafana-image-tags", "grafana-oss-image-tags"}
 
-		edition = opts.Edition
+		version = tarOpts.Version
+		edition = tarOpts.Edition
+
+		org        = dockerOpts.Org
+		registry   = dockerOpts.Registry
+		repository = dockerOpts.Repository
 	)
-
-	if edition != "" {
-		// Non-grafana repositories only create images in 1 repository instead of 2. Reason unknown.
-		repos = []string{fmt.Sprintf("grafana-%s-image-tags", edition)}
-	}
 
 	// For some unknown reason, versions in docker hub do not have a 'v'.
 	// I think this was something that was established a long time ago and just stuck.
@@ -48,9 +46,18 @@ func GrafanaImageTags(base BaseImage, registry string, opts TarFileOpts) []strin
 		version += "-ubuntu"
 	}
 
-	if opts.Distro != "" {
-		arch := executil.FullArch(opts.Distro)
+	if tarOpts.Distro != "" {
+		arch := executil.FullArch(tarOpts.Distro)
 		version += "-" + strings.ReplaceAll(arch, "/", "")
+	}
+
+	if repository != "" {
+		return []string{ImageTag(registry, org, repository, version)}
+	}
+
+	if edition != "" {
+		// Non-grafana repositories only create images in 1 repository instead of 2. Reason unknown.
+		repos = []string{fmt.Sprintf("grafana-%s-image-tags", edition)}
 	}
 
 	tags := make([]string, len(repos))
@@ -88,7 +95,7 @@ func Docker(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		for _, base := range bases {
 			var (
 				platform  = executil.Platform(tarOpts.Distro)
-				tags      = GrafanaImageTags(base, opts.Registry, tarOpts)
+				tags      = GrafanaImageTags(base, opts, tarOpts)
 				baseImage = opts.AlpineBase
 				socket    = d.Host().UnixSocket("/var/run/docker.sock")
 			)
