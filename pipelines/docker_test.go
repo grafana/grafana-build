@@ -35,8 +35,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -52,8 +54,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -69,8 +73,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -86,8 +92,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -103,8 +111,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -119,8 +129,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -135,8 +147,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -151,8 +165,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "grafana",
-				Registry: "docker.io",
+				Org:             "grafana",
+				Registry:        "docker.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -167,8 +183,10 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:      "org",
-				Registry: "registry.io",
+				Org:             "org",
+				Registry:        "registry.io",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -184,9 +202,11 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:        "org",
-				Registry:   "registry.io",
-				Repository: "grafana-dev",
+				Org:             "org",
+				Registry:        "registry.io",
+				Repository:      "grafana-dev",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -201,9 +221,11 @@ func TestImageName(t *testing.T) {
 				Version: version,
 			},
 			DockerOpts: &containers.DockerOpts{
-				Org:        "org",
-				Registry:   "registry.io",
-				Repository: "grafana-dev",
+				Org:             "org",
+				Registry:        "registry.io",
+				Repository:      "grafana-dev",
+				TagFormat:       pipelines.DefaultTagFormat,
+				UbuntuTagFormat: pipelines.DefaultUbuntuTagFormat,
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -215,7 +237,10 @@ func TestImageName(t *testing.T) {
 	for n, test := range cases {
 		t.Run(fmt.Sprintf("[%d / %d] %s", n+1, len(cases), test.Description), func(t *testing.T) {
 			expect := sort.StringSlice(test.Tags)
-			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, test.DockerOpts, test.TarOpts))
+			res, err := pipelines.GrafanaImageTags(test.BaseImage, test.DockerOpts, test.TarOpts)
+			if err != nil {
+				t.Fatal("Unexpected error:", err.Error())
+			}
 
 			for i := range expect {
 				e := expect[i]

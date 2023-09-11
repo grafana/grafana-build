@@ -52,7 +52,10 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 			base = BaseImageUbuntu
 		}
 
-		tags := GrafanaImageTags(base, opts, tarOpts)
+		tags, err := GrafanaImageTags(base, opts, tarOpts)
+		if err != nil {
+			return err
+		}
 		for _, tag := range tags {
 			// For each tag we publish an image and add the tag to the list of tags for a specific manifest
 			// Since each package has a maximum of 2 tags, this for loop will only run twice on a worst case scenario

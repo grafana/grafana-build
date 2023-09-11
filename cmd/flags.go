@@ -3,10 +3,13 @@ package main
 import (
 	"runtime"
 
+	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
 
-const defaultGoVersion = "1.21.1"
+const (
+	defaultGoVersion = "1.21.1"
+)
 
 var FlagPackage = &cli.StringSliceFlag{
 	Name:  "package",
@@ -168,6 +171,16 @@ var DockerFlags = []cli.Flag{
 		Name:  "ubuntu-base",
 		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
 		Value: "ubuntu:latest",
+	},
+	&cli.StringFlag{
+		Name:  "tag-format",
+		Usage: "Provide a go template for formatting the docker tag(s)",
+		Value: pipelines.DefaultTagFormat,
+	},
+	&cli.StringFlag{
+		Name:  "ubuntu-tag-format",
+		Usage: "Provide a go template for formatting the docker tag(s)",
+		Value: pipelines.DefaultUbuntuTagFormat,
 	},
 	&cli.StringFlag{
 		Name:  "org",

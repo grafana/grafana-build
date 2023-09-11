@@ -31,17 +31,23 @@ type DockerOpts struct {
 
 	// Latest is supplied to also tag as latest when publishing images.
 	Latest bool
+
+	// TagFormat and UbuntuTagFormat should be formatted using go template tags.
+	TagFormat       string
+	UbuntuTagFormat string
 }
 
 func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
 	return &DockerOpts{
-		Registry:   c.String("registry"),
-		AlpineBase: c.String("alpine-base"),
-		UbuntuBase: c.String("ubuntu-base"),
-		Username:   c.String("username"),
-		Password:   c.String("password"),
-		Org:        c.String("org"),
-		Repository: c.String("repo"),
-		Latest:     c.Bool("latest"),
+		Registry:        c.String("registry"),
+		AlpineBase:      c.String("alpine-base"),
+		UbuntuBase:      c.String("ubuntu-base"),
+		Username:        c.String("username"),
+		Password:        c.String("password"),
+		Org:             c.String("org"),
+		Repository:      c.String("repo"),
+		Latest:          c.Bool("latest"),
+		TagFormat:       c.String("tag-format"),
+		UbuntuTagFormat: c.String("ubuntu-tag-format"),
 	}
 }
