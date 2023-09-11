@@ -38,11 +38,14 @@ type ImageTagOpts struct {
 func (i *ImageTagOpts) ValuesMap() map[string]string {
 	arch := executil.FullArch(i.TarOpts.Distro)
 	arch = strings.ReplaceAll(arch, "/", "")
+	version := strings.TrimPrefix(i.TarOpts.Version, "v")
 
+	semverc := strings.Split(version, "-")
 	return map[string]string{
-		"arch":    arch,
-		"version": strings.TrimPrefix(i.TarOpts.Version, "v"),
-		"buildID": i.TarOpts.BuildID,
+		"arch":         arch,
+		"version":      strings.TrimPrefix(i.TarOpts.Version, "v"),
+		"version_base": semverc[0],
+		"buildID":      i.TarOpts.BuildID,
 	}
 }
 
