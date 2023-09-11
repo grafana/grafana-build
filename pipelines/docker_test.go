@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipelines"
 )
 
@@ -17,6 +18,7 @@ func TestImageName(t *testing.T) {
 		Description string
 		Tags        []string
 		BaseImage   pipelines.BaseImage
+		DockerOpts  *containers.DockerOpts
 		TarOpts     pipelines.TarFileOpts
 	}
 
@@ -26,11 +28,15 @@ func TestImageName(t *testing.T) {
 
 	cases := []tc{
 		{
-			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. AMD64 docker images have no suffix. Alpine images also have no suffix.",
+			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. Alpine images have no suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "",
 				Distro:  "linux/amd64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -39,11 +45,15 @@ func TestImageName(t *testing.T) {
 			},
 		},
 		{
-			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. ARM64 images have a -arm64 suffix. Alpine images also have no suffix.",
+			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. ARM64 images have a -arm64 suffix. Alpine images have no suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "",
 				Distro:  "linux/arm64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -52,11 +62,15 @@ func TestImageName(t *testing.T) {
 			},
 		},
 		{
-			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. AMD64 docker images have no suffix. Ubuntu images have a '-ubuntu' suffix.",
+			Description: "Grafana docker images are created for both the 'docker.io/grafana/grafana-image-tags' and 'docker.io/grafana/grafana-oss-image-tags' repositories. Ubuntu images have a '-ubuntu' suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "",
 				Distro:  "linux/amd64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -71,6 +85,10 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
+			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-image-tags:1.2.3-test.1.2.3-ubuntu-arm64",
@@ -78,11 +96,15 @@ func TestImageName(t *testing.T) {
 			},
 		},
 		{
-			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. AMD64 docker images have no suffix. Alpine images also have no suffix.",
+			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. Alpine images have no suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "enterprise",
 				Distro:  "linux/amd64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -90,11 +112,15 @@ func TestImageName(t *testing.T) {
 			},
 		},
 		{
-			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. ARM64 images have an -arm64 suffix. Alpine images also have no suffix.",
+			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. ARM64 images have an -arm64 suffix. Alpine images have no suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "enterprise",
 				Distro:  "linux/arm64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageAlpine,
 			Tags: []string{
@@ -102,11 +128,15 @@ func TestImageName(t *testing.T) {
 			},
 		},
 		{
-			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. AMD64 docker images have no suffix. Ubuntu images have a '-ubuntu' suffix.",
+			Description: "Enterprise docker images are created for only the docker.io/grafana/grafana-enterprise-image-tags repository. Ubuntu images have a '-ubuntu' suffix.",
 			TarOpts: pipelines.TarFileOpts{
 				Edition: "enterprise",
 				Distro:  "linux/amd64",
 				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
 			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
@@ -120,9 +150,64 @@ func TestImageName(t *testing.T) {
 				Distro:  "linux/arm64",
 				Version: version,
 			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "grafana",
+				Registry: "docker.io",
+			},
 			BaseImage: pipelines.BaseImageUbuntu,
 			Tags: []string{
 				"docker.io/grafana/grafana-enterprise-image-tags:1.2.3-test.1.2.3-ubuntu-arm64",
+			},
+		},
+		{
+			Description: "Grafana docker images are created for both the 'registry.io/org/grafana-image-tags' and 'registry.io/org/grafana-oss-image-tags' repositories. Alpine images have no suffix.",
+			TarOpts: pipelines.TarFileOpts{
+				Edition: "",
+				Distro:  "linux/amd64",
+				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:      "org",
+				Registry: "registry.io",
+			},
+			BaseImage: pipelines.BaseImageAlpine,
+			Tags: []string{
+				"registry.io/org/grafana-image-tags:1.2.3-test.1.2.3-amd64",
+				"registry.io/org/grafana-oss-image-tags:1.2.3-test.1.2.3-amd64",
+			},
+		},
+		{
+			Description: "Grafana docker images are created for only the 'registry.io/org/grafana-dev' repository. Alpine images have no suffix.",
+			TarOpts: pipelines.TarFileOpts{
+				Edition: "",
+				Distro:  "linux/amd64",
+				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:        "org",
+				Registry:   "registry.io",
+				Repository: "grafana-dev",
+			},
+			BaseImage: pipelines.BaseImageAlpine,
+			Tags: []string{
+				"registry.io/org/grafana-dev:1.2.3-test.1.2.3-amd64",
+			},
+		},
+		{
+			Description: "Grafana docker images are created for only the 'registry.io/org/grafana-dev' repository.",
+			TarOpts: pipelines.TarFileOpts{
+				Edition: "",
+				Distro:  "linux/amd64",
+				Version: version,
+			},
+			DockerOpts: &containers.DockerOpts{
+				Org:        "org",
+				Registry:   "registry.io",
+				Repository: "grafana-dev",
+			},
+			BaseImage: pipelines.BaseImageUbuntu,
+			Tags: []string{
+				"registry.io/org/grafana-dev:1.2.3-test.1.2.3-ubuntu-amd64",
 			},
 		},
 	}
@@ -130,7 +215,7 @@ func TestImageName(t *testing.T) {
 	for n, test := range cases {
 		t.Run(fmt.Sprintf("[%d / %d] %s", n+1, len(cases), test.Description), func(t *testing.T) {
 			expect := sort.StringSlice(test.Tags)
-			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, "grafana", "docker.io", test.TarOpts))
+			res := sort.StringSlice(pipelines.GrafanaImageTags(test.BaseImage, test.DockerOpts, test.TarOpts))
 
 			for i := range expect {
 				e := expect[i]

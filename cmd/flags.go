@@ -174,6 +174,10 @@ var DockerFlags = []cli.Flag{
 		Usage: "Overrides the organization of the images",
 		Value: "grafana",
 	},
+	&cli.StringFlag{
+		Name:  "repo",
+		Usage: "Overrides the repository of the images",
+	},
 }
 
 var DockerPublishFlags = []cli.Flag{
@@ -196,6 +200,10 @@ var DockerPublishFlags = []cli.Flag{
 		Name:  "org",
 		Usage: "Overrides the organization of the images",
 		Value: "grafana",
+	},
+	&cli.StringFlag{
+		Name:  "repo",
+		Usage: "Overrides the repository of the images",
 	},
 	&cli.BoolFlag{
 		Name:  "latest",

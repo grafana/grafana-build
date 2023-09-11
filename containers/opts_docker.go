@@ -26,6 +26,9 @@ type DockerOpts struct {
 	// Org overrides the organization when when publishing images.
 	Org string
 
+	// Repository overrides the repository when when publishing images.
+	Repository string
+
 	// Latest is supplied to also tag as latest when publishing images.
 	Latest bool
 }
@@ -38,6 +41,7 @@ func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
 		Username:   c.String("username"),
 		Password:   c.String("password"),
 		Org:        c.String("org"),
+		Repository: c.String("repo"),
 		Latest:     c.Bool("latest"),
 	}
 }
