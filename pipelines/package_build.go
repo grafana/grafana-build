@@ -8,12 +8,17 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/slices"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
 
 // BuildPackage creates a package and publishes it to a set destination.
 func BuildPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
+	ctx, span := otel.Tracer("grafana-build").Start(ctx, "build-package")
+	defer span.End()
+
 	var (
 		opts = args.GrafanaOpts
 		// This bool slice stores the values of args.BuildEnterprise for each build
@@ -27,6 +32,15 @@ func BuildPackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, 
 	)
 
 	files := map[string]*dagger.File{}
+
+	span.SetAttributes(attribute.Bool("build-enterprise", opts.BuildEnterprise))
+	span.SetAttributes(attribute.Bool("build-oss", !skipOss))
+
+	distroNames := []string{}
+	for _, distro := range distros {
+		distroNames = append(distroNames, string(distro))
+	}
+	span.SetAttributes(attribute.StringSlice("distros", distroNames))
 
 	for _, isEnterprise := range isEnterpriseBuild {
 		var (

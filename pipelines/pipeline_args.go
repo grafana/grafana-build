@@ -7,6 +7,8 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
 	"github.com/grafana/grafana-build/containers"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
@@ -88,4 +90,28 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		ProImageOpts:     containers.ProImageOptsFromFlags(c),
 		NPMOpts:          containers.NPMOptsFromFlags(c),
 	}, nil
+}
+
+// InjectPipelineArgsIntoSpan is used to copy some of the arguments passed to
+// the pipeline into a top-level OpenTelemtry span. Fields that might contain
+// secrets are left out.
+func InjectPipelineArgsIntoSpan(span trace.Span, args PipelineArgs) {
+	attributes := make([]attribute.KeyValue, 0, 10)
+	attributes = append(attributes, attribute.String("platform", string(args.Platform)))
+	if args.GrafanaOpts != nil {
+		attributes = append(attributes, attribute.String("go-version", args.GrafanaOpts.GoVersion))
+		attributes = append(attributes, attribute.String("version", args.GrafanaOpts.Version))
+		attributes = append(attributes, attribute.String("grafana-dir", args.GrafanaOpts.GrafanaDir))
+		attributes = append(attributes, attribute.String("grafana-ref", args.GrafanaOpts.GrafanaRef))
+		attributes = append(attributes, attribute.String("enterprise-dir", args.GrafanaOpts.EnterpriseDir))
+		attributes = append(attributes, attribute.String("enterprise-ref", args.GrafanaOpts.EnterpriseRef))
+	}
+	if args.PackageOpts != nil {
+		distros := []string{}
+		for _, distro := range args.PackageOpts.Distros {
+			distros = append(distros, string(distro))
+		}
+		attributes = append(attributes, attribute.StringSlice("package-distros", distros))
+	}
+	span.SetAttributes(attributes...)
 }

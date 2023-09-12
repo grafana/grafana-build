@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"dagger.io/dagger"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type BuildInfo struct {
@@ -30,28 +33,37 @@ const GitImage = "alpine/git:v2.36.3"
 // GetBuildInfo runs a dagger pipeline using the alpine/git image to get information from the git repository.
 // Because this function both creates containers and pulls data from them, it will actually run containers to get the build info for the git repository.
 func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, version string) (*BuildInfo, error) {
+	ctx, span := otel.Tracer("grafana-build").Start(ctx, "get-buildinfo")
+	defer span.End()
+
 	container := d.Container().From(GitImage).
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src")
 
 	sha, err := revParseShort(ctx, container)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to parse commit")
 		return nil, fmt.Errorf("failed to get repository's commit on HEAD: %w", err)
 	}
 
 	branch, err := revParseBranch(ctx, container)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to parse branch")
 		return nil, fmt.Errorf("failed to get repository's branch on HEAD: %w", err)
 	}
 
 	timestamp := time.Now()
 
-	return &BuildInfo{
+	result := &BuildInfo{
 		Version:   version,
 		Commit:    sha,
 		Branch:    branch,
 		Timestamp: timestamp,
-	}, nil
+	}
+	span.SetAttributes(attribute.String("version", version), attribute.String("commit", sha), attribute.String("branch", branch), attribute.String("timestamp", timestamp.Format(time.RFC3339)))
+	return result, nil
 }
 
 func revParseShort(ctx context.Context, container *dagger.Container) (string, error) {
