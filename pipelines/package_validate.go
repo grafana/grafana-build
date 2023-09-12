@@ -228,12 +228,12 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		archive  = containers.ExtractedArchive(d, pkg, packageName)
 	)
 
-	log.Printf("Validating standalone tarball for v%s%s using ubuntu:22.10 and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
+	log.Printf("Validating standalone tarball for v%s%s using ubuntu:22.04 and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("ubuntu:22.10").
+	}).From("ubuntu:22.04").
 		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates", "libfontconfig1"}).
 		WithDirectory("/src", archive).
