@@ -1,4 +1,4 @@
-package main
+package otel
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -15,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func setupOTEL(ctx context.Context) func(context.Context) error {
+func Setup(ctx context.Context) func(context.Context) error {
 	client := otlptracehttp.NewClient()
 	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
@@ -40,7 +41,7 @@ func setupOTEL(ctx context.Context) func(context.Context) error {
 	return tp.Shutdown
 }
 
-func findParentTrace(ctx context.Context) context.Context {
+func FindParentTrace(ctx context.Context) context.Context {
 	traceParent := os.Getenv("TRACEPARENT")
 	if traceParent == "" {
 		return ctx
@@ -55,4 +56,15 @@ func findParentTrace(ctx context.Context) context.Context {
 		return ctx
 	}
 	return trace.ContextWithRemoteSpanContext(ctx, span.SpanContext())
+}
+
+// Tracer is a simple wrapper around otel.Tracer in order to abstract that
+// package.
+func Tracer(name string) trace.Tracer {
+	return otel.Tracer(name)
+}
+
+func RecordFailed(span trace.Span, err error, msg string) {
+	span.RecordError(err)
+	span.SetStatus(codes.Error, msg)
 }

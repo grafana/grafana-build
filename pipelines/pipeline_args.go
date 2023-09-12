@@ -99,24 +99,12 @@ func InjectPipelineArgsIntoSpan(span trace.Span, args PipelineArgs) {
 	attributes := make([]attribute.KeyValue, 0, 10)
 	attributes = append(attributes, attribute.String("platform", string(args.Platform)))
 	if args.GrafanaOpts != nil {
-		if args.GrafanaOpts.GoVersion != "" {
-			attributes = append(attributes, attribute.String("go-version", args.GrafanaOpts.GoVersion))
-		}
-		if args.GrafanaOpts.Version != "" {
-			attributes = append(attributes, attribute.String("version", args.GrafanaOpts.Version))
-		}
-		if args.GrafanaOpts.GrafanaDir != "" {
-			attributes = append(attributes, attribute.String("grafana-dir", args.GrafanaOpts.GrafanaDir))
-		}
-		if args.GrafanaOpts.GrafanaRef != "" {
-			attributes = append(attributes, attribute.String("grafana-ref", args.GrafanaOpts.GrafanaRef))
-		}
-		if args.GrafanaOpts.EnterpriseDir != "" {
-			attributes = append(attributes, attribute.String("enterprise-dir", args.GrafanaOpts.EnterpriseDir))
-		}
-		if args.GrafanaOpts.EnterpriseRef != "" {
-			attributes = append(attributes, attribute.String("enterprise-ref", args.GrafanaOpts.EnterpriseRef))
-		}
+		attributes = append(attributes, attribute.String("go-version", args.GrafanaOpts.GoVersion))
+		attributes = append(attributes, attribute.String("version", args.GrafanaOpts.Version))
+		attributes = append(attributes, attribute.String("grafana-dir", args.GrafanaOpts.GrafanaDir))
+		attributes = append(attributes, attribute.String("grafana-ref", args.GrafanaOpts.GrafanaRef))
+		attributes = append(attributes, attribute.String("enterprise-dir", args.GrafanaOpts.EnterpriseDir))
+		attributes = append(attributes, attribute.String("enterprise-ref", args.GrafanaOpts.EnterpriseRef))
 	}
 	if args.PackageOpts != nil {
 		distros := []string{}
