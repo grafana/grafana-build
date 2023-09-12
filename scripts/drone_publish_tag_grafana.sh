@@ -84,7 +84,7 @@ dagger run --silent go run ./cmd windows-installer \
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --ubuntu-base="ubuntu:22.10" \
+  --ubuntu-base="ubuntu:22.04" \
   --alpine-base="alpine:3.18.0" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt
