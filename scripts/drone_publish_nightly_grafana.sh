@@ -8,3 +8,15 @@ dagger run --silent go run ./cmd docker publish \
   --username=${DOCKER_USERNAME} \
   --password=${DOCKER_PASSWORD} \
   --repo="grafana-dev"
+
+# Copy only the linux/amd64 edition storybook into a separate folder
+dagger run --silent go run ./cmd storybook \
+  $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
+  --destination=${STORYBOOK_DESTINATION} 
+
+# Copy only the linux/amd64 edition static assets into a separate folder
+dagger run --silent go run ./cmd cdn \
+  $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
+  --destination=${CDN_DESTINATION} 
