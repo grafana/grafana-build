@@ -17,6 +17,13 @@ import (
 )
 
 func Setup(ctx context.Context) func(context.Context) error {
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	if endpoint == "" {
+		log.Print("OTEL_EXPORTER_OTLP_ENDPOINT not set. Disabling tracing.")
+		return func(ctx context.Context) error {
+			return nil
+		}
+	}
 	client := otlptracehttp.NewClient()
 	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
