@@ -10,13 +10,19 @@ dagger run --silent go run ./cmd docker publish \
   --password=${DOCKER_PASSWORD} \
   --repo="grafana-dev"
 
-# Copy only the linux/amd64 edition storybook into a separate folder
+# Publish packages to the downloads bucket
+dagger run --silent go run ./cmd package publish \
+  $(find $local_dir | grep -e .rpm -e .tar.gz -e .exe -e .zip -e .deb | awk '{print "--package=file://"$0}') \
+  --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
+  --destination="${DOWNLOADS_DESTINATION}/oss/release"
+
+# Publish only the linux/amd64 edition storybook into the storybook bucket
 dagger run --silent go run ./cmd storybook \
   $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --destination="${STORYBOOK_DESTINATION}/${ver}"
 
-# Copy only the linux/amd64 edition static assets into a separate folder
+# Publish only the linux/amd64 edition static assets into the static assets bucket
 dagger run --silent go run ./cmd cdn \
   $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
