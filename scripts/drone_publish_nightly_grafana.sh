@@ -14,10 +14,10 @@ dagger run --silent go run ./cmd docker publish \
 dagger run --silent go run ./cmd storybook \
   $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --destination="${STORYBOOK_DESTINATION}/${ver}" 
+  --destination="${STORYBOOK_DESTINATION}/${ver}"
 
 # Copy only the linux/amd64 edition static assets into a separate folder
 dagger run --silent go run ./cmd cdn \
   $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
-  --destination="${CDN_DESTINATION}/${ver}/public" 
+  --destination="${CDN_DESTINATION}/${ver}/public"
