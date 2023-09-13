@@ -399,10 +399,13 @@ func main() {
 		// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that
 		if ext == ".gz" {
 			ext = ".tar.gz"
-			if filepath.Ext(strings.ReplaceAll(name, ext, "")) == ".docker" {
+			if filepath.Ext(strings.ReplaceAll(name, ".tar.gz", "")) == ".docker" ||
+				filepath.Ext(strings.ReplaceAll(name, ".tar.gz.sha256", "")) == ".docker" {
 				ext = ".docker.tar.gz"
 			}
 		}
+		log.Printf("[%s] Using handler for %s", name, ext)
+
 		handler := Handlers[ext]
 		if ext == "" {
 			destinations := make([]string, 0)
@@ -433,6 +436,7 @@ func main() {
 		}
 
 		destinations := handler(name)
+		log.Println("File:", name, "to be copied as", destinations)
 		for _, v := range destinations {
 			dir := filepath.Join(prefix, filepath.Dir(v))
 			v := filepath.Join(prefix, v)
@@ -440,7 +444,9 @@ func main() {
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				panic(err)
 			}
-			log.Println("Copying", name, "to", dir)
+
+			log.Println("Copying", name, "to", dir, "as", v)
+
 			//nolint:gosec
 			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
 			cmd.Stdout = os.Stdout
