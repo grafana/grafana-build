@@ -4,10 +4,12 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -16,16 +18,32 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func Setup(ctx context.Context) func(context.Context) error {
+func createExporterClient(ctx context.Context) otlptrace.Client {
+	protocol := os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
 	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+
 	if endpoint == "" {
 		log.Print("OTEL_EXPORTER_OTLP_ENDPOINT not set. Disabling tracing.")
+		return nil
+	}
+	if protocol == "grpc" {
+		return otlptracegrpc.NewClient()
+	}
+	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
+		return otlptracehttp.NewClient()
+	}
+	return otlptracegrpc.NewClient()
+}
+
+func Setup(ctx context.Context) func(context.Context) error {
+	client := createExporterClient(ctx)
+	if client == nil {
 		return func(ctx context.Context) error {
 			return nil
 		}
 	}
-	client := otlptracehttp.NewClient()
 	exporter, err := otlptrace.New(ctx, client)
+
 	if err != nil {
 		log.Fatal(err)
 	}
