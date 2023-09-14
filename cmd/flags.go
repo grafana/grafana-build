@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultGoVersion = "1.21.1"
+	defaultGoVersion = "1.20.8"
 )
 
 var FlagPackage = &cli.StringSliceFlag{
