@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana-build/stringutil"
 )
 
+const (
+	DefaultGoVersion = "1.20.8"
+)
+
 // GrafnaaOpts are populated by the 'GrafanaFlags' flags.
 // These options define how to mount or clone the grafana/enterprise source code.
 type GrafanaOpts struct {
@@ -55,6 +59,10 @@ func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOp
 		goTags         = c.StringSlice("go-tags")
 		goVersion      = c.String("go-version")
 	)
+
+	if goVersion == "" {
+		goVersion = DefaultGoVersion
+	}
 
 	if buildID == "" {
 		buildID = stringutil.RandomString(12)
