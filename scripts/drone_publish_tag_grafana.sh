@@ -21,6 +21,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
