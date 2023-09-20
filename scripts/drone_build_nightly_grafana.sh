@@ -10,7 +10,6 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 echo "Building tar.gz packages..."
 dagger run --silent go run ./cmd \
   package \
-  --name="grafana-nightly" \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
@@ -57,14 +56,12 @@ dagger run --silent go run ./cmd rpm \
 # For Windows we distribute zips and exes
 dagger run --silent go run ./cmd zip \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
-  --name="grafana-nightly" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
 
 dagger run --silent go run ./cmd windows-installer \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
-  --name="grafana-nightly" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
@@ -72,7 +69,6 @@ dagger run --silent go run ./cmd windows-installer \
 # Build a docker image for all Linux distros except armv6
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --name="grafana-nightly" \
   --checksum \
   --repo="grafana-dev" \
   --ubuntu-base="ubuntu:22.04" \
