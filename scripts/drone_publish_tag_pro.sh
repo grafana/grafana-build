@@ -62,7 +62,7 @@ dagger run --silent go run ./cmd docker \
 # Copy only the linux/amd64 edition frontends into a separate folder
 dagger run --silent go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep amd64 | grep linux | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/public" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
 
 wait

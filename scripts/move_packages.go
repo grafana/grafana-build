@@ -43,7 +43,7 @@ const (
 	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
 
 	// 1: ersion
-	storybookFormat = "artifacts/storybook/%[1]s"
+	storybookFormat = "artifacts/storybook/v%[1]s"
 
 	// 1: version
 	// 2: package name (@grafana-ui-10.0.0.tgz)
@@ -323,39 +323,13 @@ func DockerHandler(name string) []string {
 }
 
 func CDNHandler(name string) []string {
-	n := filepath.Base(strings.ReplaceAll(name, "/public", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
-
-	opts := pipelines.TarOptsFromFileName(n)
-
-	// In grafana-build we just use "" to refer to "oss"
-	edition := "oss"
-	fullName := grafana
-	if opts.Edition != "" {
-		edition = opts.Edition
-	}
-
-	fullName += "-" + edition
-
-	names := []string{
-		fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), fullName),
-	}
-
-	if edition == "oss" {
-		names = append(names, fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), grafana))
-	}
-
-	return names
+	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
+	return []string{fmt.Sprintf(cdnFormat, version, grafana)}
 }
 
 func StorybookHandler(name string) []string {
-	n := filepath.Base(strings.ReplaceAll(name, "/storybook", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
-	opts := pipelines.TarOptsFromFileName(n)
-
-	names := []string{
-		fmt.Sprintf(storybookFormat, opts.Version),
-	}
-
-	return names
+	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
+	return []string{fmt.Sprintf(storybookFormat, version)}
 }
 
 // A hopefully temporary script that prints the gsutil commands that will move these artifacts into the location where they were expected previously.

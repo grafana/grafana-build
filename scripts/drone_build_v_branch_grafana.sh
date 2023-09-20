@@ -34,13 +34,13 @@ cat assets.txt
 # Copy only the linux/amd64 edition npm artifacts into a separate folder
 dagger run --silent go run ./cmd npm \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/npm-artifacts" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > npm.txt
 
 # Copy only the linux/amd64 edition storybook into a separate folder
 dagger run --silent go run ./cmd storybook \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/storybook" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > storybook.txt
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.

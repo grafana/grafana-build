@@ -29,6 +29,7 @@ dagger run --silent go run ./cmd \
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  --name="grafana-nightly" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
@@ -36,7 +37,7 @@ dagger run --silent go run ./cmd deb \
 # Use the armv7 package to build the `rpi` specific version.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --name=grafana-rpi \
+  --name="grafana-nightly-rpi" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
@@ -44,6 +45,7 @@ dagger run --silent go run ./cmd deb \
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  --name="grafana-nightly" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \

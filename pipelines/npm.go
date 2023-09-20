@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -24,13 +23,10 @@ func NPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			targz = packages[i]
 		)
 
-		dst := strings.Join([]string{args.PublishOpts.Destination, name, "npm-artifacts"}, "/")
+		log.Println("Copying npm artifacts for", name, "to", args.PublishOpts.Destination)
 
-		log.Println("Copying npm artifacts for", name, "to", dst)
-
-		// gcloud rsync the artifacts folder to ['dst']/npm-artifacts
 		artifacts := containers.ExtractedArchive(d, targz, name).Directory("npm-artifacts")
-		dst, err := containers.PublishDirectory(ctx, d, artifacts, args.GCPOpts, dst)
+		dst, err := containers.PublishDirectory(ctx, d, artifacts, args.GCPOpts, args.PublishOpts.Destination)
 		if err != nil {
 			return err
 		}
