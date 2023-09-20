@@ -27,6 +27,7 @@ var storybookMapping = []m{
 }
 
 func TestMoveStorybook(t *testing.T) {
+	t.Setenv("DRONE_TAG", "1.2.3")
 	for _, v := range storybookMapping {
 		out := StorybookHandler(v.input)
 
