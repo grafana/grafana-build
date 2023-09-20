@@ -1,50 +1,25 @@
 package main
 
-import (
-	"sort"
-	"testing"
-)
-
 var storybookMapping = map[string]m{
 	"OSS": {
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
 			"artifacts/storybook/v1.2.3",
 		},
+		env: map[string]string{"DRONE_TAG": "1.2.3"},
 	},
 	"ENT": {
 		input: "gs://bucket/tag/grafana-enterprise_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
 			"artifacts/storybook/v1.2.3",
 		},
+		env: map[string]string{"DRONE_TAG": "1.2.3"},
 	},
 	"PRO": {
 		input: "gs://bucket/tag/grafana-pro_v1.2.3_102_linux_amd64/storybook",
 		output: []string{
 			"artifacts/storybook/v1.2.3",
 		},
+		env: map[string]string{"DRONE_TAG": "1.2.3"},
 	},
-}
-
-func TestMoveStorybook(t *testing.T) {
-	t.Setenv("DRONE_TAG", "1.2.3")
-	for _, v := range storybookMapping {
-		out := StorybookHandler(v.input)
-
-		if len(out) != len(v.output) {
-			t.Errorf("expected %d in output but received %d\nexpected: %v\nreceived: %v", len(v.output), len(out), v.output, out)
-			continue
-		}
-		sort.Strings(out)
-		exp := v.output
-		sort.Strings(exp)
-
-		for i := range out {
-			got := out[i]
-			expect := exp[i]
-			if expect != got {
-				t.Errorf("\nExpected %s\nReceived %s", expect, got)
-			}
-		}
-	}
 }
