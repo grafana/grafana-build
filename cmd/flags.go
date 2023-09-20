@@ -3,12 +3,9 @@ package main
 import (
 	"runtime"
 
+	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
-)
-
-const (
-	defaultGoVersion = "1.21.1"
 )
 
 var FlagPackage = &cli.StringSliceFlag{
@@ -147,7 +144,7 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "go-version",
 		Usage:    "The version of Go to be used for building the Grafana backend",
 		Required: false,
-		Value:    defaultGoVersion,
+		Value:    containers.DefaultGoVersion,
 	},
 	&cli.StringFlag{
 		Name:  "yarn-cache",

@@ -362,30 +362,10 @@ func main() {
 	for scanner.Scan() {
 		var (
 			name = scanner.Text()
-			ext  = filepath.Ext(name)
 		)
-
-		// sha256 extensions should be handled the same way what precedes the extension
-		if ext == sha256Ext {
-			ext = filepath.Ext(strings.ReplaceAll(name, sha256Ext, ""))
-		}
-
-		// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that
-		if ext == ".gz" {
-			ext = ".tar.gz"
-			if filepath.Ext(strings.ReplaceAll(name, ext, "")) == ".docker" {
-				ext = ".docker.tar.gz"
-			}
-		}
-		handler := Handlers[ext]
+		handler, ext := getHandler(name, Handlers)
+		destinations := handler(name)
 		if ext == "" {
-			destinations := make([]string, 0)
-			if filepath.Base(name) == "public" {
-				destinations = CDNHandler(name)
-			}
-			if filepath.Base(name) == "storybook" {
-				destinations = StorybookHandler(name)
-			}
 			for _, v := range destinations {
 				dir := filepath.Join(prefix, filepath.Dir(v))
 				v := filepath.Join(prefix, v)
@@ -406,7 +386,7 @@ func main() {
 			continue
 		}
 
-		destinations := handler(name)
+		log.Println("File:", name, "to be copied as", destinations)
 		for _, v := range destinations {
 			dir := filepath.Join(prefix, filepath.Dir(v))
 			v := filepath.Join(prefix, v)
@@ -414,7 +394,9 @@ func main() {
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				panic(err)
 			}
-			log.Println("Copying", name, "to", dir)
+
+			log.Println("Copying", name, "to", dir, "as", v)
+
 			//nolint:gosec
 			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
 			cmd.Stdout = os.Stdout
@@ -442,4 +424,35 @@ func main() {
 
 	fmt.Fprint(os.Stdout, stdout)
 	fmt.Fprint(os.Stderr, stderr)
+}
+
+func getHandler(name string, handlers map[string]HandlerFunc) (HandlerFunc, string) {
+	ext := filepath.Ext(name)
+	// sha256 extensions should be handled the same way what precedes the extension
+	if ext == sha256Ext {
+		ext = filepath.Ext(strings.ReplaceAll(name, sha256Ext, ""))
+	}
+
+	// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that
+	if ext == ".gz" {
+		ext = ".tar.gz"
+		if filepath.Ext(strings.ReplaceAll(name, ".tar.gz", "")) == ".docker" ||
+			filepath.Ext(strings.ReplaceAll(name, ".tar.gz.sha256", "")) == ".docker" {
+			ext = ".docker.tar.gz"
+		}
+	}
+
+	handler := handlers[ext]
+	// If there is no extension, then we are either dealing with public assets
+	// or the storybook, which both require some extra handling:
+	if ext == "" {
+		if filepath.Base(name) == "public" {
+			handler = CDNHandler
+		}
+		if filepath.Base(name) == "storybook" {
+			handler = StorybookHandler
+		}
+	}
+	log.Printf("[%s] Using handler for %s", name, ext)
+	return handler, ext
 }

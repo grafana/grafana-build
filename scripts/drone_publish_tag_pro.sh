@@ -28,6 +28,7 @@ dagger run --silent go run ./cmd \
   --grafana-ref=${DRONE_TAG} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
@@ -54,7 +55,7 @@ dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
   --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.0" \
+  --alpine-base="alpine:3.18.3" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 

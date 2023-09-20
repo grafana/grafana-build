@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana-build/stringutil"
 )
 
+const (
+	DefaultGoVersion = "1.20.8"
+)
+
 // GrafnaaOpts are populated by the 'GrafanaFlags' flags.
 // These options define how to mount or clone the grafana/enterprise source code.
 type GrafanaOpts struct {
@@ -41,20 +45,24 @@ type GrafanaOpts struct {
 
 func GrafanaOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaOpts, error) {
 	var (
-		version        = c.String("version")
+		version        = strings.TrimSpace(c.String("version"))
 		grafana        = c.Bool("grafana")
-		grafanaRepo    = c.String("grafana-repo")
-		grafanaDir     = c.String("grafana-dir")
-		ref            = c.String("grafana-ref")
+		grafanaRepo    = strings.TrimSpace(c.String("grafana-repo"))
+		grafanaDir     = strings.TrimSpace(c.String("grafana-dir"))
+		ref            = strings.TrimSpace(c.String("grafana-ref"))
 		enterprise     = c.Bool("enterprise")
-		enterpriseDir  = c.String("enterprise-dir")
-		enterpriseRepo = c.String("enterprise-repo")
-		enterpriseRef  = c.String("enterprise-ref")
-		buildID        = c.String("build-id")
-		gitHubToken    = c.String("github-token")
+		enterpriseDir  = strings.TrimSpace(c.String("enterprise-dir"))
+		enterpriseRepo = strings.TrimSpace(c.String("enterprise-repo"))
+		enterpriseRef  = strings.TrimSpace(c.String("enterprise-ref"))
+		buildID        = strings.TrimSpace(c.String("build-id"))
+		gitHubToken    = strings.TrimSpace(c.String("github-token"))
 		goTags         = c.StringSlice("go-tags")
-		goVersion      = c.String("go-version")
+		goVersion      = strings.TrimSpace(c.String("go-version"))
 	)
+
+	if goVersion == "" {
+		goVersion = DefaultGoVersion
+	}
 
 	if buildID == "" {
 		buildID = stringutil.RandomString(12)
