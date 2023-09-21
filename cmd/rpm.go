@@ -6,9 +6,10 @@ import (
 )
 
 var RPMCommand = &cli.Command{
-	Name:   "rpm",
-	Action: PipelineActionWithPackageInput(pipelines.RPM),
-	Usage:  "Using a grafana.tar.gz as input (ideally one built using the 'package' command), create a .rpm and checksum",
+	Name:        "rpm",
+	Action:      PipelineActionWithPackageInput(pipelines.RPM),
+	Usage:       "Using a grafana.tar.gz as input (ideally one built using the 'package' command), create a .rpm and checksum",
+	Subcommands: []*cli.Command{RPMPublishCommand},
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
 		PublishFlags,
