@@ -61,6 +61,9 @@ type PipelineArgs struct {
 
 	// NPMOpts will be populated if NPMFlags are enabled on the current sub-command.
 	NPMOpts *containers.NPMOpts
+
+	// PackagePublishOpts will be populated if PackagePublishFlags are enabled on the current sub-command.
+	PackagePublishOpts *containers.PackagePublishOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -76,19 +79,20 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 	}
 
 	return PipelineArgs{
-		Context:          c,
-		Verbose:          verbose,
-		Platform:         dagger.Platform(platform),
-		GrafanaOpts:      grafanaOpts,
-		GPGOpts:          containers.GPGOptsFromFlags(c),
-		PackageOpts:      containers.PackageOptsFromFlags(c),
-		PublishOpts:      containers.PublishOptsFromFlags(c),
-		PackageInputOpts: containers.PackageInputOptsFromFlags(c),
-		DockerOpts:       containers.DockerOptsFromFlags(c),
-		GCPOpts:          containers.GCPOptsFromFlags(c),
-		ConcurrencyOpts:  ConcurrencyOptsFromFlags(c),
-		ProImageOpts:     containers.ProImageOptsFromFlags(c),
-		NPMOpts:          containers.NPMOptsFromFlags(c),
+		Context:            c,
+		Verbose:            verbose,
+		Platform:           dagger.Platform(platform),
+		GrafanaOpts:        grafanaOpts,
+		GPGOpts:            containers.GPGOptsFromFlags(c),
+		PackageOpts:        containers.PackageOptsFromFlags(c),
+		PublishOpts:        containers.PublishOptsFromFlags(c),
+		PackageInputOpts:   containers.PackageInputOptsFromFlags(c),
+		DockerOpts:         containers.DockerOptsFromFlags(c),
+		GCPOpts:            containers.GCPOptsFromFlags(c),
+		ConcurrencyOpts:    ConcurrencyOptsFromFlags(c),
+		ProImageOpts:       containers.ProImageOptsFromFlags(c),
+		NPMOpts:            containers.NPMOptsFromFlags(c),
+		PackagePublishOpts: containers.PackagePublishOptsFromFlags(c),
 	}, nil
 }
 

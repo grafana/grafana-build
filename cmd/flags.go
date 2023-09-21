@@ -324,6 +324,57 @@ var DefaultFlags = []cli.Flag{
 	},
 }
 
+var PackagePublishFlags = []cli.Flag{
+	&cli.StringSliceFlag{
+		Name:     "package",
+		Usage:    "Path to a grafana.deb package used as input",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "destination",
+		Usage:    "Bucket to store packages (example: 'gs://bucket/grafana/')",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "gcp-service-account-key-base64",
+		Usage:    "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "access-key-id",
+		Usage:    "Access key ID to access the target bucket",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "secret-access-key",
+		Usage:    "Secret access key to access the target bucket",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "gpg-public-key-base64",
+		Usage:    "Provides a public key encoded in base64 for GPG signing",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "gpg-private-key-base64",
+		Usage:    "Provides a private key encoded in base64 for GPG signing",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "gpg-passphrase",
+		Usage:    "Provides a private key passphrase encoded in base64 for GPG signing",
+		Required: true,
+	},
+	&cli.BoolFlag{
+		Name:  "deb-remove-packages",
+		Usage: "Instead of adding the given packages, it removes them. See https://www.aptly.info/doc/aptly/repo/remove/",
+	},
+	&cli.BoolFlag{
+		Name:  "replace-existing",
+		Usage: "Replace existing packages in the repository",
+	},
+}
+
 // JoinFlags combines several slices of flags into one slice of flags.
 func JoinFlags(f ...[]cli.Flag) []cli.Flag {
 	flags := []cli.Flag{}
