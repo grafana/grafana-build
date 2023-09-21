@@ -336,11 +336,6 @@ var PackagePublishFlags = []cli.Flag{
 		Required: true,
 	},
 	&cli.StringFlag{
-		Name:     "gcp-service-account-key-base64",
-		Usage:    "Provides a service-account key encoded in base64 to use to authenticate with the Google Cloud SDK",
-		Required: true,
-	},
-	&cli.StringFlag{
 		Name:     "access-key-id",
 		Usage:    "Access key ID to access the target bucket",
 		Required: true,

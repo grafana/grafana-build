@@ -11,5 +11,6 @@ var RPMPublishCommand = &cli.Command{
 	Usage:  "Using a grafana.rpm as input (ideally one built using the 'rpm' command), publish the package to our YUM repository",
 	Flags: JoinFlagsWithDefault(
 		PackagePublishFlags,
+		GCPFlags,
 	),
 }

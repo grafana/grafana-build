@@ -7,6 +7,7 @@ import (
 type PackagePublishOpts struct {
 	Packages                []string
 	Destination             string
+	ServiceAccountKey       string
 	ServiceAccountKeyBase64 string
 	AccessKeyId             string
 	SecretAccessKey         string
@@ -21,6 +22,7 @@ func PackagePublishOptsFromFlags(c cliutil.CLIContext) *PackagePublishOpts {
 	return &PackagePublishOpts{
 		Packages:                c.StringSlice("package"),
 		Destination:             c.String("destination"),
+		ServiceAccountKey:       c.String("gcp-service-account-key"),
 		ServiceAccountKeyBase64: c.String("gcp-service-account-key-base64"),
 		AccessKeyId:             c.String("access-key-id"),
 		SecretAccessKey:         c.String("secret-access-key"),

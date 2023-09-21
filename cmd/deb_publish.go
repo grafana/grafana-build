@@ -11,5 +11,6 @@ var DebPublishCommand = &cli.Command{
 	Usage:  "Using a grafana.deb as input (ideally one built using the 'deb' command), publish the package to our APT repository",
 	Flags: JoinFlagsWithDefault(
 		PackagePublishFlags,
+		GCPFlags,
 	),
 }
