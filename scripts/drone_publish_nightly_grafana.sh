@@ -32,20 +32,20 @@ dagger run --silent go run ./cmd cdn \
 dagger run --silent go run ./cmd deb publish \
   $(find $local_dir | grep deb | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --destination="${PACKAGES_DESTINATION}" \
-  --gcp-service-account-key-base64="${PACKAGES_GCP_KEY_BASE64}" \
-  --access-key-id="${PACKAGES_ACCESS_KEY_ID}" \
-  --secret-access-key="${PACKAGES_SECRET_ACCESS_KEY}" \
-  --gpg-private-key-base64="${PACKAGES_GPG_PRIVATE_KEY}" \
-  --gpg-public-key-base64="${PACKAGES_GPG_PUBLIC_KEY}" \
-  --gpg-passphrase="${PACKAGES_GPG_PASSPHRASE}"
+  --gcp-service-account-key-base64="${GCP_KEY_BASE64}" \
+  --access-key-id="${ACCESS_KEY_ID}" \
+  --secret-access-key="${SECRET_ACCESS_KEY}" \
+  --gpg-private-key-base64="${GPG_PRIVATE_KEY}" \
+  --gpg-public-key-base64="${GPG_PUBLIC_KEY}" \
+  --gpg-passphrase="${GPG_PASSPHRASE}"
 
 # Publish the rpm packages present in the bucket
 dagger run --silent go run ./cmd rpm publish \
   $(find $local_dir | grep rpm | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --destination="${PACKAGES_DESTINATION}" \
-  --gcp-service-account-key-base64="${PACKAGES_GCP_KEY_BASE64}" \
-  --access-key-id="${PACKAGES_ACCESS_KEY_ID}" \
-  --secret-access-key="${PACKAGES_SECRET_ACCESS_KEY}" \
-  --gpg-private-key-base64="${PACKAGES_GPG_PRIVATE_KEY}" \
-  --gpg-public-key-base64="${PACKAGES_GPG_PUBLIC_KEY}" \
-  --gpg-passphrase="${PACKAGES_GPG_PASSPHRASE}"
+  --gcp-service-account-key-base64="${GCP_KEY_BASE64}" \
+  --access-key-id="${ACCESS_KEY_ID}" \
+  --secret-access-key="${SECRET_ACCESS_KEY}" \
+  --gpg-private-key-base64="${GPG_PRIVATE_KEY}" \
+  --gpg-public-key-base64="${GPG_PUBLIC_KEY}" \
+  --gpg-passphrase="${GPG_PASSPHRASE}"
