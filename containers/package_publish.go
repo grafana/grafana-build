@@ -47,6 +47,7 @@ func PackagePublish(ctx context.Context, d *dagger.Client, opts *PackagePublishO
 		WithEnvVariable("TARGET_BUCKET", targetBucket).
 		WithEnvVariable("REPLACE_EXISTING", strconv.FormatBool(opts.ReplaceExisting)).
 		WithEnvVariable("DEB_REMOVE_PACKAGES", strconv.FormatBool(opts.RemovePackages)).
+		WithEnvVariable("PACKAGE_PATH", strings.Join(opts.Packages, ",")).
 		WithEnvVariable("PACKAGE_TYPE", packageType).
 		WithExec(nil).
 		Sync(ctx)
