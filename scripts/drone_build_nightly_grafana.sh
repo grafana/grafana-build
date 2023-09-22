@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ver="nightly-${DRONE_COMMIT_SHA:0:8}"
+ver=$(cat ${GRAFANA_DIR}/package.json | jq -r .version | sed "s/$/\.${DRONE_COMMIT_SHA:0:8}/")
 local_dst="file://${DRONE_WORKSPACE}/dist"
 set -e
 

@@ -3,7 +3,7 @@ FROM golang:1.21-alpine
 ARG DAGGER_VERSION=v0.8.4
 
 WORKDIR /src
-RUN apk add --no-cache git docker wget bash
+RUN apk add --no-cache git docker wget bash jq
 
 # Install dagger & otel-cli
 RUN wget "https://github.com/dagger/dagger/releases/download/${DAGGER_VERSION}/dagger_${DAGGER_VERSION}_linux_amd64.tar.gz" && \
