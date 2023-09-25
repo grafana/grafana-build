@@ -38,7 +38,7 @@ dagger run --silent go run ./cmd cdn \
   --destination="${CDN_DESTINATION}/${ver}/public"
 
 # Publish only the linux/amd64 edition npm packages to npm
-dagger run --silent go run ./cmd npm \
+dagger run --silent go run ./cmd npm publish \
   $(find $local_dir | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | grep -v docker | awk '{print "--package=file://"$0}') \
   --token=${NPM_TOKEN} \
   --tag="nightly"
