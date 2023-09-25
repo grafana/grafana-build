@@ -190,10 +190,10 @@ func (g *GrafanaOpts) Grafana(ctx context.Context, client *dagger.Client) (*dagg
 		log.Println("Looking up github token from 'GITHUB_TOKEN' environment variable or '$XDG_HOME/.gh'")
 		token, err := LookupGitHubToken(ctx)
 		if err != nil {
-			return nil, err
+			log.Println("Looking up github token failed:", err)
 		}
 		if token == "" {
-			return nil, fmt.Errorf("unable to acquire github token")
+			log.Println("Continuing without a github token")
 		}
 		ght = token
 	}
