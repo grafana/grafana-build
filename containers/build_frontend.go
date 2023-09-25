@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"dagger.io/dagger"
 )
@@ -24,12 +23,9 @@ func CompileFrontend(d *dagger.Client, platform dagger.Platform, src *dagger.Dir
 
 	c = WithYarnCache(c, opts)
 
-	ersion := strings.TrimPrefix(version, "v")
-
 	// Get the node version from the 'src' directories '.nvmrc' file.
 	public := c.
 		WithExec([]string{"yarn", "install", "--immutable"}).
-		WithExec([]string{"npm", "version", ersion, "--no-git-tag-version"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
 		Directory("/src/public")
