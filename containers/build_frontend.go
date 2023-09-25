@@ -29,7 +29,7 @@ func CompileFrontend(d *dagger.Client, platform dagger.Platform, src *dagger.Dir
 	// Get the node version from the 'src' directories '.nvmrc' file.
 	public := c.
 		WithExec([]string{"yarn", "install", "--immutable"}).
-		WithExec([]string{"npm", "version", ersion, "--no-git-tag-version"}).
+		WithExec([]string{"npm", "version", ersion, "--no-git-tag-version", "--allow-same-version"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
 		Directory("/src/public")
