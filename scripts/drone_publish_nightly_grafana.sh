@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -e
-ver="nightly-${DRONE_COMMIT_SHA:0:8}"
+ver=$(cat ${GRAFANA_DIR}/package.json | jq -r .version)
 local_dir="${DRONE_WORKSPACE}/dist"
+
+# Check if version has hyphen
+if [[ $ver == *-* ]]; then
+    # If it does, replace everything after the hyphen
+    ver=$(echo $ver | sed -E "s/-.*/-nightly.${DRONE_COMMIT_SHA:0:8}/")
+else
+    # If it doesn't, append "-nightly.${DRONE_COMMIT_SHA:0:8}"
+    ver="${ver}-nightly.${DRONE_COMMIT_SHA:0:8}"
+fi
 
 # Publish the docker images present in the bucket
 dagger run --silent go run ./cmd docker publish \
