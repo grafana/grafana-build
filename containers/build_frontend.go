@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"dagger.io/dagger"
 )
@@ -16,16 +17,19 @@ func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
 		WithExec([]string{"cat", ".nvmrc"})
 }
 
-func CompileFrontend(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, opts *YarnCacheOpts, nodeVersion string) *dagger.Directory {
+func CompileFrontend(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, opts *YarnCacheOpts, version, nodeVersion string) *dagger.Directory {
 	c := NodeContainer(d, NodeImage(nodeVersion), platform).
 		WithDirectory("/src", src).
 		WithWorkdir("/src")
 
 	c = WithYarnCache(c, opts)
 
+	ersion := strings.TrimPrefix(version, "v")
+
 	// Get the node version from the 'src' directories '.nvmrc' file.
 	public := c.
 		WithExec([]string{"yarn", "install", "--immutable"}).
+		WithExec([]string{"npm", "version", ersion, "--no-git-tag-version"}).
 		WithExec([]string{"yarn", "run", "build"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
 		Directory("/src/public")
