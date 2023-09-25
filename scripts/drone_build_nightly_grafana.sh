@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
-ver=$(cat ${GRAFANA_DIR}/package.json | jq -r .version | sed "s/$/\.${DRONE_COMMIT_SHA:0:8}/")
-local_dst="file://${DRONE_WORKSPACE}/dist"
 set -e
+ver=$(cat ${GRAFANA_DIR}/package.json | jq -r .version)
+local_dst="file://${DRONE_WORKSPACE}/dist"
+
+# Check if version has hyphen
+if [[ $ver == *-* ]]; then
+    # If it does, replace everything after the hyphen
+    ver=$(echo $ver | sed -E "s/-.*/-nightly.${DRONE_COMMIT_SHA:0:8}/")
+else
+    # If it doesn't, append "-nightly.${DRONE_COMMIT_SHA:0:8}"
+    ver="${ver}-nightly.${DRONE_COMMIT_SHA:0:8}"
+fi
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
