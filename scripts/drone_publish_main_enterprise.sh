@@ -9,7 +9,6 @@ dagger run --silent go run ./cmd \
   package \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --version=$(echo ${GRAFANA_VERSION} | sed s/pre/${DRONE_BUILD_NUMBER}/g) \
   --grafana=false \
   --grafana-ref=${GRAFANA_REF} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \

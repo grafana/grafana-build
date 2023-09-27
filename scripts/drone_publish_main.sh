@@ -11,7 +11,6 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 echo "Building tar.gz packages..."
 dagger run --silent go run ./cmd \
   package \
-  --version=$(echo ${GRAFANA_VERSION} | sed s/pre/${DRONE_BUILD_NUMBER}/g) \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \

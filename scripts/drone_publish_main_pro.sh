@@ -24,7 +24,6 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --version=$(echo ${GRAFANA_VERSION} | sed s/pre/${DRONE_BUILD_NUMBER}/g) \
   --destination=${local_dst} > assets.txt
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
@@ -36,4 +35,4 @@ dagger run --silent go run ./cmd deb \
 echo "Final list of artifacts:"
 cat assets.txt
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
