@@ -365,7 +365,7 @@ func main() {
 
 		container = client.Container().From("google/cloud-sdk:alpine")
 	)
-
+	//
 	if c, err := authenticator.Authenticate(client, container); err == nil {
 		container = c
 	} else {
@@ -423,7 +423,7 @@ func main() {
 	log.Println("Copying", prefix, "to gcs")
 	dst := os.Getenv("DESTINATION")
 	container = container.WithMountedDirectory("dist", client.Host().Directory(prefix)).
-		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/artifacts", dst})
+		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/*", dst})
 
 	stdout, err := container.Stdout(ctx)
 	if err != nil {
