@@ -51,7 +51,8 @@ func TarFilename(opts TarFileOpts) string {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
 
-	p := []string{name, opts.Version, opts.BuildID, os, arch}
+	versionTrimmed := strings.TrimSuffix(opts.Version, "-pre")
+	p := []string{name, versionTrimmed, opts.BuildID, os, arch}
 
 	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }

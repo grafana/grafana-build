@@ -58,6 +58,20 @@ func TestTarFilename(t *testing.T) {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
+	t.Run("It should use the correct name if Enterprise is false", func(t *testing.T) {
+		distro := executil.Distribution("plan9/amd64")
+		opts := pipelines.TarFileOpts{
+			Edition: "",
+			Version: "v1.0.1-pre",
+			BuildID: "333",
+			Distro:  distro,
+		}
+
+		expected := "grafana_v1.0.1_333_plan9_amd64.tar.gz"
+		if name := pipelines.TarFilename(opts); name != expected {
+			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
+		}
+	})
 	t.Run("It should use the correct name if Enterprise is true", func(t *testing.T) {
 		distro := executil.Distribution("plan9/amd64")
 		opts := pipelines.TarFileOpts{
