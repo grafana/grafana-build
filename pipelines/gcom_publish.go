@@ -44,11 +44,11 @@ func VersionPayloadFromFileName(name string) *containers.GCOMVersionPayload {
 	}
 }
 
-func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, file *dagger.File, destination string) (*containers.GCOMPackagePayload, error) {
-	opts := TarOptsFromFileName(name)
+func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, file *dagger.File, opts *containers.GCOMOpts) (*containers.GCOMPackagePayload, error) {
+	tarOpts := TarOptsFromFileName(name)
 	ext := filepath.Ext(name)
-	os, _ := executil.OSAndArch(opts.Distro)
-	arch := strings.ReplaceAll(executil.FullArch(opts.Distro), "/", "")
+	os, _ := executil.OSAndArch(tarOpts.Distro)
+	arch := strings.ReplaceAll(executil.FullArch(tarOpts.Distro), "/", "")
 
 	if ext == "deb" {
 		os = "deb"
@@ -70,7 +70,7 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 
 	return &containers.GCOMPackagePayload{
 		OS:     os,
-		URL:    fmt.Sprintf("%s/%s", destination, name),
+		URL:    fmt.Sprintf("%s/%s", opts.DownloadURL, name),
 		Sha256: sha256,
 		Arch:   arch,
 	}, nil
@@ -78,10 +78,9 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 
 func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	var (
-		opts        = args.GCOMOpts
-		publishOpts = args.PublishOpts
-		wg          = &errgroup.Group{}
-		sm          = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+		opts = args.GCOMOpts
+		wg   = &errgroup.Group{}
+		sm   = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
 	)
 
 	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
@@ -91,12 +90,12 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 
 	// Extract the package(s)
 	for i, name := range args.PackageInputOpts.Packages {
-		wg.Go(PublishGCOMFunc(ctx, sm, d, opts, name, packages[i], publishOpts.Destination))
+		wg.Go(PublishGCOMFunc(ctx, sm, d, opts, name, packages[i]))
 	}
 	return wg.Wait()
 }
 
-func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.GCOMOpts, path string, file *dagger.File, destination string) func() error {
+func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.GCOMOpts, path string, file *dagger.File) func() error {
 	return func() error {
 		name := filepath.Base(path)
 		log.Printf("[%s] Attempting to publish package", name)
@@ -111,7 +110,7 @@ func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		versionPayload := VersionPayloadFromFileName(name)
 
 		log.Printf("[%s] Building package payload", name)
-		packagePayload, err := PackagePayloadFromFile(ctx, d, name, file, destination)
+		packagePayload, err := PackagePayloadFromFile(ctx, d, name, file, opts)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}

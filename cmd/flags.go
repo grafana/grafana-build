@@ -325,19 +325,20 @@ var DefaultFlags = []cli.Flag{
 }
 
 var GCOMFlags = []cli.Flag{
-	&cli.BoolFlag{
-		Name:  "gcom",
-		Usage: "Enable requests to grafana.com",
-		Value: true,
-	},
 	&cli.StringFlag{
-		Name:  "gcom-api-key",
-		Usage: "API Key used in requests to grafana.com",
-	},
-	&cli.StringFlag{
-		Name:  "gcom-url",
+		Name:  "url",
 		Usage: "URL used in requests to grafana.com",
 		Value: "https://grafana.com",
+	},
+	&cli.StringFlag{
+		Name:     "api-key",
+		Usage:    "API Key used in requests to grafana.com",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "download-url",
+		Usage:    "URL used to download packages from grafana.com",
+		Required: true,
 	},
 }
 

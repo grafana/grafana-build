@@ -27,8 +27,8 @@ type GCOMPackagePayload struct {
 
 // PublishGCOM publishes a package to grafana.com.
 func PublishGCOM(ctx context.Context, d *dagger.Client, versionPayload *GCOMVersionPayload, packagePayload *GCOMPackagePayload, opts *GCOMOpts) error {
-	versionApiUrl := fmt.Sprintf("%s/api/grafana/versions", opts.GCOMUrl)
-	packagesApiUrl := fmt.Sprintf("%s/api/grafana/versions/%s/packages", opts.GCOMUrl, versionPayload.Version)
+	versionApiUrl := fmt.Sprintf("%s/api/grafana/versions", opts.URL)
+	packagesApiUrl := fmt.Sprintf("%s/api/grafana/versions/%s/packages", opts.URL, versionPayload.Version)
 
 	jsonVersionPayload, err := json.Marshal(versionPayload)
 	if err != nil {
@@ -40,7 +40,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, versionPayload *GCOMVers
 		return err
 	}
 
-	apiKeySecret := d.SetSecret("gcom-api-key", opts.GCOMApiKey)
+	apiKeySecret := d.SetSecret("gcom-api-key", opts.ApiKey)
 
 	_, err = d.Container().From("alpine").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
