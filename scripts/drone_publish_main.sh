@@ -22,8 +22,7 @@ dagger run --silent go run ./cmd \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
+  --destination=${local_dst} > assets.txt
 
 echo "Done building tar.gz packages..."
 cat assets.txt
