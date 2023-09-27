@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-
 dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 set -e
@@ -8,46 +7,34 @@ set -e
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # Build all of the grafana.tar.gz packages.
-echo "Building tar.gz packages..."
 dagger run --silent go run ./cmd \
   package \
-  --version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=windows/amd64 \
-  --distro=darwin/amd64 \
+  --env GO_BUILD_TAGS=pro \
+  --env WIRE_TAGS=pro \
+  --go-tags=pro \
+  --edition=pro \
   --checksum \
+  --enterprise \
+  --enterprise-ref=${ENTERPRISE_REF} \
+  --grafana=false \
+  --grafana-ref=${GRAFANA_REF} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --build-id=${DRONE_BUILD_NUMBER} \
-  --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --version=${DRONE_TAG} \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
-
-echo "Done building tar.gz packages..."
-cat assets.txt
+  --version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
+  --destination=${local_dst} > assets.txt
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
-
-dagger run --silent go run ./cmd docker \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --checksum \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.3" \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt
-
-cat debs.txt docker.txt >> assets.txt
+  --destination=${local_dst} >> assets.txt
 
 echo "Final list of artifacts:"
 cat assets.txt
-
 # Move the tar.gz packages to their expected locations
-cat assets.txt | IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./scripts/move_packages.go ./dist/main

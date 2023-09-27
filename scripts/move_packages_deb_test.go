@@ -1,6 +1,15 @@
 package main
 
 var debMapping = map[string]m{
+	"OSS: Linux AMD64 on main": {
+		env: map[string]string{
+			"IS_MAIN": "true",
+		},
+		input: "file://dist/grafana_v1.2.3_102_linux_amd64.deb",
+		output: []string{
+			"oss/main/grafana_1.2.3_amd64.deb",
+		},
+	},
 	"OSS: Linux AMD64": {
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64.deb",
 		output: []string{
