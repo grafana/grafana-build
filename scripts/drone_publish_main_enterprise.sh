@@ -19,7 +19,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --destination=${local_dst} \
+  --destination=${local_dst} > assets.txt \
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \

@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-dst="${DESTINATION}/${DRONE_BUILD_EVENT}"
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 set -e
 
@@ -25,7 +24,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
+  --version=$(cat package.json | jq -r .version | sed s/pre/${DRONE_BUILD_NUMBER}/g) \
   --destination=${local_dst} > assets.txt
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
