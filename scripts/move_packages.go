@@ -279,10 +279,13 @@ func TarGZHandler(name string) []string {
 			libc = []string{""}
 		}
 	}
-
+	format := tarGzFormat
+	if IsMain() {
+		format = tarGzMainFormat
+	}
 	dst := []string{}
 	for _, m := range libc {
-		dst = append(dst, fmt.Sprintf(tarGzFormat, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
+		dst = append(dst, fmt.Sprintf(format, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
 	}
 
 	return dst
