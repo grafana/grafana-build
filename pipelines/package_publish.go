@@ -27,5 +27,13 @@ func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) er
 		return err
 	}
 	fmt.Fprintln(os.Stdout, dst)
+
+	if args.GCOMOpts.GCOMEnabled {
+		err := PublishGCOM(ctx, d, args)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
