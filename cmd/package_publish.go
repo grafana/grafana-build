@@ -10,7 +10,6 @@ var PackagePublishCommand = &cli.Command{
 	Action:      PipelineActionWithPackageInput(pipelines.PublishPackage),
 	Description: "Publishes a grafana.tar.gz (ideally one built using the 'package' command) in the destination directory (--destination)",
 	Flags: JoinFlagsWithDefault(
-		GCOMFlags,
 		PackageInputFlags,
 		PublishFlags,
 		GCPFlags,

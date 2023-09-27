@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -64,11 +63,6 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 		os = "win"
 	}
 
-	u, err := url.Parse(destination)
-	if err != nil {
-		return nil, err
-	}
-
 	sha256, err := containers.Sha256(d, file).Contents(ctx)
 	if err != nil {
 		return nil, err
@@ -76,7 +70,7 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 
 	return &containers.GCOMPackagePayload{
 		OS:     os,
-		URL:    fmt.Sprintf("https://dl.grafana.com%s/%s", strings.TrimRight(u.Path, "/"), name),
+		URL:    fmt.Sprintf("%s/%s", destination, name),
 		Sha256: sha256,
 		Arch:   arch,
 	}, nil
