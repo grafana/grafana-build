@@ -43,7 +43,8 @@ const (
 
 	// 1: ersion
 	// 2. name (grafana-oss | grafana-enterprise)
-	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnFormat     = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnMainFormat = "grafana/%s/public"
 
 	// 1: ersion
 	storybookFormat = "artifacts/storybook/v%[1]s"
@@ -336,6 +337,10 @@ func DockerHandler(name string) []string {
 }
 
 func CDNHandler(name string) []string {
+	if IsMain() {
+		opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(name, "/public", ".tar.gz"))
+		return []string{fmt.Sprintf(cdnMainFormat, opts.Version)}
+	}
 	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
 	return []string{fmt.Sprintf(cdnFormat, version, grafana)}
 }

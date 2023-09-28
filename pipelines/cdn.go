@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -21,12 +22,13 @@ func CDN(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 		var (
 			name  = ReplaceExt(v, "")
 			targz = packages[i]
+			dst   = strings.Join([]string{args.PublishOpts.Destination, name, "public"}, "/")
 		)
 
-		log.Println("Copying frontend assets for", name, "to", args.PublishOpts.Destination)
+		log.Println("Copying frontend assets for", name, "to", dst)
 
 		public := containers.ExtractedArchive(d, targz, name).Directory("public")
-		dst, err := containers.PublishDirectory(ctx, d, public, args.GCPOpts, args.PublishOpts.Destination)
+		dst, err := containers.PublishDirectory(ctx, d, public, args.GCPOpts, dst)
 		if err != nil {
 			return err
 		}
