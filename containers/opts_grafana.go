@@ -126,7 +126,7 @@ func (g *GrafanaOpts) DetectVersion(ctx context.Context, client *dagger.Client, 
 		return "", err
 	}
 
-	v = strings.ReplaceAll(v, "pre", g.BuildID)
+	v = strings.ReplaceAll(v, "pre", "")
 
 	log.Println("Got version", v)
 	return v, nil
