@@ -68,14 +68,19 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 	if len(components) != 5 {
 		return TarFileOpts{}
 	}
+	versionComponents := strings.Split(components[1], "-")
 
 	var (
 		name    = components[0]
-		version = components[1]
-		buildID = components[2]
+		version = versionComponents[0]
 		os      = components[3]
 		arch    = components[4]
 	)
+	var buildID string
+	// Check if BuildID exists
+	if len(versionComponents) > 1 {
+		buildID = versionComponents[1]
+	}
 	if archv := strings.Split(arch, "-"); len(archv) == 2 {
 		// The reverse operation of removing the 'v' for 'arm' because the golang environment variable
 		// GOARM doesn't want it, but the docker --platform flag either doesn't care or does want it.
