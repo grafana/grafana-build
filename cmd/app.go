@@ -14,10 +14,7 @@ type CLI struct {
 func (c *CLI) ArtifactsCommand() *cli.Command {
 	f := artifacts.ArtifactFlags(c.artifacts)
 	flags := make([]cli.Flag, len(f))
-	for i, v := range f {
-		flags[i] = v
-	}
-
+	copy(flags, f)
 	return &cli.Command{
 		Name:  "artifacts",
 		Usage: "Use this command to declare a list of artifacts to be built and/or published",
