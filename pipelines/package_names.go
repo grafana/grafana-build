@@ -51,12 +51,7 @@ func TarFilename(opts TarFileOpts) string {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
 
-	var p []string
-	if strings.Contains(opts.Version, opts.BuildID) {
-		p = []string{name, opts.Version, os, arch}
-	} else {
-		p = []string{name, opts.Version, opts.BuildID, os, arch}
-	}
+	p := []string{name, opts.Version, opts.BuildID, os, arch}
 
 	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
 }
