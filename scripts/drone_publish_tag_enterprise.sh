@@ -29,6 +29,24 @@ dagger run --silent go run ./cmd \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
+# Build grafana-enterprise with `GOEXPERIMENT=boringcrypto`
+go run ./cmd \
+  package \
+  --distro=linux/amd64 \
+  --yarn-cache=${YARN_CACHE_FOLDER} \
+  --checksum \
+  --env GOEXPERIMENT=boringcrypto \
+  --grafana=false \
+  --edition=enterprise-boringcrypto \
+  --enterprise \
+  --enterprise-ref=${DRONE_TAG} \
+  --grafana-ref=${DRONE_TAG} \
+  --destination=${local_dst} \
+  --version=${DRONE_TAG} \
+  --github-token=${GITHUB_TOKEN} \
+  --build-id=${DRONE_BUILD_NUMBER} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git >> assets.txt
+
 echo "Done building tar.gz packages..."
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
