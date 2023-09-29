@@ -49,14 +49,14 @@ echo "Done building tar.gz packages..."
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | grep -v boring | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | grep -v boring | awk '{print "--package=" $0}') \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
@@ -80,7 +80,7 @@ dagger run --silent go run ./cmd windows-installer \
 
 # Build a docker image for all Linux distros except armv6
 dagger run --silent go run ./cmd docker \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | grep -v boring | awk '{print "--package=" $0}') \
   --checksum \
   --ubuntu-base="ubuntu:22.04" \
   --alpine-base="alpine:3.18.3" \
