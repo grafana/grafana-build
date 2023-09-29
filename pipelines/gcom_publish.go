@@ -50,17 +50,18 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 	os, _ := executil.OSAndArch(tarOpts.Distro)
 	arch := strings.ReplaceAll(executil.FullArch(tarOpts.Distro), "/", "")
 
-	if ext == "deb" {
-		os = "deb"
-	}
-	if ext == "rpm" {
-		os = "rhel"
-	}
-	if ext == "exe" {
-		os = "win-installer"
-	}
 	if os == "windows" {
 		os = "win"
+	}
+
+	if ext == ".deb" {
+		os = "deb"
+	}
+	if ext == ".rpm" {
+		os = "rhel"
+	}
+	if ext == ".exe" {
+		os = "win-installer"
 	}
 
 	sha256, err := containers.Sha256(d, file).Contents(ctx)
