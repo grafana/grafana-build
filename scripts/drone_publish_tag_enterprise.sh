@@ -12,8 +12,6 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=linux/arm/v6 \
-  --distro=linux/arm/v7 \
   --distro=windows/amd64 \
   --distro=darwin/amd64 \
   --checksum \
@@ -30,9 +28,9 @@ dagger run --silent go run ./cmd \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
 
 # Build grafana-enterprise with `GOEXPERIMENT=boringcrypto`
-go run ./cmd \
+dagger run --silent go run ./cmd \
   package \
-  --distro=linux/amd64 \
+  --distro=linux/amd64/dynamic \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
   --env GOEXPERIMENT=boringcrypto \

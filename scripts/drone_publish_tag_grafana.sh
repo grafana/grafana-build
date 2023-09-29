@@ -13,8 +13,6 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=linux/arm/v6 \
-  --distro=linux/arm/v7 \
   --distro=windows/amd64 \
   --distro=darwin/amd64 \
   --checksum \

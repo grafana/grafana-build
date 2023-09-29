@@ -127,8 +127,6 @@ func BuildOptsDynamic(distro executil.Distribution, buildinfo *BuildInfo) *execu
 	)
 
 	return &executil.GoBuildOpts{
-		CC:                ZigCC(distro),
-		CXX:               ZigCXX(distro),
 		ExperimentalFlags: []string{},
 		OS:                os,
 		Arch:              arch,
