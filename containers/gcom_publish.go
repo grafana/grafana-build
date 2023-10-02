@@ -42,9 +42,8 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, versionPayload *GCOMVers
 
 	apiKeySecret := d.SetSecret("gcom-api-key", opts.ApiKey)
 
-	_, err = d.Container().From("alpine").
+	_, err = d.Container().From("alpine/curl").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
-		WithExec([]string{"apk", "add", "curl"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonVersionPayload), versionApiUrl)}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonPackagePayload), packagesApiUrl)}).
 		Sync(ctx)
