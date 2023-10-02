@@ -324,6 +324,24 @@ var DefaultFlags = []cli.Flag{
 	},
 }
 
+var GCOMFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "url",
+		Usage: "URL used in requests to grafana.com",
+		Value: "https://grafana.com",
+	},
+	&cli.StringFlag{
+		Name:     "api-key",
+		Usage:    "API Key used in requests to grafana.com",
+		Required: true,
+	},
+	&cli.StringFlag{
+		Name:     "download-url",
+		Usage:    "URL used to download packages from grafana.com",
+		Required: true,
+	},
+}
+
 // JoinFlags combines several slices of flags into one slice of flags.
 func JoinFlags(f ...[]cli.Flag) []cli.Flag {
 	flags := []cli.Flag{}
