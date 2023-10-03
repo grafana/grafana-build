@@ -77,6 +77,10 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 	if err != nil {
 		return PipelineArgs{}, err
 	}
+	gcomOpts, err := containers.GCOMOptsFromFlags(c)
+	if err != nil {
+		return PipelineArgs{}, err
+	}
 
 	return PipelineArgs{
 		Context:          c,
@@ -92,7 +96,7 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		ConcurrencyOpts:  ConcurrencyOptsFromFlags(c),
 		ProImageOpts:     containers.ProImageOptsFromFlags(c),
 		NPMOpts:          containers.NPMOptsFromFlags(c),
-		GCOMOpts:         containers.GCOMOptsFromFlags(c),
+		GCOMOpts:         gcomOpts,
 	}, nil
 }
 
