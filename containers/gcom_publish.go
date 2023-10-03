@@ -27,7 +27,7 @@ type GCOMPackagePayload struct {
 
 // PublishGCOMVersion publishes a version to grafana.com.
 func PublishGCOMVersion(ctx context.Context, d *dagger.Client, versionPayload *GCOMVersionPayload, opts *GCOMOpts) error {
-	versionApiUrl := fmt.Sprintf("%s/api/grafana/versions", opts.URL)
+	versionApiUrl := opts.URL.JoinPath("/api/grafana/versions")
 
 	jsonVersionPayload, err := json.Marshal(versionPayload)
 	if err != nil {
@@ -38,7 +38,7 @@ func PublishGCOMVersion(ctx context.Context, d *dagger.Client, versionPayload *G
 
 	_, err = d.Container().From("alpine/curl").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonVersionPayload), versionApiUrl)}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonVersionPayload), versionApiUrl.String())}).
 		Sync(ctx)
 
 	if err != nil {
@@ -50,7 +50,7 @@ func PublishGCOMVersion(ctx context.Context, d *dagger.Client, versionPayload *G
 
 // PublishGCOMPackage publishes a package to grafana.com.
 func PublishGCOMPackage(ctx context.Context, d *dagger.Client, packagePayload *GCOMPackagePayload, opts *GCOMOpts, version string) error {
-	packagesApiUrl := fmt.Sprintf("%s/api/grafana/versions/%s/packages", opts.URL, version)
+	packagesApiUrl := opts.URL.JoinPath("/api/grafana/versions/", version, "/packages")
 
 	jsonPackagePayload, err := json.Marshal(packagePayload)
 	if err != nil {
@@ -61,7 +61,7 @@ func PublishGCOMPackage(ctx context.Context, d *dagger.Client, packagePayload *G
 
 	_, err = d.Container().From("alpine/curl").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonPackagePayload), packagesApiUrl)}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonPackagePayload), packagesApiUrl.String())}).
 		Sync(ctx)
 
 	if err != nil {

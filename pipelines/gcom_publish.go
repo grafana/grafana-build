@@ -71,7 +71,7 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 
 	return &containers.GCOMPackagePayload{
 		OS:     os,
-		URL:    fmt.Sprintf("%s/%s", opts.DownloadURL, name),
+		URL:    opts.DownloadURL.JoinPath(name).String(),
 		Sha256: sha256,
 		Arch:   arch,
 	}, nil
