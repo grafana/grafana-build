@@ -89,16 +89,37 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 		return err
 	}
 
-	// Extract the package(s)
+	// Extract the package versions
+	versionPayloads := make(map[string]*containers.GCOMVersionPayload)
+	for _, name := range args.PackageInputOpts.Packages {
+		tarOpts := TarOptsFromFileName(name)
+		if _, ok := versionPayloads[tarOpts.Version]; !ok {
+			log.Printf("[%s] Building version payload", tarOpts.Version)
+			versionPayloads[tarOpts.Version] = VersionPayloadFromFileName(name)
+		}
+	}
+
+	// Publish each version only once
+	for _, p := range versionPayloads {
+		log.Printf("[%s] Attempting to publish version", p.Version)
+		err := containers.PublishGCOMVersion(ctx, d, p, opts)
+		if err != nil {
+			return err
+		}
+		log.Printf("[%s] Done publishing version", p.Version)
+	}
+
+	// Publish the package(s)
 	for i, name := range args.PackageInputOpts.Packages {
-		wg.Go(PublishGCOMFunc(ctx, sm, d, opts, name, packages[i]))
+		wg.Go(PublishGCOMPackageFunc(ctx, sm, d, opts, name, packages[i]))
 	}
 	return wg.Wait()
 }
 
-func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.GCOMOpts, path string, file *dagger.File) func() error {
+func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.GCOMOpts, path string, file *dagger.File) func() error {
 	return func() error {
 		name := filepath.Base(path)
+		tarOpts := TarOptsFromFileName(name)
 		log.Printf("[%s] Attempting to publish package", name)
 		log.Printf("[%s] Acquiring semaphore", name)
 		if err := sm.Acquire(ctx, 1); err != nil {
@@ -107,9 +128,6 @@ func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		defer sm.Release(1)
 		log.Printf("[%s] Acquired semaphore", name)
 
-		log.Printf("[%s] Building version payload", name)
-		versionPayload := VersionPayloadFromFileName(name)
-
 		log.Printf("[%s] Building package payload", name)
 		packagePayload, err := PackagePayloadFromFile(ctx, d, name, file, opts)
 		if err != nil {
@@ -117,7 +135,7 @@ func PublishGCOMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clie
 		}
 
 		log.Printf("[%s] Publishing package", name)
-		err = containers.PublishGCOM(ctx, d, versionPayload, packagePayload, opts)
+		err = containers.PublishGCOMPackage(ctx, d, packagePayload, opts, tarOpts.Version)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}
