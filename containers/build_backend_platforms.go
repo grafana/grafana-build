@@ -9,7 +9,6 @@ import (
 type DistroBuildOptsFunc func(executil.Distribution, *BuildInfo) *executil.GoBuildOpts
 
 var DefaultTags = []string{
-	"netgo",
 	"osusergo",
 }
 
@@ -127,6 +126,8 @@ func BuildOptsDynamic(distro executil.Distribution, buildinfo *BuildInfo) *execu
 	)
 
 	return &executil.GoBuildOpts{
+		CC:                ZigCC(distro),
+		CXX:               ZigCXX(distro),
 		ExperimentalFlags: []string{},
 		OS:                os,
 		Arch:              arch,
@@ -175,7 +176,7 @@ func BuildOptsDynamicWindows(distro executil.Distribution, buildinfo *BuildInfo)
 
 var ZigTargets = map[executil.Distribution]string{
 	executil.DistLinuxAMD64:        "x86_64-linux-musl",
-	executil.DistLinuxAMD64Dynamic: "x86_64-linux-musl",
+	executil.DistLinuxAMD64Dynamic: "x86_64-linux-gnu",
 	executil.DistLinuxARM64:        "aarch64-linux-musl",
 	executil.DistLinuxARM64Dynamic: "aarch64-linux-musl",
 	executil.DistLinuxARM:          "arm-linux-musleabihf",
