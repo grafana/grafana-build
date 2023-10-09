@@ -326,9 +326,9 @@ var DefaultFlags = []cli.Flag{
 
 var GCOMFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  "url",
-		Usage: "URL used in requests to grafana.com",
-		Value: "https://grafana.com",
+		Name:  "api-url",
+		Usage: "API URL used in requests to grafana.com",
+		Value: "https://grafana.com/api/grafana",
 	},
 	&cli.StringFlag{
 		Name:     "api-key",

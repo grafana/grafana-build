@@ -14,7 +14,7 @@ type GCOMOpts struct {
 }
 
 func GCOMOptsFromFlags(c cliutil.CLIContext) (*GCOMOpts, error) {
-	apiUrl, err := url.Parse(c.String("url"))
+	apiUrl, err := url.Parse(c.String("api-url"))
 	if err != nil {
 		return nil, err
 	}
