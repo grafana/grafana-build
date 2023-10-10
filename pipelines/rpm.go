@@ -53,7 +53,6 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"/sbin/service",
 			"fontconfig",
 			"freetype",
-			"urw-fonts",
 		},
 		ExtraArgs: []string{
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",
