@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
+ref="${DRONE_TAG:-main}"
 set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
@@ -17,9 +18,9 @@ dagger run --silent go run ./cmd \
   --edition=pro \
   --checksum \
   --enterprise \
-  --enterprise-ref=${ENTERPRISE_REF} \
+  --enterprise-ref=${ref} \
   --grafana=false \
-  --grafana-ref=${GRAFANA_REF} \
+  --grafana-ref=${ref} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
