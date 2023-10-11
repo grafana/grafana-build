@@ -88,6 +88,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
 			"packages":        src.Directory("packages"),
 			"plugins-bundled": src.Directory("plugins-bundled"),
+			"public":          src.Directory("public"),
 		},
 		Files: map[string]*dagger.File{
 			"package.json": src.File("package.json"),
