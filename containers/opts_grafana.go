@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DefaultGoVersion = "1.20.8"
+	DefaultGoVersion = "1.20.10"
 )
 
 // GrafnaaOpts are populated by the 'GrafanaFlags' flags.
