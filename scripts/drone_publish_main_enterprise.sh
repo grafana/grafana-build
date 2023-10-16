@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
-ref="${DRONE_TAG:-main}"
 set -e
 
 
@@ -12,10 +11,8 @@ dagger run --silent go run ./cmd \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
   --grafana=false \
-  --grafana-ref=${ref} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --enterprise \
-  --enterprise-ref=${ref} \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
