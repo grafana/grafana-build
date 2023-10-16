@@ -2,6 +2,7 @@
 local_dst="file://dist/${DRONE_BUILD_EVENT}"
 set -e
 
+
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
 
@@ -10,10 +11,8 @@ dagger run --silent go run ./cmd \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
   --grafana=false \
-  --grafana-ref=${GRAFANA_REF} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --enterprise \
-  --enterprise-ref=${ENTERPRISE_REF} \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
