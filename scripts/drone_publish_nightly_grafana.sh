@@ -38,6 +38,6 @@ dagger run --silent go run ./cmd npm publish \
 dagger run --silent go run ./cmd gcom publish \
   $(find $local_dir | grep -e .rpm -e .tar.gz -e .exe -e .zip -e .deb | grep -v sha256 | grep -v docker | awk '{print "--package=file://"$0}') \
   --api-key=${GCOM_API_KEY} \
-  --api-url="https://grafana-dev.com/api/grafana" \
+  --api-url="https://grafana.com/api/grafana" \
   --download-url="https://dl.grafana.com/oss/release" \
   --nightly
