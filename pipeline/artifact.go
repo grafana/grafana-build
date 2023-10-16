@@ -10,7 +10,9 @@ import (
 )
 
 var (
-	ErrorOptionNotSet = errors.New("expected option not set")
+	ErrorNotADirectory      = errors.New("not a directory argument")
+	ErrorOptionNotSet       = errors.New("expected option not set")
+	ErrorDependencyNotFound = errors.New("dependency not found")
 )
 
 type ArtifactType int
@@ -28,13 +30,10 @@ type ArtifactContainerOpts struct {
 }
 
 type ArtifactBuildOpts struct {
-	Log     *slog.Logger
-	Client  *dagger.Client
-	State   StateHandler
-	Builder *dagger.Container
-
+	ContainerOpts *ArtifactContainerOpts
 	// Dependencies are artifacts that this artifact depends on.
 	Dependencies map[string]Artifact
+	Builder      *dagger.Container
 }
 
 func (o *ArtifactBuildOpts) Dependency(artifact Artifact) (Artifact, error) {
@@ -44,7 +43,7 @@ func (o *ArtifactBuildOpts) Dependency(artifact Artifact) (Artifact, error) {
 
 	v, ok := o.Dependencies[artifact.Name]
 	if !ok {
-		return Artifact{}, errors.New("dependency not found")
+		return Artifact{}, fmt.Errorf("%s: %w", artifact.Name, ErrorDependencyNotFound)
 	}
 
 	return v, nil
@@ -125,27 +124,22 @@ func (a *Artifact) Option(key string) (string, error) {
 	return v.(string), nil
 }
 
-func (a *Artifact) Directory(ctx context.Context) (*dagger.Directory, error) {
-  if a.Type != ArtifactTypeDirectory {
-    return nil, errors.New("not a directory argument")
-  }
+func (a *Artifact) Directory(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Directory, error) {
+	if a.Type != ArtifactTypeDirectory {
+		return nil, fmt.Errorf("%s: %w", a.Name, ErrorNotADirectory)
+	}
 
-  builder, err := a.Builder(ctx, &ArtifactContainerOpts{
-    Log:      &slog.Logger{},
-    Client:   &dagger.Client{},
-    Platform: dagger.Platform(""),
-    State:    StateHandler(nil),
-  })
+	builder, err := a.Builder(ctx, opts)
 
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
-  return a.BuildDirFunc(ctx, &ArtifactBuildOpts{
-    Builder: builder,
-  })
+	return a.BuildDirFunc(ctx, &ArtifactBuildOpts{
+		Builder: builder,
+	})
 }
 
 func (a *Artifact) File(ctx context.Context) (*dagger.File, error) {
-  return nil, nil
+	return nil, nil
 }

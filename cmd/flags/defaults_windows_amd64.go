@@ -1,4 +1,4 @@
-package main
+package flags
 
 // DefaultDistros are distributions that can quickly be built in an ideal scenario for the operating system on the above build tag.
 var DefaultDistros = []string{"linux/amd64"}

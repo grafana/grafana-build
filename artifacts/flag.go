@@ -26,10 +26,16 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Value: true,
 	}
 
+	platformFlag := &cli.StringFlag{
+		Name:  "platform",
+		Value: "linux/amd64",
+	}
+
 	flags := []cli.Flag{
 		artifactsFlag,
 		buildFlag,
 		publishFlag,
+		platformFlag,
 	}
 
 	// All of these artifacts are the registered artifacts. These should mostly stay the same no matter what.

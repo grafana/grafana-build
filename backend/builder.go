@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"context"
+
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/pipeline"
 )
@@ -10,13 +12,13 @@ import (
 // * zig, for cross-compilation
 // * golang
 // * musl
-func Builder(d *dagger.Client, platform dagger.Platform, args []pipeline.Argument) *dagger.Container {
+func Builder(ctx context.Context, o *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	var (
 		GoImage = "golang:1.21-alpine"
 	)
-	container := d.Container(dagger.ContainerOpts{
-		Platform: platform,
+	container := o.Client.Container(dagger.ContainerOpts{
+		Platform: o.Platform,
 	}).From(GoImage)
 
-	return container
+	return container, nil
 }
