@@ -29,6 +29,7 @@ func VersionPayloadFromFileName(name string, opts *containers.GCOMOpts) *contain
 		beta = true
 	}
 	if opts.Nightly {
+		stable = false
 		beta = false
 		nightly = true
 	}
