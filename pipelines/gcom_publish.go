@@ -103,11 +103,12 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 	// Publish each version only once
 	for _, p := range versionPayloads {
 		log.Printf("[%s] Attempting to publish version", p.Version)
-		err := containers.PublishGCOMVersion(ctx, d, p, opts)
+		out, err := containers.PublishGCOMVersion(ctx, d, p, opts)
 		if err != nil {
 			return err
 		}
 		log.Printf("[%s] Done publishing version", p.Version)
+		fmt.Fprintln(Stdout, out)
 	}
 
 	// Publish the package(s)
@@ -136,12 +137,13 @@ func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagg
 		}
 
 		log.Printf("[%s] Publishing package", name)
-		err = containers.PublishGCOMPackage(ctx, d, packagePayload, opts, tarOpts.Version)
+		out, err := containers.PublishGCOMPackage(ctx, d, packagePayload, opts, tarOpts.Version)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}
-
 		log.Printf("[%s] Done publishing package", name)
+
+		fmt.Fprintln(Stdout, out)
 		return nil
 	}
 }

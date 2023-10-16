@@ -26,47 +26,35 @@ type GCOMPackagePayload struct {
 }
 
 // PublishGCOMVersion publishes a version to grafana.com.
-func PublishGCOMVersion(ctx context.Context, d *dagger.Client, versionPayload *GCOMVersionPayload, opts *GCOMOpts) error {
+func PublishGCOMVersion(ctx context.Context, d *dagger.Client, versionPayload *GCOMVersionPayload, opts *GCOMOpts) (string, error) {
 	versionApiUrl := opts.URL.JoinPath("/versions")
 
 	jsonVersionPayload, err := json.Marshal(versionPayload)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	apiKeySecret := d.SetSecret("gcom-api-key", opts.ApiKey)
 
-	_, err = d.Container().From("alpine/curl").
+	return d.Container().From("alpine/curl").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonVersionPayload), versionApiUrl.String())}).
-		Sync(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+		Stdout(ctx)
 }
 
 // PublishGCOMPackage publishes a package to grafana.com.
-func PublishGCOMPackage(ctx context.Context, d *dagger.Client, packagePayload *GCOMPackagePayload, opts *GCOMOpts, version string) error {
+func PublishGCOMPackage(ctx context.Context, d *dagger.Client, packagePayload *GCOMPackagePayload, opts *GCOMOpts, version string) (string, error) {
 	packagesApiUrl := opts.URL.JoinPath("/versions/", version, "/packages")
 
 	jsonPackagePayload, err := json.Marshal(packagePayload)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	apiKeySecret := d.SetSecret("gcom-api-key", opts.ApiKey)
 
-	_, err = d.Container().From("alpine/curl").
+	return d.Container().From("alpine/curl").
 		WithSecretVariable("GCOM_API_KEY", apiKeySecret).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`curl -H "Content-Type: application/json" -H "Authorization: Bearer $GCOM_API_KEY" -d '%s' %s`, string(jsonPackagePayload), packagesApiUrl.String())}).
-		Sync(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+		Stdout(ctx)
 }
