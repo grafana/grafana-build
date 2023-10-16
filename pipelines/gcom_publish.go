@@ -108,7 +108,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 			return err
 		}
 		log.Printf("[%s] Done publishing version", p.Version)
-		fmt.Fprintln(Stdout, out)
+		fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", ""))
 	}
 
 	// Publish the package(s)
@@ -143,7 +143,7 @@ func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagg
 		}
 		log.Printf("[%s] Done publishing package", name)
 
-		fmt.Fprintln(Stdout, out)
+		fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", ""))
 		return nil
 	}
 }
