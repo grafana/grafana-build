@@ -15,26 +15,26 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-func VersionPayloadFromFileName(name string) *containers.GCOMVersionPayload {
+func VersionPayloadFromFileName(name string, opts *containers.GCOMOpts) *containers.GCOMVersionPayload {
 	var (
-		opts         = TarOptsFromFileName(name)
-		splitVersion = strings.Split(opts.Version, ".")
+		tarOpts      = TarOptsFromFileName(name)
+		splitVersion = strings.Split(tarOpts.Version, ".")
 		stable       = true
 		nightly      = false
 		beta         = false
 	)
 
-	if strings.Contains(opts.Version, "-") {
+	if opts.Beta {
 		stable = false
 		beta = true
 	}
-	if strings.Contains(opts.Version, "nightly") {
+	if opts.Nightly {
 		beta = false
 		nightly = true
 	}
 
 	return &containers.GCOMVersionPayload{
-		Version:         opts.Version,
+		Version:         tarOpts.Version,
 		ReleaseDate:     time.Now().Format(time.RFC3339Nano),
 		Stable:          stable,
 		Beta:            beta,
@@ -95,7 +95,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 		tarOpts := TarOptsFromFileName(name)
 		if _, ok := versionPayloads[tarOpts.Version]; !ok {
 			log.Printf("[%s] Building version payload", tarOpts.Version)
-			versionPayloads[tarOpts.Version] = VersionPayloadFromFileName(name)
+			versionPayloads[tarOpts.Version] = VersionPayloadFromFileName(name, opts)
 		}
 	}
 

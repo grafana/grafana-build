@@ -11,6 +11,8 @@ type GCOMOpts struct {
 	URL         *url.URL
 	DownloadURL *url.URL
 	ApiKey      string
+	Beta        bool
+	Nightly     bool
 }
 
 func GCOMOptsFromFlags(c cliutil.CLIContext) (*GCOMOpts, error) {
@@ -26,5 +28,7 @@ func GCOMOptsFromFlags(c cliutil.CLIContext) (*GCOMOpts, error) {
 		URL:         apiUrl,
 		DownloadURL: downloadUrl,
 		ApiKey:      c.String("api-key"),
+		Beta:        c.Bool("beta"),
+		Nightly:     c.Bool("nightly"),
 	}, nil
 }

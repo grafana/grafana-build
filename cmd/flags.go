@@ -340,6 +340,14 @@ var GCOMFlags = []cli.Flag{
 		Usage:    "URL used to download packages from grafana.com",
 		Required: true,
 	},
+	&cli.BoolFlag{
+		Name:  "beta",
+		Usage: "Use when publishing a beta version",
+	},
+	&cli.BoolFlag{
+		Name:  "nightly",
+		Usage: "Use when publishing a nightly version",
+	},
 }
 
 // JoinFlags combines several slices of flags into one slice of flags.
