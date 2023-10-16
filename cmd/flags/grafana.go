@@ -2,8 +2,7 @@ package flags
 
 import "github.com/urfave/cli/v2"
 
-// Grafana flags are flags that are required when working with the grafana source code.
-var Grafana = []cli.Flag{
+var GrafanaDirectory = []cli.Flag{
 	&cli.BoolFlag{
 		Name:     "grafana",
 		Usage:    "If set, initialize Grafana",
@@ -27,6 +26,14 @@ var Grafana = []cli.Flag{
 		Required: false,
 		Value:    "main",
 	},
+	&cli.StringFlag{
+		Name:     "github-token",
+		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Required: false,
+	},
+}
+
+var EnterpriseDirectory = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  "enterprise",
 		Usage: "If set, initialize Grafana Enterprise",
@@ -50,19 +57,26 @@ var Grafana = []cli.Flag{
 		Value:    "main",
 	},
 	&cli.StringFlag{
-		Name:     "build-id",
-		Usage:    "Build ID to use, by default will be what is defined in package.json",
-		Required: false,
-	},
-	&cli.StringFlag{
 		Name:     "github-token",
 		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Required: false,
+	},
+}
+
+var GrafanaMeta = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "build-id",
+		Usage:    "Build ID to use, by default will be what is defined in package.json",
 		Required: false,
 	},
 	&cli.StringFlag{
 		Name:  "version",
 		Usage: "Explicit version number. If this is not set then one with will auto-detected based on the source repository",
 	},
+}
+
+// Grafana flags are flags that are required when working with the grafana source code.
+var Grafana = Join([]cli.Flag{
 	&cli.StringSliceFlag{
 		Name:    "env",
 		Aliases: []string{"e"},
@@ -76,4 +90,4 @@ var Grafana = []cli.Flag{
 		Name:  "yarn-cache",
 		Usage: "If there is a yarn cache directory, then mount that when running 'yarn install' instead of creating a cache directory",
 	},
-}
+}, GrafanaDirectory, EnterpriseDirectory)

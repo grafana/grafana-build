@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"dagger.io/dagger"
-	"github.com/grafana/grafana-build/cmd/artifacts"
+	"github.com/grafana/grafana-build/artifacts"
 	"github.com/grafana/grafana-build/pipelines"
 	"github.com/urfave/cli/v2"
 )
@@ -73,6 +73,7 @@ func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) c
 }
 
 func init() {
+	// TODO change the registerer if the user is running using a JSON file etc
 	artifacts.Register(globalCLI, Artifacts...)
 }
 

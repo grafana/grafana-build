@@ -3,6 +3,7 @@ package main
 import (
 	"runtime"
 
+	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/urfave/cli/v2"
 )
 
@@ -118,18 +119,9 @@ var GrafanaFlags = []cli.Flag{
 		Value:    "main",
 	},
 	&cli.StringFlag{
-		Name:     "build-id",
-		Usage:    "Build ID to use, by default will be what is defined in package.json",
-		Required: false,
-	},
-	&cli.StringFlag{
 		Name:     "github-token",
 		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
 		Required: false,
-	},
-	&cli.StringFlag{
-		Name:  "version",
-		Usage: "Explicit version number. If this is not set then one with will auto-detected based on the source repository",
 	},
 	&cli.StringSliceFlag{
 		Name:    "env",
@@ -297,14 +289,7 @@ var DefaultFlags = []cli.Flag{
 }
 
 // JoinFlags combines several slices of flags into one slice of flags.
-func JoinFlags(f ...[]cli.Flag) []cli.Flag {
-	flags := []cli.Flag{}
-	for _, v := range f {
-		flags = append(flags, v...)
-	}
-
-	return flags
-}
+var JoinFlags = flags.Join
 
 func JoinFlagsWithDefault(f ...[]cli.Flag) []cli.Flag {
 	// Kind of gross but ensures that DeafultFlags are registered before any others.

@@ -1,4 +1,4 @@
-package artifacts
+package arguments
 
 import (
 	"context"
@@ -6,12 +6,11 @@ import (
 	"log"
 	"log/slog"
 
-	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
-	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/grafana/grafana-build/daggerutil"
 	"github.com/grafana/grafana-build/git"
 	"github.com/grafana/grafana-build/pipeline"
+	"github.com/urfave/cli/v2"
 )
 
 // GrafnaaOpts are populated by the 'GrafanaFlags' flags.
@@ -40,16 +39,16 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 	}, nil
 }
 
-func grafanaDirectory(ctx context.Context, c cliutil.CLIContext, d *dagger.Client) (any, error) {
-	opts, err := GrafanaDirectoryOptsFromFlags(ctx, c)
+func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
+	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
 	if err != nil {
 		return nil, err
 	}
 
 	// If GrafanaDir was provided, then we can just use that one.
-	if path := opts.GrafanaDir; path != "" {
+	if path := o.GrafanaDir; path != "" {
 		slog.Info("Using local Grafana found", "path", path)
-		src, err := daggerutil.HostDir(d, path)
+		src, err := daggerutil.HostDir(opts.Client, path)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +57,7 @@ func grafanaDirectory(ctx context.Context, c cliutil.CLIContext, d *dagger.Clien
 	}
 
 	// Since GrafanaDir was not provided, we must clone it.
-	ght := opts.GitHubToken
+	ght := o.GitHubToken
 
 	// If GitHubToken was not set from flag
 	if ght == "" {
@@ -73,7 +72,7 @@ func grafanaDirectory(ctx context.Context, c cliutil.CLIContext, d *dagger.Clien
 		ght = token
 	}
 
-	src, err := git.CloneWithGitHubToken(d, ght, opts.GrafanaRepo, opts.GrafanaRef)
+	src, err := git.CloneWithGitHubToken(opts.Client, ght, o.GrafanaRepo, o.GrafanaRef)
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +80,38 @@ func grafanaDirectory(ctx context.Context, c cliutil.CLIContext, d *dagger.Clien
 	return src, nil
 }
 
-// ArgumentGrafanaDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has Grafana in it.
+var GrafanaDirectoryFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "grafana-dir",
+		Usage:    "Local Grafana dir to use, instead of git clone",
+		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "grafana-repo",
+		Usage:    "Grafana repo to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "https://github.com/grafana/grafana.git",
+	},
+	&cli.StringFlag{
+		Name:     "grafana-ref",
+		Usage:    "Grafana ref to clone, not valid if --grafana-dir is set",
+		Required: false,
+		Value:    "main",
+	},
+	&cli.StringFlag{
+		Name:     "github-token",
+		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Required: false,
+	},
+}
+
+// GrafanaDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has Grafana in it.
 // This Grafana directory could be initialized with Grafana Enterprise if the appropriate options are provided.
 // It could also use a local directory instead of cloning it.
 // Where possible, when cloning and no authentication options are provided, the valuefunc will try to use the configured github CLI for cloning.
-var ArgumentGrafanaDirectory = pipeline.Argument{
+var GrafanaDirectory = pipeline.Argument{
 	Name:        "grafana-dir",
 	Description: "The grafana backend binaries ('grafana', 'grafana-cli', 'grafana-server') in a directory",
-	Flags:       flags.Grafana,
+	Flags:       GrafanaDirectoryFlags,
 	ValueFunc:   grafanaDirectory,
-	Required:    true,
 }

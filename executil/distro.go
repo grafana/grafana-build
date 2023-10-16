@@ -141,6 +141,9 @@ func IsWindows(d Distribution) bool {
 
 func OSAndArch(d Distribution) (string, string) {
 	p := strings.Split(string(d), "/")
+	if len(p) < 2 {
+		return string(d), ""
+	}
 	return p[0], p[1]
 }
 

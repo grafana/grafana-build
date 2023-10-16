@@ -1,10 +1,9 @@
-package artifacts
+package arguments
 
 import (
 	"context"
 
 	"github.com/grafana/grafana-build/cliutil"
-	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/grafana/grafana-build/pipeline"
 )
 
@@ -31,10 +30,6 @@ func EnterpriseDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext)
 	}, nil
 }
 
-var ArgumentEnterpriseDirectory = pipeline.Argument{
-	Name:        "enterprise-dir",
-	Description: "The grafana backend binaries ('grafana', 'grafana-cli', 'grafana-server') in a directory",
-	Flags:       flags.Grafana,
-	ValueFunc:   grafanaDirectory,
-	Required:    false,
+var EnterpriseDirectory = pipeline.Argument{
+	Name: "enterprise-dir",
 }

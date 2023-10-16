@@ -3,7 +3,6 @@ package pipelines
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 
 	"dagger.io/dagger"
@@ -12,33 +11,23 @@ import (
 	"github.com/grafana/grafana-build/versions"
 )
 
-// PackagedPaths are paths that are included in the grafana tarball.
-var PackagedPaths = []string{
+// PackagedFiels are files that are included in the grafana tarball.
+var PackagedFiles = []string{
 	"Dockerfile",
 	"LICENSE",
 	"NOTICE.md",
 	"README.md",
-	"VERSION",
-	"bin/",
-	"conf/",
-	"docs/sources/",
-	"packaging/deb",
-	"packaging/rpm",
-	"packaging/docker",
-	"packaging/wrappers",
-	"plugins-bundled/",
-	"public/",
-	"npm-artifacts/",
-	"storybook/",
 }
 
-func PathsWithRoot(root string, paths []string) []string {
-	p := make([]string, len(paths))
-	for i, v := range paths {
-		p[i] = path.Join(root, v)
-	}
-
-	return p
+// PackagedFiels are files that are included in the grafana tarball.
+var PackagedDirectories = []string{
+	"conf/",
+	"docs/sources/",
+	"packaging/deb/",
+	"packaging/rpm/",
+	"packaging/docker/",
+	"packaging/wrappers/",
+	"plugins-bundled/",
 }
 
 // The PackageOpts command requires all of the options to build Grafana, but supports a list of distros instead of just one.
@@ -108,20 +97,35 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	root := fmt.Sprintf("grafana-%s", strings.TrimPrefix(version, "v"))
 	packages := make(map[executil.Distribution]*dagger.File, len(backends))
 
-	paths := PackagedPaths
+	dirs := PackagedDirectories
 	if versionOpts.Autocomplete.IsSet && versionOpts.Autocomplete.Value {
-		paths = append(paths, "packaging/autocomplete")
+		dirs = append(dirs, "packaging/autocomplete")
+	}
+
+	files := map[string]*dagger.File{
+		"VERSION": d.Container().From(containers.BusyboxImage).
+			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > VERSION", opts.Version)}).File("VERSION"),
+	}
+	for _, v := range PackagedFiles {
+		files[v] = src.File(v)
+	}
+
+	directories := map[string]*dagger.Directory{}
+	for _, v := range dirs {
+		directories[v] = src.Directory(v)
 	}
 
 	for k, backend := range backends {
-		packager := d.Container().
-			From(containers.BusyboxImage).
-			WithMountedDirectory(path.Join("/src", root), src).
-			WithMountedDirectory(path.Join("/src", root, "bin"), backend).
-			WithMountedDirectory(path.Join("/src", root, "public"), frontend).
-			WithMountedDirectory(path.Join("/src", root, "npm-artifacts"), npmPackages).
-			WithMountedDirectory(path.Join("/src", root, "storybook"), storybook).
-			WithWorkdir("/src")
+		packageDirs := map[string]*dagger.Directory{
+			"bin":           backend,
+			"public":        frontend,
+			"npm-artifacts": npmPackages,
+			"storybok":      storybook,
+		}
+
+		for k, v := range directories {
+			packageDirs[k] = v
+		}
 
 		opts := TarFileOpts{
 			Version: version,
@@ -129,11 +133,17 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			Edition: edition,
 			Distro:  k,
 		}
-
 		name := TarFilename(opts)
-		packager = packager.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\" > %s", opts.Version, path.Join(root, "VERSION"))}).
-			WithExec(append([]string{"tar", "-czf", name}, PathsWithRoot(root, paths)...))
-		packages[k] = packager.File(name)
+
+		packager := d.Container().
+			From(containers.BusyboxImage).
+			WithEnvVariable("PACKAGE_NAME", name)
+
+		packages[k] = containers.TargzFile(packager, &containers.TargzFileOpts{
+			Root:        root,
+			Directories: packageDirs,
+			Files:       map[string]*dagger.File{},
+		})
 	}
 
 	return packages, nil
