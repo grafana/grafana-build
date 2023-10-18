@@ -12,7 +12,9 @@ dagger run --silent go run ./cmd \
   --distro=linux/arm64 \
   --grafana=false \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
+  --grafana-ref=${SOURCE_COMMIT} \
   --enterprise \
+  --enterprise-ref=${DRONE_COMMIT} \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
