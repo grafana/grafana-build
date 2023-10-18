@@ -31,6 +31,9 @@ const (
 	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
 	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
 
+	tarGzMainFormat = "%[2]s/main/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
+	debMainFormat   = "%[2]s/main/%[3]s_%[4]s_%[6]s.deb%[8]s"
+
 	// 1: ersion
 	// 2. name (grafana-oss | grafana-enterprise)
 	// 3: '-ubuntu', if set
@@ -40,7 +43,8 @@ const (
 
 	// 1: ersion
 	// 2. name (grafana-oss | grafana-enterprise)
-	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnFormat     = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnMainFormat = "grafana/%s/public"
 
 	// 1: ersion
 	storybookFormat = "artifacts/storybook/v%[1]s"
@@ -64,6 +68,10 @@ var Handlers = map[string]HandlerFunc{
 	".docker.tar.gz": DockerHandler,
 	".exe":           EXEHandler,
 	".zip":           ZipHandler,
+}
+
+func IsMain() bool {
+	return os.Getenv("IS_MAIN") != ""
 }
 
 func NPMHandler(name string) []string {
@@ -163,6 +171,9 @@ func EXEHandler(name string) []string {
 func DebHandler(name string) []string {
 	ext := filepath.Ext(name)
 	format := debFormat
+	if IsMain() {
+		format = debMainFormat
+	}
 
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
@@ -269,10 +280,13 @@ func TarGZHandler(name string) []string {
 			libc = []string{""}
 		}
 	}
-
+	format := tarGzFormat
+	if IsMain() {
+		format = tarGzMainFormat
+	}
 	dst := []string{}
 	for _, m := range libc {
-		dst = append(dst, fmt.Sprintf(tarGzFormat, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
+		dst = append(dst, fmt.Sprintf(format, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
 	}
 
 	return dst
@@ -323,6 +337,10 @@ func DockerHandler(name string) []string {
 }
 
 func CDNHandler(name string) []string {
+	if IsMain() {
+		opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(name, "/public", ".tar.gz"))
+		return []string{fmt.Sprintf(cdnMainFormat, opts.Version)}
+	}
 	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
 	return []string{fmt.Sprintf(cdnFormat, version, grafana)}
 }
@@ -352,7 +370,7 @@ func main() {
 
 		container = client.Container().From("google/cloud-sdk:alpine")
 	)
-
+	//
 	if c, err := authenticator.Authenticate(client, container); err == nil {
 		container = c
 	} else {
@@ -410,7 +428,7 @@ func main() {
 	log.Println("Copying", prefix, "to gcs")
 	dst := os.Getenv("DESTINATION")
 	container = container.WithMountedDirectory("dist", client.Host().Directory(prefix)).
-		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/artifacts", dst})
+		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/*", dst})
 
 	stdout, err := container.Stdout(ctx)
 	if err != nil {

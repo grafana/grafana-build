@@ -9,6 +9,8 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 echo "Building tar.gz packages..."
 dagger run --silent go run ./cmd \
   package \
+  --grafana=false \
+  --enterprise \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
@@ -18,7 +20,7 @@ dagger run --silent go run ./cmd \
   --distro=darwin/amd64 \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
-  --grafana-dir=${GRAFANA_DIR} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
   --destination=${local_dst} \
@@ -26,24 +28,24 @@ dagger run --silent go run ./cmd \
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
 dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --name="grafana-nightly" \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  --name="grafana-enterprise-nightly" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # Use the armv7 package to build the `rpi` specific version.
 dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --name="grafana-nightly-rpi" \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
+  --name="grafana-enterprise-nightly-rpi" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --name="grafana-nightly" \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  --name="grafana-enterprise-nightly" \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
@@ -54,22 +56,22 @@ dagger run --silent go run ./cmd rpm \
 
 # For Windows we distribute zips and exes
 dagger run --silent go run ./cmd zip \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
 
 dagger run --silent go run ./cmd windows-installer \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep windows | awk '{print "--package=" $0}') \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} \
   --checksum >> assets.txt
 
 # Build a docker image for all Linux distros except armv6
 dagger run --silent go run ./cmd docker \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
+  $(cat assets.txt | grep enterprise | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --repo="grafana-dev" \
+  --repo="grafana-enterprise-dev" \
   --ubuntu-base="ubuntu:22.04" \
   --alpine-base="alpine:3.18.0" \
   --destination=${local_dst} \

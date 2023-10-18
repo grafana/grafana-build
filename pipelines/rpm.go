@@ -41,7 +41,8 @@ func WithRPMSignature(ctx context.Context, d *dagger.Client, opts *containers.GP
 // It accepts publish args, so you can place the file in a local or remote destination.
 func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 	installers, err := PackageInstaller(ctx, d, args, InstallerOpts{
-		PackageType: "rpm",
+		NameOverride: args.PackageInputOpts.Name,
+		PackageType:  "rpm",
 		ConfigFiles: [][]string{
 			{"/src/packaging/rpm/sysconfig/grafana-server", "/pkg/etc/sysconfig/grafana-server"},
 			{"/src/packaging/rpm/init.d/grafana-server", "/pkg/etc/init.d/grafana-server"},
@@ -52,7 +53,6 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"/sbin/service",
 			"fontconfig",
 			"freetype",
-			"urw-fonts",
 		},
 		ExtraArgs: []string{
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",

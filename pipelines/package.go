@@ -88,6 +88,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 			".yarn":           src.Directory(".yarn").WithoutDirectory("/src/.yarn/cache"),
 			"packages":        src.Directory("packages"),
 			"plugins-bundled": src.Directory("plugins-bundled"),
+			"public":          src.Directory("public"),
 		},
 		Files: map[string]*dagger.File{
 			"package.json": src.File("package.json"),
@@ -100,7 +101,7 @@ func PackageFiles(ctx context.Context, d *dagger.Client, opts PackageOpts) (map[
 	}
 
 	var (
-		frontend    = containers.CompileFrontend(d, opts.Platform, src, cacheOpts, nodeVersion)
+		frontend    = containers.CompileFrontend(d, opts.Platform, src, cacheOpts, version, nodeVersion)
 		npmPackages = containers.NPMPackages(d, opts.Platform, src, cacheOpts, version, nodeVersion)
 		storybook   = containers.Storybook(d, opts.Platform, src, cacheOpts, version, nodeVersion)
 	)

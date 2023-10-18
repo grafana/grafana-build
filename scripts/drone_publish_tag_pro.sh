@@ -12,8 +12,6 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=linux/arm/v6 \
-  --distro=linux/arm/v7 \
   --distro=darwin/amd64 \
   --distro=windows/amd64 \
   --env GO_BUILD_TAGS=pro \
@@ -41,14 +39,6 @@ dagger run --silent go run ./cmd deb \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
-
-# Use the armv7 package to build the `rpi` specific version.
-dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --name=grafana-pro-rpi \
-  --checksum \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> debs.txt
 
 # Build a docker image for all .tar.gz packages
 dagger run --silent go run ./cmd docker \

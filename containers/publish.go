@@ -80,12 +80,7 @@ func PublishFile(ctx context.Context, d *dagger.Client, opts *PublishFileOpts) (
 	if publishOpts.Checksum {
 		name := destination + ".sha256"
 		log.Println("Checksum is enabled, creating checksum", name)
-		files[name] = d.Container().
-			From("busybox").
-			WithEnvVariable("DESTINATION", destination).
-			WithFile("/src/file", file).
-			WithExec([]string{"/bin/sh", "-c", "sha256sum /src/file | awk '{print $1}' > /src/file.sha256"}).
-			File("/src/file.sha256")
+		files[name] = Sha256(d, file)
 	}
 
 	for dst, f := range files {
