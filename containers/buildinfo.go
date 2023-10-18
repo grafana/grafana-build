@@ -13,19 +13,25 @@ import (
 )
 
 type BuildInfo struct {
-	Version   string
-	Commit    string
-	Branch    string
-	Timestamp time.Time
+	Version          string
+	Commit           string
+	EnterpriseCommit string
+	Branch           string
+	Timestamp        time.Time
 }
 
 func (b *BuildInfo) LDFlags() []string {
-	return []string{
+	flags := []string{
 		fmt.Sprintf("main.version=%s", strings.TrimPrefix(b.Version, "v")),
 		fmt.Sprintf("main.commit=%s", b.Commit),
 		fmt.Sprintf("main.buildstamp=%d", b.Timestamp.Unix()),
 		fmt.Sprintf("main.buildBranch=%s", b.Branch),
 	}
+
+	if b.EnterpriseCommit != "" {
+		flags = append(flags, fmt.Sprintf("main.enterpriseCommit=%s", b.EnterpriseCommit))
+	}
+	return flags
 }
 
 const GitImage = "alpine/git:v2.36.3"
@@ -39,6 +45,8 @@ func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, 
 	container := d.Container().From(GitImage).
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src")
+
+	enterpriseSha := enterpriseCommit(ctx, container)
 
 	sha, err := revParseShort(ctx, container)
 	if err != nil {
@@ -57,13 +65,39 @@ func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, 
 	timestamp := time.Now()
 
 	result := &BuildInfo{
-		Version:   version,
-		Commit:    sha,
-		Branch:    branch,
-		Timestamp: timestamp,
+		Version:          version,
+		Commit:           sha,
+		EnterpriseCommit: enterpriseSha,
+		Branch:           branch,
+		Timestamp:        timestamp,
 	}
-	span.SetAttributes(attribute.String("version", version), attribute.String("commit", sha), attribute.String("branch", branch), attribute.String("timestamp", timestamp.Format(time.RFC3339)))
+	span.SetAttributes(
+		attribute.String("version", version),
+		attribute.String("commit", sha),
+		attribute.String("enterpriseCommit", enterpriseSha),
+		attribute.String("branch", branch),
+		attribute.String("timestamp", timestamp.Format(time.RFC3339)),
+	)
 	return result, nil
+}
+
+func enterpriseCommit(ctx context.Context, container *dagger.Container) string {
+	var err error
+	c := container.
+		WithEntrypoint([]string{}).
+		WithExec([]string{"/bin/sh", "-c", "cat /src/.enterprise-commit || return 0"})
+
+	c, err = ExitError(ctx, c)
+	if err != nil {
+		return ""
+	}
+
+	stdout, err := c.Stdout(ctx)
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(stdout)
 }
 
 func revParseShort(ctx context.Context, container *dagger.Container) (string, error) {
