@@ -3,7 +3,6 @@ package containers
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -47,7 +46,7 @@ func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, 
 		WithMountedDirectory("/src", dir).
 		WithWorkdir("/src")
 
-	enterpriseSha, _ := enterpriseCommit(ctx, container)
+	enterpriseSha := enterpriseCommit(ctx, container)
 
 	sha, err := revParseShort(ctx, container)
 	if err != nil {
@@ -72,29 +71,33 @@ func GetBuildInfo(ctx context.Context, d *dagger.Client, dir *dagger.Directory, 
 		Branch:           branch,
 		Timestamp:        timestamp,
 	}
-	span.SetAttributes(attribute.String("version", version), attribute.String("commit", sha), attribute.String("branch", branch), attribute.String("timestamp", timestamp.Format(time.RFC3339)))
+	span.SetAttributes(
+		attribute.String("version", version),
+		attribute.String("commit", sha),
+		attribute.String("enterpriseCommit", enterpriseSha),
+		attribute.String("branch", branch),
+		attribute.String("timestamp", timestamp.Format(time.RFC3339)),
+	)
 	return result, nil
 }
 
-func enterpriseCommit(ctx context.Context, container *dagger.Container) (string, error) {
+func enterpriseCommit(ctx context.Context, container *dagger.Container) string {
 	var err error
 	c := container.
 		WithEntrypoint([]string{}).
 		WithExec([]string{"/bin/sh", "-c", "cat /src/.enterprise-commit || return 0"})
 
-	log.Println("Getting container exit error")
 	c, err = ExitError(ctx, c)
 	if err != nil {
-		return "", nil
+		return ""
 	}
 
-	log.Println("Getting container stdout")
 	stdout, err := c.Stdout(ctx)
 	if err != nil {
-		return "", nil
+		return ""
 	}
 
-	return strings.TrimSpace(stdout), nil
+	return strings.TrimSpace(stdout)
 }
 
 func revParseShort(ctx context.Context, container *dagger.Container) (string, error) {
