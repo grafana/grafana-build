@@ -183,7 +183,7 @@ func PackageArch(d Distribution) string {
 // From the distribution, try to assume the docker platform (used in Docker's --platform argument or the (dagger.ContainerOpts).Platform field
 func Platform(d Distribution) dagger.Platform {
 	// for now let's just try to use the distro name as the platform and see if that works...
-	return dagger.Platform(string(d))
+	return dagger.Platform(strings.ReplaceAll(string(d), "/dynamic", ""))
 }
 
 type DistroBuildOptsFunc func(distro Distribution, experiments []string, tags []string) *GoBuildOpts
