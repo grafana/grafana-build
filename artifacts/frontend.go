@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-build/arguments"
 	"github.com/grafana/grafana-build/flags"
 	"github.com/grafana/grafana-build/frontend"
-	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
 )
 
@@ -21,10 +20,15 @@ var (
 	}
 )
 
+var FrontendInitializer = Initializer{
+	InitializerFunc: NewFrontendFromString,
+	Arguments:       FrontendArguments,
+}
+
 type Frontend struct {
-	Name      packages.Name
-	Src       *dagger.Directory
-	YarnCache *dagger.CacheVolume
+	Enterprise bool
+	Src        *dagger.Directory
+	YarnCache  *dagger.CacheVolume
 }
 
 // The frontend does not have any artifact dependencies.
@@ -63,21 +67,50 @@ func (f *Frontend) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublish
 // For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
 // `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
 func (f *Frontend) Filename(ctx context.Context) (string, error) {
+	n := "grafana"
+	if f.Enterprise {
+		n = "enterprise"
+	}
+
 	// Important note: this path is only used in two ways:
 	// 1. When requesting an artifact be built and exported, this is the path where it will be exported to
 	// 2. In a map to distinguish when the same artifact is being built more than once
-	return path.Join("bin", string(f.Name), "public"), nil
+	return path.Join("bin", n, "public"), nil
 }
 
-func NewFrontend(ctx context.Context, log *slog.Logger, artifact string, name packages.Name, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	options, err := pipeline.ParseFlags(artifact, FrontendFlags)
+	if err != nil {
+		return nil, err
+	}
+
+	enterprise, err := options.Bool(flags.Enterprise)
+	if err != nil {
+		return nil, err
+	}
+
+	src, err := GrafanaDir(ctx, state, enterprise)
+	if err != nil {
+		return nil, err
+	}
+
+	cache, err := state.CacheVolume(ctx, arguments.YarnCacheDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrontend(ctx, log, artifact, enterprise, src, cache)
+}
+
+func NewFrontend(ctx context.Context, log *slog.Logger, artifact string, enterprise bool, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          FrontendFlags,
 		Handler: &Frontend{
-			Name:      name,
-			Src:       src,
-			YarnCache: cache,
+			Enterprise: enterprise,
+			Src:        src,
+			YarnCache:  cache,
 		},
 	})
 }

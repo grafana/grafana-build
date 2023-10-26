@@ -6,9 +6,9 @@ import (
 
 var Artifacts = map[string]artifacts.Initializer{
 	// artifacts.BackendKey: artifacts.BackendInitializer,
-	// artifacts.FrontendKey: artifacts.FrontendInitializer,
-	"targz":  artifacts.TargzInitializer,
-	"deb":    artifacts.DebInitializer,
-	"rpm":    artifacts.RPMInitializer,
-	"docker": artifacts.DockerInitializer,
+	"frontend": artifacts.FrontendInitializer,
+	"targz":    artifacts.TargzInitializer,
+	"deb":      artifacts.DebInitializer,
+	"rpm":      artifacts.RPMInitializer,
+	"docker":   artifacts.DockerInitializer,
 }

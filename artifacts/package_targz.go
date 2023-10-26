@@ -100,7 +100,7 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 	if err != nil {
 		return nil, err
 	}
-	return NewTarball(ctx, log, artifact, p.Distribution, p.Name, p.Version, p.BuildID, src, yarnCache, static, wireTag, goVersion, viceroyVersion, experiments)
+	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, static, wireTag, goVersion, viceroyVersion, experiments)
 }
 
 // NewTarball returns a properly initialized Tarball artifact.
@@ -110,6 +110,7 @@ func NewTarball(
 	log *slog.Logger,
 	artifact string,
 	distro backend.Distribution,
+	enterprise bool,
 	name packages.Name,
 	version string,
 	buildID string,
@@ -135,7 +136,7 @@ func NewTarball(
 	if err != nil {
 		return nil, err
 	}
-	frontendArtifact, err := NewFrontend(ctx, log, artifact, name, src, cache)
+	frontendArtifact, err := NewFrontend(ctx, log, artifact, enterprise, src, cache)
 	if err != nil {
 		return nil, err
 	}

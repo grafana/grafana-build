@@ -3,6 +3,7 @@ package arguments
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 
 	"dagger.io/dagger"
@@ -108,9 +109,18 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 	}
 
 	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache)
+
+	log.Println("Installing yarn deps for grafana dir")
+	log.Println("Installing yarn deps for grafana dir")
+	log.Println("Installing yarn deps for grafana dir")
+	log.Println("Installing yarn deps for grafana dir")
 	if _, err := errorutil.ExitError(ctx, container); err != nil {
 		return nil, err
 	}
+	log.Println("Done installing yarn deps for grafana dir")
+	log.Println("Done installing yarn deps for grafana dir")
+	log.Println("Done installing yarn deps for grafana dir")
+	log.Println("Done installing yarn deps for grafana dir")
 
 	return container.Directory("/src"), nil
 }
