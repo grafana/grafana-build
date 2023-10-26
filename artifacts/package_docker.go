@@ -23,6 +23,7 @@ var (
 			arguments.UbuntuImage,
 			arguments.TagFormat,
 			arguments.UbuntuTagFormat,
+			arguments.BoringTagFormat,
 		},
 	)
 	DockerFlags = flags.JoinFlags(
@@ -180,12 +181,21 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 	if err != nil {
 		return nil, err
 	}
+	boringFormat, err := state.String(ctx, arguments.BoringTagFormat)
+	if err != nil {
+		return nil, err
+	}
 
 	base := alpineImage
 	if ubuntu {
 		format = ubuntuFormat
 		base = ubuntuImage
 	}
+
+	if p.Name == packages.PackageEnterpriseBoring {
+		format = boringFormat
+	}
+
 	log.Info("initializing Docker artifact", "Org", org, "registry", registry, "repos", repos, "tag", format)
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{

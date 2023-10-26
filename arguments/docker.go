@@ -29,13 +29,18 @@ var (
 	}
 	TagFormatFlag = &cli.StringFlag{
 		Name:  "tag-format",
-		Usage: "Provide a go template for formatting the docker tag(s)",
+		Usage: "Provide a go template for formatting the docker tag(s) for images with an Alpine base",
 		Value: docker.DefaultTagFormat,
 	}
 	UbuntuTagFormatFlag = &cli.StringFlag{
 		Name:  "ubuntu-tag-format",
-		Usage: "Provide a go template for formatting the docker tag(s)",
+		Usage: "Provide a go template for formatting the docker tag(s) for images with a ubuntu base",
 		Value: docker.DefaultUbuntuTagFormat,
+	}
+	BoringTagFormatFlag = &cli.StringFlag{
+		Name:  "boring-tag-format",
+		Usage: "Provide a go template for formatting the docker tag(s) for the boringcrypto build of Grafana Enterprise",
+		Value: docker.DefaultBoringTagFormat,
 	}
 
 	DockerRegistry  = pipeline.NewStringFlagArgument(DockerRegistryFlag)
@@ -44,4 +49,5 @@ var (
 	UbuntuImage     = pipeline.NewStringFlagArgument(UbuntuImageFlag)
 	TagFormat       = pipeline.NewStringFlagArgument(TagFormatFlag)
 	UbuntuTagFormat = pipeline.NewStringFlagArgument(UbuntuTagFormatFlag)
+	BoringTagFormat = pipeline.NewStringFlagArgument(BoringTagFormatFlag)
 )

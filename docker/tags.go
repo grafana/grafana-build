@@ -20,6 +20,7 @@ const (
 const (
 	DefaultTagFormat       = "{{ .version }}-{{ .arch }}"
 	DefaultUbuntuTagFormat = "{{ .version }}-ubuntu-{{ .arch }}"
+	DefaultBoringTagFormat = "{{ .version }}-{{ .arch }}-boringcrypto"
 )
 
 // Tags returns the name of the grafana docker image based on the tar package name.
@@ -65,6 +66,7 @@ func ImageVersion(format string, values map[string]string) (string, error) {
 func TemplateValues(distro backend.Distribution, version, buildID string) map[string]string {
 	arch := backend.FullArch(distro)
 	arch = strings.ReplaceAll(arch, "/", "")
+	arch = strings.ReplaceAll(arch, "dynamic", "")
 	ersion := strings.TrimPrefix(version, "v")
 
 	semverc := strings.Split(ersion, "-")
