@@ -2,6 +2,7 @@ package arguments
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipeline"
@@ -47,7 +48,15 @@ var Version = pipeline.Argument{
 		if err != nil {
 			return "", err
 		}
+		buildID, err := opts.State.String(ctx, BuildID)
+		if err != nil {
+			return "", err
+		}
+		version, err := containers.GetJSONValue(ctx, opts.Client, src, "package.json", "version")
+		if err != nil {
+			return "", err
+		}
 
-		return containers.GetJSONValue(ctx, opts.Client, src, "package.json", "version")
+		return strings.ReplaceAll(version, "pre", buildID), nil
 	},
 }

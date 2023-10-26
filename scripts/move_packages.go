@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/executil"
 	"github.com/grafana/grafana-build/pipelines"
 )
 
@@ -31,6 +31,9 @@ const (
 	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
 	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
 
+	tarGzMainFormat = "%[2]s/main/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
+	debMainFormat   = "%[2]s/main/%[3]s_%[4]s_%[6]s.deb%[8]s"
+
 	// 1: ersion
 	// 2. name (grafana-oss | grafana-enterprise)
 	// 3: '-ubuntu', if set
@@ -40,14 +43,15 @@ const (
 
 	// 1: ersion
 	// 2. name (grafana-oss | grafana-enterprise)
-	cdnFormat = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnFormat     = "artifacts/static-assets/%[2]s/%[1]s/public"
+	cdnMainFormat = "grafana/%s/public"
 
 	// 1: ersion
-	storybookFormat = "artifacts/storybook/%[1]s"
+	storybookFormat = "artifacts/storybook/v%[1]s"
 
 	// 1: version
 	// 2: package name (@grafana-ui-10.0.0.tgz)
-	npmFormat = "artifacts/npm/%[1]s/npm-artifacts/%[2]s"
+	npmFormat = "artifacts/npm/v%[1]s/npm-artifacts/%[2]s"
 
 	sha256Ext = ".sha256"
 	grafana   = "grafana"
@@ -66,11 +70,20 @@ var Handlers = map[string]HandlerFunc{
 	".zip":           ZipHandler,
 }
 
+func IsMain() bool {
+	return os.Getenv("IS_MAIN") != ""
+}
+
 func NPMHandler(name string) []string {
 	var (
-		version = os.Getenv("DRONE_TAG")
+		version = strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
 		file    = filepath.Base(name)
 	)
+
+	// The version part of the filename should start with a v:
+	if !strings.Contains(file, "v"+version) {
+		file = strings.Replace(file, version, "v"+version, 1)
+	}
 
 	return []string{fmt.Sprintf(npmFormat, version, file)}
 }
@@ -106,8 +119,8 @@ func RPMHandler(name string) []string {
 		fullName += "-" + opts.Edition
 	}
 
-	goos, arch := executil.OSAndArch(opts.Distro)
-	arm := executil.ArchVersion(opts.Distro)
+	goos, arch := backend.OSAndArch(opts.Distro)
+	arm := backend.ArchVersion(opts.Distro)
 	if arch == "arm" {
 		if arm == "7" {
 			arch = "armhfp"
@@ -158,6 +171,9 @@ func EXEHandler(name string) []string {
 func DebHandler(name string) []string {
 	ext := filepath.Ext(name)
 	format := debFormat
+	if IsMain() {
+		format = debMainFormat
+	}
 
 	// If we're copying a sha256 file and not a tar.gz then we want to add .sha256 to the template
 	// or just give it emptystring if it's not the sha256 file
@@ -205,12 +221,9 @@ func DebHandler(name string) []string {
 	}
 
 	names := []string{fullName}
-	goos, arch := executil.OSAndArch(opts.Distro)
-	arm := executil.ArchVersion(opts.Distro)
+	goos, arch := backend.OSAndArch(opts.Distro)
 	if arch == "arm" {
-		if arm == "7" {
-			arch = "armhf"
-		}
+		arch = "armhf"
 		// If we're building for arm then we also copy the same thing, but with the name '-rpi'. for osme reason?
 		names = []string{fullName}
 	}
@@ -253,13 +266,13 @@ func TarGZHandler(name string) []string {
 	}
 
 	libc := []string{""}
-	goos, arch := executil.OSAndArch(opts.Distro)
+	goos, arch := backend.OSAndArch(opts.Distro)
 
 	if arch == "arm64" || arch == "arm" || arch == "amd64" && goos == "linux" {
 		libc = []string{"", "-musl"}
 	}
 
-	arm := executil.ArchVersion(opts.Distro)
+	arm := backend.ArchVersion(opts.Distro)
 	if arch == "arm" {
 		arch += "v" + arm
 		// I guess we don't create an arm-6-musl?
@@ -267,10 +280,13 @@ func TarGZHandler(name string) []string {
 			libc = []string{""}
 		}
 	}
-
+	format := tarGzFormat
+	if IsMain() {
+		format = tarGzMainFormat
+	}
 	dst := []string{}
 	for _, m := range libc {
-		dst = append(dst, fmt.Sprintf(tarGzFormat, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
+		dst = append(dst, fmt.Sprintf(format, opts.Version, edition, fullName, ersion, goos, arch, m, sha256, enterprise2))
 	}
 
 	return dst
@@ -311,9 +327,9 @@ func DockerHandler(name string) []string {
 		ubuntu = "-ubuntu"
 	}
 
-	_, arch := executil.OSAndArch(opts.Distro)
+	_, arch := backend.OSAndArch(opts.Distro)
 	if arch == "arm" {
-		arch += "v" + executil.ArchVersion(opts.Distro)
+		arch += "v" + backend.ArchVersion(opts.Distro)
 	}
 	return []string{
 		fmt.Sprintf(dockerFormat, strings.TrimPrefix(opts.Version, "v"), fullName, ubuntu, arch, sha256),
@@ -321,39 +337,17 @@ func DockerHandler(name string) []string {
 }
 
 func CDNHandler(name string) []string {
-	n := filepath.Base(strings.ReplaceAll(name, "/public", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
-
-	opts := pipelines.TarOptsFromFileName(n)
-
-	// In grafana-build we just use "" to refer to "oss"
-	edition := "oss"
-	fullName := grafana
-	if opts.Edition != "" {
-		edition = opts.Edition
+	if IsMain() {
+		opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(name, "/public", ".tar.gz"))
+		return []string{fmt.Sprintf(cdnMainFormat, opts.Version)}
 	}
-
-	fullName += "-" + edition
-
-	names := []string{
-		fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), fullName),
-	}
-
-	if edition == "oss" {
-		names = append(names, fmt.Sprintf(cdnFormat, strings.TrimPrefix(opts.Version, "v"), grafana))
-	}
-
-	return names
+	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
+	return []string{fmt.Sprintf(cdnFormat, version, grafana)}
 }
 
 func StorybookHandler(name string) []string {
-	n := filepath.Base(strings.ReplaceAll(name, "/storybook", ".tar.gz")) // Surprisingly still works even with 'gs://' urls
-	opts := pipelines.TarOptsFromFileName(n)
-
-	names := []string{
-		fmt.Sprintf(storybookFormat, opts.Version),
-	}
-
-	return names
+	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
+	return []string{fmt.Sprintf(storybookFormat, version)}
 }
 
 // A hopefully temporary script that prints the gsutil commands that will move these artifacts into the location where they were expected previously.
@@ -376,7 +370,7 @@ func main() {
 
 		container = client.Container().From("google/cloud-sdk:alpine")
 	)
-
+	//
 	if c, err := authenticator.Authenticate(client, container); err == nil {
 		container = c
 	} else {
@@ -386,30 +380,10 @@ func main() {
 	for scanner.Scan() {
 		var (
 			name = scanner.Text()
-			ext  = filepath.Ext(name)
 		)
-
-		// sha256 extensions should be handled the same way what precedes the extension
-		if ext == sha256Ext {
-			ext = filepath.Ext(strings.ReplaceAll(name, sha256Ext, ""))
-		}
-
-		// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that
-		if ext == ".gz" {
-			ext = ".tar.gz"
-			if filepath.Ext(strings.ReplaceAll(name, ext, "")) == ".docker" {
-				ext = ".docker.tar.gz"
-			}
-		}
-		handler := Handlers[ext]
+		handler, ext := getHandler(name, Handlers)
+		destinations := handler(name)
 		if ext == "" {
-			destinations := make([]string, 0)
-			if filepath.Base(name) == "public" {
-				destinations = CDNHandler(name)
-			}
-			if filepath.Base(name) == "storybook" {
-				destinations = StorybookHandler(name)
-			}
 			for _, v := range destinations {
 				dir := filepath.Join(prefix, filepath.Dir(v))
 				v := filepath.Join(prefix, v)
@@ -430,7 +404,7 @@ func main() {
 			continue
 		}
 
-		destinations := handler(name)
+		log.Println("File:", name, "to be copied as", destinations)
 		for _, v := range destinations {
 			dir := filepath.Join(prefix, filepath.Dir(v))
 			v := filepath.Join(prefix, v)
@@ -438,7 +412,9 @@ func main() {
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				panic(err)
 			}
-			log.Println("Copying", name, "to", dir)
+
+			log.Println("Copying", name, "to", dir, "as", v)
+
 			//nolint:gosec
 			cmd := exec.Command("cp", strings.TrimPrefix(name, "file://"), v)
 			cmd.Stdout = os.Stdout
@@ -452,7 +428,7 @@ func main() {
 	log.Println("Copying", prefix, "to gcs")
 	dst := os.Getenv("DESTINATION")
 	container = container.WithMountedDirectory("dist", client.Host().Directory(prefix)).
-		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/artifacts", dst})
+		WithExec([]string{"gcloud", "storage", "cp", "-r", "/dist/*", dst})
 
 	stdout, err := container.Stdout(ctx)
 	if err != nil {
@@ -466,4 +442,35 @@ func main() {
 
 	fmt.Fprint(os.Stdout, stdout)
 	fmt.Fprint(os.Stderr, stderr)
+}
+
+func getHandler(name string, handlers map[string]HandlerFunc) (HandlerFunc, string) {
+	ext := filepath.Ext(name)
+	// sha256 extensions should be handled the same way what precedes the extension
+	if ext == sha256Ext {
+		ext = filepath.Ext(strings.ReplaceAll(name, sha256Ext, ""))
+	}
+
+	// tar.gz extensions can also have docker.tar.gz so we need to make sure we don't skip that
+	if ext == ".gz" {
+		ext = ".tar.gz"
+		if filepath.Ext(strings.ReplaceAll(name, ".tar.gz", "")) == ".docker" ||
+			filepath.Ext(strings.ReplaceAll(name, ".tar.gz.sha256", "")) == ".docker" {
+			ext = ".docker.tar.gz"
+		}
+	}
+
+	handler := handlers[ext]
+	// If there is no extension, then we are either dealing with public assets
+	// or the storybook, which both require some extra handling:
+	if ext == "" {
+		if filepath.Base(name) == "public" {
+			handler = CDNHandler
+		}
+		if filepath.Base(name) == "storybook" {
+			handler = StorybookHandler
+		}
+	}
+	log.Printf("[%s] Using handler for %s", name, ext)
+	return handler, ext
 }

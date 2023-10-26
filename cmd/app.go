@@ -2,12 +2,11 @@ package main
 
 import (
 	"github.com/grafana/grafana-build/artifacts"
-	"github.com/grafana/grafana-build/pipeline"
 	"github.com/urfave/cli/v2"
 )
 
 type CLI struct {
-	artifacts []pipeline.Artifact
+	artifacts map[string]artifacts.Initializer
 	app       *cli.App
 }
 
@@ -36,7 +35,7 @@ func (c *CLI) App() *cli.App {
 			DebCommand,
 			RPMCommand,
 			CDNCommand,
-			DockerCommand,
+			// DockerCommand,
 			WindowsInstallerCommand,
 			ZipCommand,
 			ValidateCommand,
@@ -47,13 +46,15 @@ func (c *CLI) App() *cli.App {
 	}
 }
 
-func (c *CLI) Register(a pipeline.Artifact) error {
-	c.artifacts = append(c.artifacts, a)
+func (c *CLI) Register(flag string, a artifacts.Initializer) error {
+	c.artifacts[flag] = a
 	return nil
 }
 
-func (c *CLI) Artifacts() []pipeline.Artifact {
+func (c *CLI) Initializers() map[string]artifacts.Initializer {
 	return c.artifacts
 }
 
-var globalCLI = &CLI{}
+var globalCLI = &CLI{
+	artifacts: map[string]artifacts.Initializer{},
+}

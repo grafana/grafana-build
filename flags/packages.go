@@ -1,15 +1,17 @@
 package flags
 
 import (
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
 )
 
 const (
-	PackageName         = "package-name"
-	PackageDistribution = "package-distribution"
-	PackageBuildID      = "package-build-id"
-	PackageEnterprise   = "package-enterprise"
+	PackageName   pipeline.FlagOption = "package-name"
+	Distribution  pipeline.FlagOption = "distribution"
+	Static        pipeline.FlagOption = "static"
+	Enterprise    pipeline.FlagOption = "enterprise"
+	WireTag       pipeline.FlagOption = "wire-tag"
+	GoExperiments pipeline.FlagOption = "go-experiments"
 )
 
 // These are the flags that packages (targz, deb, rpm, docker) must have.
@@ -17,64 +19,44 @@ const (
 var PackageNameFlags = []pipeline.Flag{
 	{
 		Name: "grafana",
-		Options: map[string]string{
-			PackageName: "grafana",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-image-tags", "grafana-oss-image-tags"},
+			PackageName:        string(packages.PackageGrafana),
+			Enterprise:         false,
+			WireTag:            "oss",
+			GoExperiments:      []string{},
 		},
 	},
 	{
 		Name: "enterprise",
-		Options: map[string]string{
-			PackageName: "grafana-enterprise",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-enterprise-image-tags"},
+			PackageName:        string(packages.PackageEnterprise),
+			Enterprise:         true,
+			WireTag:            "enterprise",
+			GoExperiments:      []string{},
 		},
 	},
 	{
 		Name: "pro",
-		Options: map[string]string{
-			PackageName: "grafana-pro",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-pro-image-tags"},
+			PackageName:        string(packages.PackagePro),
+			Enterprise:         true,
+			WireTag:            "pro",
+			GoExperiments:      []string{},
 		},
 	},
 	{
 		Name: "boring",
-		Options: map[string]string{
-			PackageName: "grafana-enterprise-boringcrypto",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-enterprise-image-tags"},
+			PackageName:        string(packages.PackageEnterpriseBoring),
+			Enterprise:         true,
+			WireTag:            "enterprise",
+			GoExperiments:      []string{"boringcrypto"},
 		},
 	},
-}
-
-var Distributions = []executil.Distribution{
-	executil.DistLinuxAMD64,
-	executil.DistLinuxARM64,
-	executil.DistLinuxARMv6,
-	executil.DistLinuxARMv7,
-	executil.DistDarwinAMD64,
-	executil.DistDarwinARM64,
-	executil.DistWindowsAMD64,
-	executil.DistWindowsARM64,
-	executil.DistLinuxRISCV64,
-}
-
-func DistroFlags() []pipeline.Flag {
-	f := make([]pipeline.Flag, len(Distributions))
-	for i, v := range Distributions {
-		d := string(v)
-		f[i] = pipeline.Flag{
-			Name: d,
-			Options: map[string]string{
-				PackageDistribution: d,
-			},
-		}
-	}
-
-	return f
-}
-
-func JoinFlags(f ...[]pipeline.Flag) []pipeline.Flag {
-	r := []pipeline.Flag{}
-	for _, v := range f {
-		r = append(r, v...)
-	}
-
-	return r
 }
 
 func StdPackageFlags() []pipeline.Flag {

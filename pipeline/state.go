@@ -21,6 +21,7 @@ type StateHandler interface {
 	Bool(context.Context, Argument) (bool, error)
 	File(context.Context, Argument) (*dagger.File, error)
 	Directory(context.Context, Argument) (*dagger.Directory, error)
+	CacheVolume(context.Context, Argument) (*dagger.CacheVolume, error)
 }
 
 // State stores the overall state of the application. Externally, it is read-only.
@@ -38,9 +39,9 @@ type State struct {
 func (s *State) ArgumentOpts() *ArgumentOpts {
 	return &ArgumentOpts{
 		Log:        s.Log,
-		State:      s,
 		CLIContext: s.CLIContext,
 		Client:     s.Client,
+		State:      s,
 	}
 }
 
@@ -131,6 +132,25 @@ func (s *State) Directory(ctx context.Context, arg Argument) (*dagger.Directory,
 	}
 
 	dir, err := arg.Directory(ctx, s.ArgumentOpts())
+	if err != nil {
+		return nil, err
+	}
+
+	s.Data.Store(arg.Name, dir)
+	return dir, nil
+}
+
+func (s *State) CacheVolume(ctx context.Context, arg Argument) (*dagger.CacheVolume, error) {
+	if v, ok := s.Data.Load(arg.Name); ok {
+		val, ok := v.(*dagger.CacheVolume)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s", ErrorUnexpectedType, arg.Name)
+		}
+
+		return val, nil
+	}
+
+	dir, err := arg.CacheVolume(ctx, s.ArgumentOpts())
 	if err != nil {
 		return nil, err
 	}

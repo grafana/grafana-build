@@ -13,14 +13,13 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=linux/arm/v6 \
-  --distro=linux/arm/v7 \
   --distro=windows/amd64 \
   --distro=darwin/amd64 \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
@@ -31,13 +30,13 @@ cat assets.txt
 # Copy only the linux/amd64 edition npm artifacts into a separate folder
 dagger run --silent go run ./cmd npm \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/npm-artifacts" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > npm.txt
 
 # Copy only the linux/amd64 edition storybook into a separate folder
 dagger run --silent go run ./cmd storybook \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/storybook" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > storybook.txt
 
 # Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
@@ -46,14 +45,6 @@ dagger run --silent go run ./cmd deb \
   --checksum \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
-
-# Use the armv7 package to build the `rpi` specific version.
-dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --name=grafana-rpi \
-  --checksum \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> debs.txt
 
 # Make rpm installers for all the same Linux distros, and sign them because RPM packages are signed.
 dagger run --silent go run ./cmd rpm \
@@ -83,8 +74,8 @@ dagger run --silent go run ./cmd windows-installer \
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --ubuntu-base="ubuntu:22.10" \
-  --alpine-base="alpine:3.18.0" \
+  --ubuntu-base="ubuntu:22.04" \
+  --alpine-base="alpine:3.18.3" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt
 

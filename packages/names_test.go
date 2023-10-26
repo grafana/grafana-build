@@ -3,7 +3,7 @@ package packages_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/packages"
 )
 
@@ -47,7 +47,7 @@ func TestDestinationName(t *testing.T) {
 
 func TestFileName(t *testing.T) {
 	t.Run("It should use the correct name if Enterprise is false", func(t *testing.T) {
-		distro := executil.Distribution("plan9/amd64")
+		distro := backend.Distribution("plan9/amd64")
 		opts := packages.NameOpts{
 			Name:      "grafana",
 			Version:   "v1.0.1-test",
@@ -57,12 +57,12 @@ func TestFileName(t *testing.T) {
 		}
 
 		expected := "grafana_v1.0.1-test_333_plan9_amd64.tar.gz"
-		if name, _ := packages.FileName(opts); name != expected {
+		if name, _ := packages.FileName(opts.Name, opts.Version, opts.BuildID, opts.Distro, opts.Extension); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
 	t.Run("It should use the correct name if Enterprise is true", func(t *testing.T) {
-		distro := executil.Distribution("plan9/amd64")
+		distro := backend.Distribution("plan9/amd64")
 		opts := packages.NameOpts{
 			Name:      "grafana-enterprise",
 			Version:   "v1.0.1-test",
@@ -72,12 +72,12 @@ func TestFileName(t *testing.T) {
 		}
 
 		expected := "grafana-enterprise_v1.0.1-test_333_plan9_amd64.tar.gz"
-		if name, _ := packages.FileName(opts); name != expected {
+		if name, _ := packages.FileName(opts.Name, opts.Version, opts.BuildID, opts.Distro, opts.Extension); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
 	t.Run("It should use include the arch version if one is supplied in the distro", func(t *testing.T) {
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		opts := packages.NameOpts{
 			Name:      "grafana-enterprise",
 			Version:   "v1.0.1-test",
@@ -87,12 +87,12 @@ func TestFileName(t *testing.T) {
 		}
 
 		expected := "grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		if name, _ := packages.FileName(opts); name != expected {
+		if name, _ := packages.FileName(opts.Name, opts.Version, opts.BuildID, opts.Distro, opts.Extension); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
 	t.Run("It should support grafana names with multiple hyphens", func(t *testing.T) {
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		opts := packages.NameOpts{
 			Name:      "grafana-enterprise-rpi",
 			Version:   "v1.0.1-test",
@@ -102,7 +102,7 @@ func TestFileName(t *testing.T) {
 		}
 
 		expected := "grafana-enterprise-rpi_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		if name, _ := packages.FileName(opts); name != expected {
+		if name, _ := packages.FileName(opts.Name, opts.Version, opts.BuildID, opts.Distro, opts.Extension); name != expected {
 			t.Errorf("name '%s' does not match expected name '%s'", name, expected)
 		}
 	})
@@ -111,7 +111,7 @@ func TestFileName(t *testing.T) {
 func TestOptsFromFile(t *testing.T) {
 	t.Run("It should get the correct tar file opts from a valid name", func(t *testing.T) {
 		name := "grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := packages.NameOpts{
 			Name:      "grafana-enterprise",
 			Version:   "v1.0.1-test",
@@ -135,7 +135,7 @@ func TestOptsFromFile(t *testing.T) {
 	})
 	t.Run("It should consider only the basename", func(t *testing.T) {
 		name := "somewhere/grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := packages.NameOpts{
 			Name:      "grafana-enterprise",
 			Version:   "v1.0.1-test",
@@ -159,7 +159,7 @@ func TestOptsFromFile(t *testing.T) {
 	})
 	t.Run("It should support names with multiple hyphens", func(t *testing.T) {
 		name := "somewhere/grafana-enterprise-rpi_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := packages.NameOpts{
 			Name:      "grafana-enterprise-rpi",
 			Version:   "v1.0.1-test",

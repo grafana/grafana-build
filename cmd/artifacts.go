@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/grafana/grafana-build/artifacts"
-	"github.com/grafana/grafana-build/pipeline"
 )
 
-var Artifacts = []pipeline.Artifact{
-	artifacts.Backend,
-	artifacts.Frontend,
-	artifacts.Tarball,
+var Artifacts = map[string]artifacts.Initializer{
+	// artifacts.BackendKey: artifacts.BackendInitializer,
+	// artifacts.FrontendKey: artifacts.FrontendInitializer,
+	"targz":  artifacts.TargzInitializer,
+	"deb":    artifacts.DebInitializer,
+	"rpm":    artifacts.RPMInitializer,
+	"docker": artifacts.DockerInitializer,
 }

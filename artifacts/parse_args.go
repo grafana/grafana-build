@@ -1,8 +1,10 @@
 package artifacts
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/grafana/grafana-build/pipeline"
@@ -11,24 +13,34 @@ import (
 var (
 	ErrorArtifactCollision = errors.New("artifact argument specifies two different artifacts")
 	ErrorDuplicateArgument = errors.New("artifact argument specifies duplicate or incompatible arguments")
-	ErrorNoArgument        = errors.New("could not find compatible argument for argument string")
+	ErrorNoArtifact        = errors.New("could not find compatible artifact for argument string")
 
 	ErrorFlagNotFound = errors.New("no option available for the given flag")
 )
 
-func findArtifact(val string, artifacts []pipeline.Artifact) (pipeline.Artifact, error) {
+func findInitializer(val string, initializers map[string]Initializer) (Initializer, error) {
 	c := strings.Split(val, ":")
+	var initializer *Initializer
 
 	// Find the artifact that is requested by `val`.
 	// The artifact can be defined anywhere in the artifact string. Example: `linux/amd64:grafana:targz` or `linux/amd64:grafana:targz` are the same, where targz is the artifact.
 	for _, v := range c {
-		for _, a := range artifacts {
-			if a.Name == v {
-				return a, nil
-			}
+		n, ok := initializers[v]
+		if !ok {
+			continue
 		}
+		if initializer != nil {
+			return Initializer{}, fmt.Errorf("%s: %w", val, ErrorArtifactCollision)
+		}
+
+		initializer = &n
 	}
-	return pipeline.Artifact{}, ErrorNoArgument
+
+	if initializer == nil {
+		return Initializer{}, fmt.Errorf("%s: %w", val, ErrorNoArtifact)
+	}
+
+	return *initializer, nil
 }
 
 func findFlag(f []pipeline.Flag, name string) (pipeline.Flag, error) {
@@ -41,34 +53,33 @@ func findFlag(f []pipeline.Flag, name string) (pipeline.Flag, error) {
 	return pipeline.Flag{}, ErrorFlagNotFound
 }
 
-// Parse parses the artifact string `val` and finds the matching artifact in `artifacts`,
-// populated with the options specified in the string.
-func Parse(val string, artifacts []pipeline.Artifact) (pipeline.Artifact, error) {
-	artifact, err := findArtifact(val, artifacts)
-	if err != nil {
-		return pipeline.Artifact{}, err
-	}
-
-	c := strings.Split(val, ":")
-	// Given all of the other flags that were supplied for the agument string, apply them on the artifact,
-	// using the artifact's own list of flags.
-	for _, v := range c {
-		if v == artifact.Name {
-			continue
-		}
-
-		// Ensure that this argument flag is not another artifact
-		if _, err := findArtifact(v, artifacts); err == nil {
-			return pipeline.Artifact{}, fmt.Errorf("%w: %s", ErrorArtifactCollision, v)
-		}
-
-		f, err := findFlag(artifact.Flags, v)
+// The ArtifactsFromStrings function should provide all of the necessary arguments to produce each artifact
+// dleimited by colons. It's a repeated flag, so all permutations are stored in 1 instance of the ArtifactsFlag struct.
+// Examples:
+// * targz:linux/amd64 -- Will produce a "Grafana" tar.gz for "linux/amd64".
+// * targz:enterprise:linux/amd64 -- Will produce a "Grafana" tar.gz for "linux/amd64".
+func ArtifactsFromStrings(ctx context.Context, log *slog.Logger, a []string, registered map[string]Initializer, state pipeline.StateHandler) ([]*pipeline.Artifact, error) {
+	artifacts := make([]*pipeline.Artifact, len(a))
+	for i, v := range a {
+		n, err := Parse(ctx, log, v, registered, state)
 		if err != nil {
-			return pipeline.Artifact{}, fmt.Errorf("%w: %s", err, v)
+			return nil, err
 		}
 
-		artifact.Apply(f)
+		artifacts[i] = n
 	}
 
-	return artifact, nil
+	return artifacts, nil
+}
+
+// Parse parses the artifact string `val` and finds the matching initializer.
+func Parse(ctx context.Context, log *slog.Logger, val string, initializers map[string]Initializer, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	initializer, err := findInitializer(val, initializers)
+	if err != nil {
+		return nil, err
+	}
+
+	initializerFunc := initializer.InitializerFunc
+	// TODO soon, the initializer might need more info about flags
+	return initializerFunc(ctx, log, val, state)
 }

@@ -1,13 +1,97 @@
 package artifacts
 
 import (
-	"github.com/grafana/grafana-build/backend"
+	"context"
+	"fmt"
+	"log/slog"
+	"path"
+
+	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/arguments"
+	"github.com/grafana/grafana-build/flags"
+	"github.com/grafana/grafana-build/frontend"
+	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
 )
 
-var Frontend = pipeline.Artifact{
-	Name:         "frontend",
-	Type:         pipeline.ArtifactTypeDirectory,
-	Builder:      backend.Builder,
-	BuildDirFunc: backend.Build,
+var (
+	FrontendFlags     = flags.PackageNameFlags
+	FrontendArguments = []pipeline.Argument{
+		arguments.YarnCacheDirectory,
+	}
+)
+
+type Frontend struct {
+	Name      packages.Name
+	Src       *dagger.Directory
+	YarnCache *dagger.CacheVolume
+}
+
+// The frontend does not have any artifact dependencies.
+func (f *Frontend) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
+	return nil, nil
+}
+
+// Builder will return a node.js alpine container that matches the .nvmrc in the Grafana source repository
+func (f *Frontend) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	return FrontendBuilder(ctx, f.Src, f.YarnCache, opts)
+}
+
+func (f *Frontend) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	panic("not implemented") // Frontend doesn't return a file
+}
+
+func (f *Frontend) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
+	return frontend.Build(builder), nil
+}
+
+func (f *Frontend) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (f *Frontend) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (f *Frontend) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+	panic("not implemented") // TODO: Implement
+}
+
+// Filename should return a deterministic file or folder name that this build will produce.
+// This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
+// also affect the filename to ensure that there are no collisions.
+// For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
+// `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
+func (f *Frontend) Filename(ctx context.Context) (string, error) {
+	// Important note: this path is only used in two ways:
+	// 1. When requesting an artifact be built and exported, this is the path where it will be exported to
+	// 2. In a map to distinguish when the same artifact is being built more than once
+	return path.Join("bin", string(f.Name), "public"), nil
+}
+
+func NewFrontend(ctx context.Context, log *slog.Logger, artifact string, name packages.Name, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
+		ArtifactString: artifact,
+		Type:           pipeline.ArtifactTypeDirectory,
+		Flags:          FrontendFlags,
+		Handler: &Frontend{
+			Name:      name,
+			Src:       src,
+			YarnCache: cache,
+		},
+	})
+}
+
+func FrontendBuilder(
+	ctx context.Context,
+	src *dagger.Directory,
+	cache *dagger.CacheVolume,
+	opts *pipeline.ArtifactContainerOpts,
+) (*dagger.Container, error) {
+	nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
+	}
+
+	return frontend.Builder(opts.Client, opts.Platform, src, nodeVersion, cache), nil
 }

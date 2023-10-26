@@ -8,9 +8,13 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/e2e"
 	"github.com/grafana/grafana-build/errorutil"
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/fpm"
+	"github.com/grafana/grafana-build/frontend"
+	"github.com/grafana/grafana-build/gpg"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
@@ -84,9 +88,9 @@ func ValidatePackageSignature(ctx context.Context, d *dagger.Client, src *dagger
 	return nil
 }
 
-func distroPlatform(distro executil.Distribution) dagger.Platform {
-	platform := executil.Platform(distro)
-	if _, arch := executil.OSAndArch(distro); arch == "arm" {
+func distroPlatform(distro backend.Distribution) dagger.Platform {
+	platform := backend.Platform(distro)
+	if _, arch := backend.OSAndArch(distro); arch == "arm" {
 		// armv7 and armv6 just use armv7
 		return dagger.Platform("linux/arm/v7")
 	}
@@ -117,7 +121,7 @@ func validatePackage(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 // validateDocker uses the given package (.docker.tar.gz) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
 func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
-	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	nodeVersion, err := frontend.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
@@ -141,13 +145,13 @@ func validateDocker(ctx context.Context, d *dagger.Client, pkg *dagger.File, src
 
 	// TODO: Add LICENSE to containers and implement validation
 
-	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
+	return e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateDeb uses the given package (deb) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
 func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
-	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	nodeVersion, err := frontend.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
@@ -177,13 +181,13 @@ func validateDeb(ctx context.Context, d *dagger.Client, deb *dagger.File, src *d
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
+	return e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateRpm uses the given package (rpm) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
 func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
-	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	nodeVersion, err := frontend.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
@@ -212,13 +216,13 @@ func validateRpm(ctx context.Context, d *dagger.Client, rpm *dagger.File, src *d
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
+	return e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateTarball uses the given package (pkg) and grafana source code (src) to run the e2e smoke tests.
 // the returned directory is the e2e artifacts created by cypress (screenshots and videos).
 func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, src *dagger.Directory, yarnCache *dagger.CacheVolume, packageName string) (*dagger.Directory, error) {
-	nodeVersion, err := containers.NodeVersion(d, src).Stdout(ctx)
+	nodeVersion, err := frontend.NodeVersion(d, src).Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
 	}
@@ -226,15 +230,15 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 	var (
 		taropts  = TarOptsFromFileName(packageName)
 		platform = distroPlatform(taropts.Distro)
-		archive  = containers.ExtractedArchive(d, pkg, packageName)
+		archive  = containers.ExtractedArchive(d, pkg)
 	)
 
-	log.Printf("Validating standalone tarball for v%s%s using ubuntu:22.10 and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
+	log.Printf("Validating standalone tarball for v%s%s using ubuntu:22.04 and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("ubuntu:22.10").
+	}).From("ubuntu:22.04").
 		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates", "libfontconfig1"}).
 		WithDirectory("/src", archive).
@@ -249,7 +253,7 @@ func validateTarball(ctx context.Context, d *dagger.Client, pkg *dagger.File, sr
 		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
 
-	return containers.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
+	return e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion), nil
 }
 
 // validateLicense uses the given container and license path to validate the license for each edition (enterprise or oss)
@@ -396,7 +400,7 @@ func validateRpmUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 }
 
 // validateSignature uses the given package (rpm) and provided gpg public key to validate signature.
-func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, packageName string, opts *containers.GPGOpts) error {
+func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, packageName string, opts *gpg.GPGOpts) error {
 	if ext := filepath.Ext(packageName); ext != ".rpm" {
 		return fmt.Errorf("expected a .rpm file, received '%s'", ext)
 	}
@@ -407,7 +411,7 @@ func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, 
 
 	log.Printf("Validating rpm package signature for v%s%s and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
-	container, err := containers.GPGContainer(d, &containers.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64})
+	container, err := gpg.WithGPGOpts(d, fpm.Builder(d), &gpg.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64})
 	if err != nil {
 		return err
 	}

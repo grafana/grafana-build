@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 
 	"dagger.io/dagger"
-	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/fpm"
+	"github.com/grafana/grafana-build/gpg"
 )
 
-func WithRPMSignature(ctx context.Context, d *dagger.Client, opts *containers.GPGOpts, installers map[string]*dagger.File) (map[string]*dagger.File, error) {
+func WithRPMSignature(ctx context.Context, d *dagger.Client, opts *gpg.GPGOpts, installers map[string]*dagger.File) (map[string]*dagger.File, error) {
 	out := make(map[string]*dagger.File, len(installers))
 
 	for dst, file := range installers {
@@ -20,7 +21,7 @@ func WithRPMSignature(ctx context.Context, d *dagger.Client, opts *containers.GP
 			continue
 		}
 
-		container, err := containers.GPGContainer(d, opts)
+		container, err := gpg.WithGPGOpts(d, fpm.Builder(d), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -40,8 +41,9 @@ func WithRPMSignature(ctx context.Context, d *dagger.Client, opts *containers.GP
 // RPM uses the grafana package given by the '--package' argument and creates a .rpm installer.
 // It accepts publish args, so you can place the file in a local or remote destination.
 func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
-	installers, err := PackageInstaller(ctx, d, args, InstallerOpts{
-		PackageType: "rpm",
+	installers, err := PackageInstaller(ctx, d, args, fpm.BuildOpts{
+		NameOverride: args.PackageInputOpts.Name,
+		PackageType:  "rpm",
 		ConfigFiles: [][]string{
 			{"/src/packaging/rpm/sysconfig/grafana-server", "/pkg/etc/sysconfig/grafana-server"},
 			{"/src/packaging/rpm/init.d/grafana-server", "/pkg/etc/init.d/grafana-server"},
@@ -52,14 +54,12 @@ func RPM(ctx context.Context, d *dagger.Client, args PipelineArgs) error {
 			"/sbin/service",
 			"fontconfig",
 			"freetype",
-			"urw-fonts",
 		},
 		ExtraArgs: []string{
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",
 			"--rpm-digest=sha256",
 		},
 		EnvFolder: "/pkg/etc/sysconfig",
-		Container: containers.RPMContainer(d),
 	})
 
 	if err != nil {

@@ -22,6 +22,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > grafana.txt &
@@ -42,6 +43,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > pro.txt &
@@ -54,13 +56,13 @@ cat pro.txt grafana.txt > assets.txt
 # Copy only the linux/amd64 edition npm artifacts into a separate folder
 dagger run go run ./cmd npm \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/npm-artifacts" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > npm.txt &
 
 # Copy only the linux/amd64 edition storybook into a separate folder
 dagger run --silent go run ./cmd storybook \
   $(cat assets.txt | grep tar.gz | grep linux | grep amd64 | grep -v enterprise | grep -v pro | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/storybook" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > storybook.txt &
 
 # Use the non-pro, non-windows, non-darwin packages and create deb packages from them.
@@ -98,15 +100,15 @@ dagger run --silent go run ./cmd windows-installer \
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --ubuntu-base="ubuntu:22.10" \
-  --alpine-base="alpine:3.18.0" \
+  --ubuntu-base="ubuntu:22.04" \
+  --alpine-base="alpine:3.18.3" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
 # Copy only the linux/amd64 edition frontends into a separate folder
 dagger run --silent go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep pro | grep linux | grep amd64 | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/public" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
 
 wait

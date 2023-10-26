@@ -1,20 +1,28 @@
 package packages
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/backend"
+)
+
+type Name string
+
+const (
+	PackageGrafana          Name = "grafana"
+	PackageEnterprise       Name = "grafana-enterprise"
+	PackageEnterpriseBoring Name = "grafana-enterprise-boringcrypto"
+	PackagePro              Name = "grafana-pro"
 )
 
 type NameOpts struct {
 	// Name is the name of the product in the package. 99% of the time, this will be "grafana" or "grafana-enterprise".
-	Name      string
+	Name      Name
 	Version   string
 	BuildID   string
-	Distro    executil.Distribution
+	Distro    backend.Distribution
 	Extension string
 }
 
@@ -29,43 +37,22 @@ func WithoutExt(name string) string {
 	return strings.Join(append(cmp[:len(cmp)-1], lastWithoutExt), "_")
 }
 
-var (
-	ErrorNoName      = errors.New("all packages must have a name. Ex: \"grafana\", \"grafana-enteprrise\", \"grafana-rpi\"")
-	ErrorNoVersion   = errors.New("all packages must have a version")
-	ErrorNoBuildID   = errors.New("all packages must have a build ID")
-	ErrorNoDistro    = errors.New("all packages must have a build distribution. Ex: \"linux/amd64\", \"darwin/arm64\", \"linux/plan9\"")
-	ErrorNoExtension = errors.New("all packages must have a file extension. Ex: \"tar.gz\", \"deb\", \"docker.tar.gz\"")
-)
-
 // FileName returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
-func FileName(opts NameOpts) (string, error) {
-	if opts.Name == "" {
-		return "", ErrorNoName
-	}
-	if opts.Version == "" {
-		return "", ErrorNoVersion
-	}
-	if opts.BuildID == "" {
-		return "", ErrorNoBuildID
-	}
-	if opts.Distro == "" {
-		return "", ErrorNoDistro
-	}
+func FileName(name Name, version, buildID string, distro backend.Distribution, extension string) (string, error) {
 	var (
-		name = opts.Name
 		// This should return something like "linux", "arm"
-		os, arch = executil.OSAndArch(opts.Distro)
+		os, arch = backend.OSAndArch(distro)
 		// If applicable this will be set to something like "7" (for arm7)
-		archv = executil.ArchVersion(opts.Distro)
+		archv = backend.ArchVersion(distro)
 	)
 
 	if archv != "" {
 		arch = strings.Join([]string{arch, archv}, "-")
 	}
 
-	p := []string{name, opts.Version, opts.BuildID, os, arch}
+	p := []string{string(name), version, buildID, os, arch}
 
-	return fmt.Sprintf("%s.%s", strings.Join(p, "_"), opts.Extension), nil
+	return fmt.Sprintf("%s.%s", strings.Join(p, "_"), extension), nil
 }
 
 func NameOptsFromFileName(filename string) NameOpts {
@@ -96,10 +83,10 @@ func NameOptsFromFileName(filename string) NameOpts {
 	}
 
 	return NameOpts{
-		Name:    name,
+		Name:    Name(name),
 		Version: version,
 		BuildID: buildID,
-		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
+		Distro:  backend.Distribution(strings.Join([]string{os, arch}, "/")),
 	}
 }
 

@@ -10,8 +10,8 @@ import (
 
 	"dagger.io/dagger"
 	grafanabuild "github.com/grafana/grafana-build"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/executil"
 	"github.com/grafana/grafana-build/tarfs"
 )
 
@@ -79,7 +79,7 @@ func WindowsInstaller(ctx context.Context, d *dagger.Client, args PipelineArgs) 
 		)
 		log.Println("Taropts from file name", v, taropts)
 
-		if os, _ := executil.OSAndArch(taropts.Distro); os != "windows" {
+		if os, _ := backend.OSAndArch(taropts.Distro); os != "windows" {
 			return fmt.Errorf("package '%s' is not a windows package", v)
 		}
 

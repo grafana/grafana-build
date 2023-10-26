@@ -30,24 +30,19 @@ func TargzFile(packager *dagger.Container, opts *TargzFileOpts) *dagger.File {
 		WithWorkdir("/src")
 
 	paths := []string{}
-	for k := range opts.Files {
-		paths = append(paths, k)
+	for k, v := range opts.Files {
+		path := path.Join(root, k)
+		packager = packager.WithMountedFile(path, v)
+		paths = append(paths, path)
 	}
 
-	for k := range opts.Directories {
-		paths = append(paths, k)
+	for k, v := range opts.Directories {
+		path := path.Join(root, k)
+		packager = packager.WithMountedDirectory(path, v)
+		paths = append(paths, path)
 	}
 
-	packager = packager.WithExec(append([]string{"tar", "-czf", "/package.tar.gz"}, PathsWithRoot(root, paths)...))
+	packager = packager.WithExec(append([]string{"tar", "-czf", "/package.tar.gz"}, paths...))
 
 	return packager.File("/package.tar.gz")
-}
-
-func PathsWithRoot(root string, paths []string) []string {
-	p := make([]string, len(paths))
-	for i, v := range paths {
-		p[i] = path.Join(root, v)
-	}
-
-	return p
 }

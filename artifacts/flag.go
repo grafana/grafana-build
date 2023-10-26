@@ -5,7 +5,7 @@ import (
 
 	"log/slog"
 
-	"github.com/grafana/grafana-build/pipeline"
+	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/urfave/cli/v2"
 )
 
@@ -31,25 +31,30 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Value: "linux/amd64",
 	}
 
-	flags := []cli.Flag{
-		artifactsFlag,
-		buildFlag,
-		publishFlag,
-		platformFlag,
-	}
+	flags := flags.Join(
+		[]cli.Flag{
+			artifactsFlag,
+			buildFlag,
+			publishFlag,
+			platformFlag,
+		},
+		flags.PublishFlags,
+		flags.ConcurrencyFlags,
+	)
 
 	// All of these artifacts are the registered artifacts. These should mostly stay the same no matter what.
-	artifacts := r.Artifacts()
+	initializers := r.Initializers()
 
 	// Add all of the CLI flags that are defined by each artifact's arguments.
 	m := map[string]cli.Flag{}
+
 	// For artifact arguments that specify flags, we'll coalesce them here and add them to the list of flags.
-	for _, artifact := range artifacts {
-		for _, arg := range artifact.Arguments {
+	for _, n := range initializers {
+		for _, arg := range n.Arguments {
 			for _, f := range arg.Flags {
 				fn := strings.Join(f.Names(), ",")
 				m[fn] = f
-				slog.Debug("global flag added by argument in artifact", "flag", fn, "arg", arg.Name, "artifact", artifact.Name)
+				slog.Debug("global flag added by argument in artifact", "flag", fn, "arg", arg.Name)
 			}
 		}
 	}
@@ -59,23 +64,4 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 	}
 
 	return flags
-}
-
-// The ArtifactsFromStrings function should provide all of the necessary arguments to produce each artifact
-// dleimited by colons. It's a repeated flag, so all permutations are stored in 1 instance of the ArtifactsFlag struct.
-// Examples:
-// * targz:linux/amd64 -- Will produce a "Grafana" tar.gz for "linux/amd64".
-// * targz:enterprise:linux/amd64 -- Will produce a "Grafana" tar.gz for "linux/amd64".
-func ArtifactsFromStrings(a []string, registered []pipeline.Artifact) ([]pipeline.Artifact, error) {
-	artifacts := make([]pipeline.Artifact, len(a))
-	for i, v := range a {
-		n, err := Parse(v, registered)
-		if err != nil {
-			return nil, err
-		}
-
-		artifacts[i] = n
-	}
-
-	return artifacts, nil
 }

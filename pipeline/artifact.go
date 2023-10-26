@@ -27,119 +27,74 @@ type ArtifactContainerOpts struct {
 	Client   *dagger.Client
 	Platform dagger.Platform
 	State    StateHandler
+	Store    ArtifactStore
 }
 
-type ArtifactBuildOpts struct {
-	ContainerOpts *ArtifactContainerOpts
-	// Dependencies are artifacts that this artifact depends on.
-	Dependencies map[string]Artifact
-	Builder      *dagger.Container
+type ArtifactPublishFileOpts struct{}
+type ArtifactPublishDirOpts struct{}
+
+type ArtifactInitializer func(context.Context, *slog.Logger, string, StateHandler) (*Artifact, error)
+
+// An Artifact is a file or a directory that is created when using the `-a / --artifact` flag.
+// Each artifact can depend on other artifacts, and can be affected by 'flags' from the artifact string that describes this artifact.
+// For example, the flags in the artifact string, 'targz:linux/amd64:grafana'
+type ArtifactHandler interface {
+	Dependencies(ctx context.Context) ([]*Artifact, error)
+	Builder(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error)
+	BuildFile(ctx context.Context, builder *dagger.Container, opts *ArtifactContainerOpts) (*dagger.File, error)
+	BuildDir(ctx context.Context, builder *dagger.Container, opts *ArtifactContainerOpts) (*dagger.Directory, error)
+
+	Publisher(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error)
+	PublishFile(ctx context.Context, opts *ArtifactPublishFileOpts) error
+	PublisDir(ctx context.Context, opts *ArtifactPublishDirOpts) error
+
+	// Filename should return a deterministic file or folder name that this build will produce.
+	// This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
+	// also affect the filename to ensure that there are no collisions.
+	// For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
+	// `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
+	Filename(ctx context.Context) (string, error)
 }
-
-func (o *ArtifactBuildOpts) Dependency(artifact Artifact) (Artifact, error) {
-	if o.Dependencies == nil {
-		o.Dependencies = map[string]Artifact{}
-	}
-
-	v, ok := o.Dependencies[artifact.Name]
-	if !ok {
-		return Artifact{}, fmt.Errorf("%s: %w", artifact.Name, ErrorDependencyNotFound)
-	}
-
-	return v, nil
-}
-
-type ArtifactPublishFileOpts struct {
-	Log    *slog.Logger
-	Client *dagger.Client
-	State  StateHandler
-
-	File *dagger.File
-}
-
-type ArtifactPublishDirOpts struct {
-	Log    *slog.Logger
-	Client *dagger.Client
-	State  StateHandler
-
-	Directory *dagger.Directory
-}
-
-type (
-	ContainerFunc func(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error)
-
-	BuildFileFunc func(ctx context.Context, opts *ArtifactBuildOpts) (*dagger.File, error)
-	BuildDirFunc  func(ctx context.Context, opts *ArtifactBuildOpts) (*dagger.Directory, error)
-
-	PublishFileFunc func(ctx context.Context, opts *ArtifactPublishFileOpts) error
-	PublishDirFunc  func(ctx context.Context, opts *ArtifactPublishDirOpts) error
-
-	FileNameFunc func(ctx context.Context, a Artifact, state StateHandler) (string, error)
-)
 
 type Artifact struct {
-	Name      string
-	Type      ArtifactType
-	Requires  []Artifact
-	Arguments []Argument
-	Flags     []Flag
-	options   map[string]any
-
-	Builder   ContainerFunc
-	Publisher ContainerFunc
-
-	BuildFileFunc BuildFileFunc
-	BuildDirFunc  BuildDirFunc
-
-	PublishFileFunc PublishFileFunc
-	PublishDirFunc  PublishDirFunc
-
-	FileNameFunc FileNameFunc
+	// ArtifactString is the artifact string provided by the user.
+	// If the artifact is being initialized as a dependency where an artifact string is not provided,
+	// then the artifactstring should be set with the parent's artifact string.
+	// For example, the targz artifact depends on the binary artifact. If a user requests a targz using the artifactstring
+	// 'targz:linux/amd64:grafana', then its dependencies should also have that ArtifactString.
+	// This value is really only used for logging.
+	ArtifactString string
+	Handler        ArtifactHandler
+	// Type is the type of the artifact which is used when deciding whether to use BuildFile or BuildDir when building the artifact
+	Type ArtifactType
+	// Flags are the available list of flags that can individually contribute to the outcome of the artifact. Unlike arguments, flags are
+	// specific to the argument.
+	// For example, users can request the same argument with different flags:
+	// * targz:linux/amd64:grafana
+	// * targz:linux/amd64:grafana-enterprise
+	// The flags returned by this function should simply define what flags are allowed for this argument.
+	// A single flag can manipulate multiple options. For example, the 'boring' option modifies both the GOEXPERIMENT environment variable and ensures that the
+	// package is built with grafana enterprise.
+	// The options that the flag affects is in the flag itself. The options that the flag manipulates should be available to the callers by using the "Option" function.
+	// These flags are only set here so that the CLI can communicate what flags are possible.
+	Flags []Flag
 }
 
-func (a *Artifact) Apply(f Flag) {
-	for k, v := range f.Options {
-		a.SetOption(k, v)
-	}
+// Apply applies the flag into the OptionsHandler.
+// This is a good opportunity for an artifact to handle being given a Flag in a different way than just storing its options.
+func (a *Artifact) Apply(f Flag, o OptionsHandler) error {
+	return o.Apply(f)
 }
 
-func (a *Artifact) SetOption(key, value string) {
-	if a.options == nil {
-		a.options = map[string]any{}
-	}
-
-	a.options[key] = value
-}
-
-func (a *Artifact) Option(key string) (string, error) {
-	if a.options == nil {
-		return "", fmt.Errorf("%w: %s", ErrorOptionNotSet, key)
-	}
-
-	v, ok := a.options[key]
-	if !ok {
-		return "", fmt.Errorf("%w: %s", ErrorOptionNotSet, key)
-	}
-
-	return v.(string), nil
-}
-
-func (a *Artifact) Directory(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Directory, error) {
+func Directory(ctx context.Context, a *Artifact, opts *ArtifactContainerOpts) (*dagger.Directory, error) {
 	if a.Type != ArtifactTypeDirectory {
-		return nil, fmt.Errorf("%s: %w", a.Name, ErrorNotADirectory)
+		return nil, fmt.Errorf("%s: %w", a.ArtifactString, ErrorNotADirectory)
 	}
 
-	builder, err := a.Builder(ctx, opts)
-
+	builder, err := a.Handler.Builder(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.BuildDirFunc(ctx, &ArtifactBuildOpts{
-		Builder: builder,
-	})
-}
-
-func (a *Artifact) File(ctx context.Context) (*dagger.File, error) {
-	return nil, nil
+	return a.Handler.BuildDir(ctx, builder, opts)
 }

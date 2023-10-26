@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrorFlagNotProvided = errors.New("argument must be provided using an artifact flag, ex: 'targz:linux/amd64'")
+	ErrorFlagNotProvided = errors.New("flag not provided, ex: '--go-version=1.21.0'")
 )
 
 type ArgumentType int
@@ -21,6 +21,7 @@ const (
 	ArgumentTypeString ArgumentType = iota
 	ArgumentTypeInt64
 	ArgumentTypeDirectory
+	ArgumentTypeCacheVolume
 	ArgumentTypeFile
 	ArgumentTypeBool
 )
@@ -190,4 +191,46 @@ func (a Argument) MustFile(ctx context.Context, opts *ArgumentOpts) *dagger.File
 	}
 
 	return v
+}
+
+func (a Argument) CacheVolume(ctx context.Context, opts *ArgumentOpts) (*dagger.CacheVolume, error) {
+	if a.ValueFunc == nil {
+		return nil, fmt.Errorf("error: %w. %s (%s)", ErrorFlagNotProvided, a.Name, a.Description)
+	}
+	value, err := a.ValueFunc(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	dir, ok := value.(*dagger.CacheVolume)
+	if !ok {
+		return nil, errors.New("value returned by valuefunc is not a *dagger.File")
+	}
+
+	return dir, nil
+}
+
+func (a Argument) MustCacheVolume(ctx context.Context, opts *ArgumentOpts) *dagger.CacheVolume {
+	v, err := a.CacheVolume(ctx, opts)
+	if err != nil {
+		panic(err)
+	}
+
+	return v
+}
+
+func StringFlagValueFunc(f cli.Flag) func(context.Context, *ArgumentOpts) (any, error) {
+	return func(ctx context.Context, opts *ArgumentOpts) (any, error) {
+		return opts.CLIContext.String(f.Names()[0]), nil
+	}
+}
+
+func NewStringFlagArgument(flag *cli.StringFlag) Argument {
+	return Argument{
+		Name:        flag.Name,
+		Description: flag.Usage,
+		Flags: []cli.Flag{
+			flag,
+		},
+		ValueFunc: StringFlagValueFunc(flag),
+	}
 }

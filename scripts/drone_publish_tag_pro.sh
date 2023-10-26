@@ -12,8 +12,6 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --distro=linux/amd64 \
   --distro=linux/arm64 \
-  --distro=linux/arm/v6 \
-  --distro=linux/arm/v7 \
   --distro=darwin/amd64 \
   --distro=windows/amd64 \
   --env GO_BUILD_TAGS=pro \
@@ -28,6 +26,7 @@ dagger run --silent go run ./cmd \
   --grafana-ref=${DRONE_TAG} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
+  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > assets.txt
@@ -41,27 +40,19 @@ dagger run --silent go run ./cmd deb \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > debs.txt
 
-# Use the armv7 package to build the `rpi` specific version.
-dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep arm-7 | awk '{print "--package=" $0}') \
-  --name=grafana-pro-rpi \
-  --checksum \
-  --destination=${local_dst} \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> debs.txt
-
 # Build a docker image for all .tar.gz packages
 dagger run --silent go run ./cmd docker \
   $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
   --checksum \
-  --ubuntu-base="ubuntu:22.10" \
-  --alpine-base="alpine:3.18.0" \
+  --ubuntu-base="ubuntu:22.04" \
+  --alpine-base="alpine:3.18.3" \
   --destination=${local_dst} \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > docker.txt &
 
 # Copy only the linux/amd64 edition frontends into a separate folder
 dagger run --silent go run ./cmd cdn \
   $(cat assets.txt | grep tar.gz | grep amd64 | grep linux | grep -v docker | grep -v sha256 | awk '{print "--package=" $0}') \
-  --destination=${local_dst} \
+  --destination="${local_dst}/public" \
   --gcp-service-account-key-base64=${GCP_KEY_BASE64} > cdn.txt &
 
 wait
