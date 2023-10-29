@@ -5,10 +5,13 @@ import (
 )
 
 var Artifacts = map[string]artifacts.Initializer{
-	// artifacts.BackendKey: artifacts.BackendInitializer,
-	"frontend": artifacts.FrontendInitializer,
-	"targz":    artifacts.TargzInitializer,
-	"deb":      artifacts.DebInitializer,
-	"rpm":      artifacts.RPMInitializer,
-	"docker":   artifacts.DockerInitializer,
+	"frontend":  artifacts.FrontendInitializer,
+	"npm":       artifacts.NPMPackagesInitializer,
+	"targz":     artifacts.TargzInitializer,
+	"zip":       artifacts.ZipInitializer,
+	"deb":       artifacts.DebInitializer,
+	"rpm":       artifacts.RPMInitializer,
+	"docker":    artifacts.DockerInitializer,
+	"storybook": artifacts.StorybookInitializer,
+	"exe":       artifacts.ExeInitializer,
 }

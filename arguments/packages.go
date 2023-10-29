@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/pipeline"
+	"github.com/grafana/grafana-build/stringutil"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,7 +22,12 @@ var BuildID = pipeline.Argument{
 		flagBuildID,
 	},
 	ValueFunc: func(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
-		return opts.CLIContext.String("build-id"), nil
+		v := opts.CLIContext.String("build-id")
+		if v == "" {
+			v = stringutil.RandomString(8)
+		}
+
+		return v, nil
 	},
 }
 

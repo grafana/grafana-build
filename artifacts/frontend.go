@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"path"
+	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -27,6 +27,7 @@ var FrontendInitializer = Initializer{
 
 type Frontend struct {
 	Enterprise bool
+	Version    string
 	Src        *dagger.Directory
 	YarnCache  *dagger.CacheVolume
 }
@@ -69,13 +70,13 @@ func (f *Frontend) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublish
 func (f *Frontend) Filename(ctx context.Context) (string, error) {
 	n := "grafana"
 	if f.Enterprise {
-		n = "enterprise"
+		n = "grafana-enterprise"
 	}
 
 	// Important note: this path is only used in two ways:
 	// 1. When requesting an artifact be built and exported, this is the path where it will be exported to
 	// 2. In a map to distinguish when the same artifact is being built more than once
-	return path.Join("bin", n, "public"), nil
+	return filepath.Join(f.Version, n, "public"), nil
 }
 
 func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
@@ -99,16 +100,22 @@ func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact strin
 		return nil, err
 	}
 
-	return NewFrontend(ctx, log, artifact, enterprise, src, cache)
+	version, err := state.String(ctx, arguments.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrontend(ctx, log, artifact, version, enterprise, src, cache)
 }
 
-func NewFrontend(ctx context.Context, log *slog.Logger, artifact string, enterprise bool, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
+func NewFrontend(ctx context.Context, log *slog.Logger, artifact, version string, enterprise bool, src *dagger.Directory, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          FrontendFlags,
 		Handler: &Frontend{
 			Enterprise: enterprise,
+			Version:    version,
 			Src:        src,
 			YarnCache:  cache,
 		},

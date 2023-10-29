@@ -136,7 +136,7 @@ func NewTarball(
 	if err != nil {
 		return nil, err
 	}
-	frontendArtifact, err := NewFrontend(ctx, log, artifact, enterprise, src, cache)
+	frontendArtifact, err := NewFrontend(ctx, log, version, artifact, enterprise, src, cache)
 	if err != nil {
 		return nil, err
 	}

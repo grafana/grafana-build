@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/containers"
 )
 
 // The Storer stores the result of artifacts.
@@ -19,7 +20,7 @@ type ArtifactStore interface {
 	StoreDirectory(ctx context.Context, a *Artifact, dir *dagger.Directory) error
 	Directory(ctx context.Context, a *Artifact) (*dagger.Directory, error)
 
-	Export(ctx context.Context, a *Artifact, destination string) error
+	Export(ctx context.Context, d *dagger.Client, a *Artifact, destination string, checksum bool) ([]string, error)
 	Exists(ctx context.Context, a *Artifact) (bool, error)
 }
 
@@ -75,10 +76,10 @@ func (m *MapArtifactStore) Directory(ctx context.Context, a *Artifact) (*dagger.
 	return v.(*dagger.Directory), nil
 }
 
-func (m *MapArtifactStore) Export(ctx context.Context, a *Artifact, dst string) error {
+func (m *MapArtifactStore) Export(ctx context.Context, d *dagger.Client, a *Artifact, dst string, checksum bool) ([]string, error) {
 	path, err := a.Handler.Filename(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	path = filepath.Join(dst, path)
@@ -86,28 +87,35 @@ func (m *MapArtifactStore) Export(ctx context.Context, a *Artifact, dst string) 
 	case ArtifactTypeFile:
 		f, err := m.File(ctx, a)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if _, err := f.Export(ctx, path); err != nil {
-			return err
+			return nil, err
 		}
 
-		return nil
+		if !checksum {
+			return []string{path}, nil
+		}
+		if _, err := containers.Sha256(d, f).Export(ctx, path+".sha256"); err != nil {
+			return nil, err
+		}
+
+		return []string{path, path + ".sha256"}, nil
 	case ArtifactTypeDirectory:
 		f, err := m.Directory(ctx, a)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if _, err := f.Export(ctx, path); err != nil {
-			return err
+			return nil, err
 		}
 
-		return nil
+		return []string{path}, nil
 	}
 
-	return fmt.Errorf("unrecognized artifact type: %d", a.Type)
+	return nil, fmt.Errorf("unrecognized artifact type: %d", a.Type)
 }
 
 func (m *MapArtifactStore) Exists(ctx context.Context, a *Artifact) (bool, error) {

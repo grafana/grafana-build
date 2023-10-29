@@ -50,29 +50,30 @@ const (
 	DistIllumosAMD64v4 Distribution = "illumos/amd64/v4"
 )
 const (
-	DistLinux386          Distribution = "linux/386"
-	DistLinux386SSE2      Distribution = "linux/386/sse2"
-	DistLinux386SoftFloat Distribution = "linux/386/softfloat"
-	DistLinuxAMD64        Distribution = "linux/amd64"
-	DistLinuxAMD64v1      Distribution = "linux/amd64/v1"
-	DistLinuxAMD64v2      Distribution = "linux/amd64/v2"
-	DistLinuxAMD64v3      Distribution = "linux/amd64/v3"
-	DistLinuxAMD64v4      Distribution = "linux/amd64/v4"
-	DistLinuxAMD64Dynamic Distribution = "linux/amd64/dynamic"
-	DistLinuxARM          Distribution = "linux/arm"
-	DistLinuxARMv6        Distribution = "linux/arm/v6"
-	DistLinuxARMv7        Distribution = "linux/arm/v7"
-	DistLinuxARM64        Distribution = "linux/arm64"
-	DistLinuxARM64Dynamic Distribution = "linux/arm64/dynamic"
-	DistLinuxLoong64      Distribution = "linux/loong64"
-	DistLinuxMips         Distribution = "linux/mips"
-	DistLinuxMips64       Distribution = "linux/mips64"
-	DistLinuxMips64le     Distribution = "linux/mips64le"
-	DistLinuxMipsle       Distribution = "linux/mipsle"
-	DistLinuxPPC64        Distribution = "linux/ppc64"
-	DistLinuxPPC64le      Distribution = "linux/ppc64le"
-	DistLinuxRISCV64      Distribution = "linux/riscv64"
-	DistLinuxS390X        Distribution = "linux/s390x"
+	DistLinux386              Distribution = "linux/386"
+	DistLinux386SSE2          Distribution = "linux/386/sse2"
+	DistLinux386SoftFloat     Distribution = "linux/386/softfloat"
+	DistLinuxAMD64            Distribution = "linux/amd64"
+	DistLinuxAMD64v1          Distribution = "linux/amd64/v1"
+	DistLinuxAMD64v2          Distribution = "linux/amd64/v2"
+	DistLinuxAMD64v3          Distribution = "linux/amd64/v3"
+	DistLinuxAMD64v4          Distribution = "linux/amd64/v4"
+	DistLinuxAMD64Dynamic     Distribution = "linux/amd64/dynamic"
+	DistLinuxAMD64DynamicMusl Distribution = "linux/amd64/dynamic-musl"
+	DistLinuxARM              Distribution = "linux/arm"
+	DistLinuxARMv6            Distribution = "linux/arm/v6"
+	DistLinuxARMv7            Distribution = "linux/arm/v7"
+	DistLinuxARM64            Distribution = "linux/arm64"
+	DistLinuxARM64Dynamic     Distribution = "linux/arm64/dynamic"
+	DistLinuxLoong64          Distribution = "linux/loong64"
+	DistLinuxMips             Distribution = "linux/mips"
+	DistLinuxMips64           Distribution = "linux/mips64"
+	DistLinuxMips64le         Distribution = "linux/mips64le"
+	DistLinuxMipsle           Distribution = "linux/mipsle"
+	DistLinuxPPC64            Distribution = "linux/ppc64"
+	DistLinuxPPC64le          Distribution = "linux/ppc64le"
+	DistLinuxRISCV64          Distribution = "linux/riscv64"
+	DistLinuxS390X            Distribution = "linux/s390x"
 )
 
 const (
@@ -182,8 +183,10 @@ func PackageArch(d Distribution) string {
 
 // From the distribution, try to assume the docker platform (used in Docker's --platform argument or the (dagger.ContainerOpts).Platform field
 func Platform(d Distribution) dagger.Platform {
+	p := strings.ReplaceAll(string(d), "/dynamic-musl", "")
+	p = strings.ReplaceAll(p, "/dynamic", "")
 	// for now let's just try to use the distro name as the platform and see if that works...
-	return dagger.Platform(strings.ReplaceAll(string(d), "/dynamic", ""))
+	return dagger.Platform(p)
 }
 
 type DistroBuildOptsFunc func(distro Distribution, experiments []string, tags []string) *GoBuildOpts
@@ -304,14 +307,15 @@ func BuildOptsWithoutZig(distro Distribution, experiments []string, tags []strin
 }
 
 var ZigTargets = map[Distribution]string{
-	DistLinuxAMD64:        "x86_64-linux-musl",
-	DistLinuxAMD64Dynamic: "x86_64-linux-gnu",
-	DistLinuxARM64:        "aarch64-linux-musl",
-	DistLinuxARM64Dynamic: "aarch64-linux-musl",
-	DistLinuxARM:          "arm-linux-musleabihf",
-	DistLinuxARMv6:        "arm-linux-musleabihf",
-	DistLinuxARMv7:        "arm-linux-musleabihf",
-	DistLinuxRISCV64:      "riscv64-linux-musl",
+	DistLinuxAMD64:            "x86_64-linux-musl",
+	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
+	DistLinuxAMD64DynamicMusl: "x86_64-linux-musl",
+	DistLinuxARM64:            "aarch64-linux-musl",
+	DistLinuxARM64Dynamic:     "aarch64-linux-musl",
+	DistLinuxARM:              "arm-linux-musleabihf",
+	DistLinuxARMv6:            "arm-linux-musleabihf",
+	DistLinuxARMv7:            "arm-linux-musleabihf",
+	DistLinuxRISCV64:          "riscv64-linux-musl",
 }
 
 var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
@@ -331,8 +335,9 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistDarwinAMD64: BuildOptsWithoutZig,
 	DistDarwinARM64: BuildOptsWithoutZig,
 
-	DistWindowsAMD64: BuildOptsWithoutZig,
-	DistWindowsARM64: BuildOptsWithoutZig,
+	DistWindowsAMD64:          BuildOptsWithoutZig,
+	DistWindowsARM64:          BuildOptsWithoutZig,
+	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
 
 func DistroOptsLogger(log *slog.Logger, fn DistroBuildOptsFunc) func(distro Distribution, experiments []string, tags []string) *GoBuildOpts {

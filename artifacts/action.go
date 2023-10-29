@@ -84,15 +84,17 @@ func Action(r Registerer, c *cli.Context) error {
 			return err
 		}
 		log.Info("Done adding artifact")
+
 	}
 
+	checksum := c.Bool("checksum")
 	wg := &errgroup.Group{}
 	sm := semaphore.NewWeighted(parallel)
 	log.Info("Exporting artifacts...")
 	// Export the files from the dag, causing the containers to trigger.
 	for _, v := range artifacts {
 		log := log.With("artifact", v.ArtifactString)
-		wg.Go(ExportArtifactFunc(ctx, sm, log, v, store, destination))
+		wg.Go(ExportArtifactFunc(ctx, client, sm, log, v, store, destination, checksum))
 	}
 
 	return wg.Wait()
@@ -172,7 +174,7 @@ func BuildArtifactDirectory(ctx context.Context, a *pipeline.Artifact, opts *pip
 	return a.Handler.BuildDir(ctx, builder, opts)
 }
 
-func ExportArtifactFunc(ctx context.Context, sm *semaphore.Weighted, log *slog.Logger, v *pipeline.Artifact, store pipeline.ArtifactStore, dst string) func() error {
+func ExportArtifactFunc(ctx context.Context, d *dagger.Client, sm *semaphore.Weighted, log *slog.Logger, v *pipeline.Artifact, store pipeline.ArtifactStore, dst string, checksum bool) func() error {
 	return func() error {
 		log.Info("Started exporting artifact...")
 
@@ -191,9 +193,15 @@ func ExportArtifactFunc(ctx context.Context, sm *semaphore.Weighted, log *slog.L
 		}
 
 		log.Info("Exporting artifact")
-		if err := store.Export(ctx, v, dst); err != nil {
+		paths, err := store.Export(ctx, d, v, dst, checksum)
+		if err != nil {
 			return fmt.Errorf("error exporting artifact '%s': %w", filename, err)
 		}
+
+		for _, v := range paths {
+			fmt.Fprintf(Stdout, "%s\n", v)
+		}
+
 		log.Info("Done exporting artifact")
 
 		return nil

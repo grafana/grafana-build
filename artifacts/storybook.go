@@ -3,7 +3,7 @@ package artifacts
 import (
 	"context"
 	"log/slog"
-	"path"
+	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -18,6 +18,11 @@ var (
 		arguments.YarnCacheDirectory,
 	}
 )
+
+var StorybookInitializer = Initializer{
+	InitializerFunc: NewStorybookFromString,
+	Arguments:       StorybookArguments,
+}
 
 type Storybook struct {
 	Src       *dagger.Directory
@@ -64,7 +69,7 @@ func (f *Storybook) Filename(ctx context.Context) (string, error) {
 	// Important note: this path is only used in two ways:
 	// 1. When requesting an artifact be built and exported, this is the path where it will be exported to
 	// 2. In a map to distinguish when the same artifact is being built more than once
-	return path.Join("bin", "storybook"), nil
+	return filepath.Join(f.Version, "storybook"), nil
 }
 
 func NewStorybookFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {

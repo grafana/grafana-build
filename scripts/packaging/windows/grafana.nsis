@@ -21,7 +21,6 @@ Name "${APPNAME}"
 SetFont Arial 10
 AddBrandingImage left 100u
 
-!define MUI_ICON "winimg\grafana_icon.ico"
 !define MUI_PAGE_HEADER_TEXT "Install ${APPNAME}"
 !define MUI_UNCONFIRMPAGE_TEXT_TOP "Warning: Uninstalling Grafana"
 

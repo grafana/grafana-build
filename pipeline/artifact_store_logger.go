@@ -80,21 +80,22 @@ func (m *ArtifactStoreLogger) Directory(ctx context.Context, a *Artifact) (*dagg
 	return dir, nil
 }
 
-func (m *ArtifactStoreLogger) Export(ctx context.Context, a *Artifact, dst string) error {
+func (m *ArtifactStoreLogger) Export(ctx context.Context, d *dagger.Client, a *Artifact, dst string, checksum bool) ([]string, error) {
 	fn, err := a.Handler.Filename(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	log := m.Log.With("artifact", a.ArtifactString, "path", fn, "destination", dst)
+	log := m.Log.With("artifact", a.ArtifactString, "path", fn, "destination", dst, "checksum", checksum)
 
 	log.DebugContext(ctx, "exporting artifact...")
-	if err := m.Store.Export(ctx, a, dst); err != nil {
+	path, err := m.Store.Export(ctx, d, a, dst, checksum)
+	if err != nil {
 		log.DebugContext(ctx, "error exporting artifact", "error", err)
-		return err
+		return nil, err
 	}
 
 	log.DebugContext(ctx, "done exporting artifact")
-	return err
+	return path, nil
 }
 
 func (m *ArtifactStoreLogger) Exists(ctx context.Context, a *Artifact) (bool, error) {
