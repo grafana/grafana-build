@@ -103,6 +103,7 @@ func (b *Backend) Filename(ctx context.Context) (string, error) {
 
 type NewBackendOpts struct {
 	Name           packages.Name
+	Enterprise     bool
 	Src            *dagger.Directory
 	Distribution   backend.Distribution
 	GoVersion      string
@@ -117,6 +118,7 @@ type NewBackendOpts struct {
 func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *NewBackendOpts) (*pipeline.Artifact, error) {
 	bopts := &backend.BuildOpts{
 		Version:           opts.Version,
+		Enterprise:        opts.Enterprise,
 		ExperimentalFlags: opts.Experiments,
 		Tags:              opts.Tags,
 		Static:            opts.Static,

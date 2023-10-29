@@ -132,6 +132,7 @@ func NewTarball(
 		GoVersion:      goVersion,
 		ViceroyVersion: viceroyVersion,
 		Experiments:    experiments,
+		Enterprise:     enterprise,
 	})
 	if err != nil {
 		return nil, err

@@ -19,10 +19,18 @@ import (
 const BusyboxImage = "busybox:1.36"
 
 func InitializeEnterprise(d *dagger.Client, grafana *dagger.Directory, enterprise *dagger.Directory) *dagger.Directory {
+	hash := d.Container().From("alpine/git").
+		WithDirectory("/src/grafana-enterprise", enterprise).
+		WithWorkdir("/src/grafana-enterprise").
+		WithEntrypoint([]string{}).
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .enterprise-commit"}).
+		File("/src/grafana-enterprise/.buildinfo.enterprise-commit")
+
 	return d.Container().From(BusyboxImage).
 		WithDirectory("/src/grafana", grafana).
 		WithDirectory("/src/grafana-enterprise", enterprise).
 		WithWorkdir("/src/grafana-enterprise").
+		WithFile("/src/grafana/.buildinfo.enterprise-commit", hash).
 		WithExec([]string{"/bin/sh", "build.sh"}).
 		WithExec([]string{"cp", "LICENSE", "../grafana"}).
 		Directory("/src/grafana")

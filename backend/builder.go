@@ -17,6 +17,7 @@ type BuildOpts struct {
 	Tags              []string
 	WireTag           string
 	Static            bool
+	Enterprise        bool
 }
 
 func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc, error) {
