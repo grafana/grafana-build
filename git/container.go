@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
-	"github.com/grafana/grafana-build/errorutil"
+	"github.com/grafana/grafana-build/containers"
 )
 
 const GitImage = "alpine/git"
@@ -115,7 +115,7 @@ func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
 		return nil, err
 	}
 
-	container, err = errorutil.ExitError(context.Background(), container)
+	container, err = containers.ExitError(context.Background(), container)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 		return nil, err
 	}
 
-	container, err = errorutil.ExitError(context.Background(), container)
+	container, err = containers.ExitError(context.Background(), container)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func CloneWithSSHAuth(d *dagger.Client, sshKeyPath, url, ref string) (*dagger.Di
 		return nil, err
 	}
 
-	container, err = errorutil.ExitError(context.Background(), container)
+	container, err = containers.ExitError(context.Background(), container)
 	if err != nil {
 		return nil, err
 	}

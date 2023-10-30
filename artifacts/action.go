@@ -26,6 +26,9 @@ func Action(r Registerer, c *cli.Context) error {
 		}))
 		parallel    = c.Int64("parallel")
 		destination = c.String("destination")
+		platform    = c.String("platform")
+		verify      = c.Bool("verify")
+		checksum    = c.Bool("checksum")
 	)
 
 	if len(artifactStrings) == 0 {
@@ -68,11 +71,11 @@ func Action(r Registerer, c *cli.Context) error {
 		Client:   client,
 		Log:      log,
 		State:    state,
-		Platform: dagger.Platform(c.String("platform")),
+		Platform: dagger.Platform(platform),
 		Store:    store,
 	}
 
-	// Build each artifact, essentially constructing a dag.
+	// Build each artifact and their dependencies, essentially constructing a dag using Dagger.
 	for i, v := range artifacts {
 		filename, err := v.Handler.Filename(ctx)
 		if err != nil {
@@ -84,21 +87,27 @@ func Action(r Registerer, c *cli.Context) error {
 			return err
 		}
 		log.Info("Done adding artifact")
-
 	}
 
-	checksum := c.Bool("checksum")
 	wg := &errgroup.Group{}
 	sm := semaphore.NewWeighted(parallel)
 	log.Info("Exporting artifacts...")
 	// Export the files from the dag, causing the containers to trigger.
 	for _, v := range artifacts {
-		log := log.With("artifact", v.ArtifactString)
+		log := log.With("artifact", v.ArtifactString, "action", "export")
 		wg.Go(ExportArtifactFunc(ctx, client, sm, log, v, store, destination, checksum))
+	}
+	if verify {
+		// Export the files from the dag, causing the containers to trigger.
+		for _, v := range artifacts {
+			log := log.With("artifact", v.ArtifactString, "action", "validate")
+			wg.Go(VerifyArtifactFunc(ctx, client, sm, log, v, store, destination))
+		}
 	}
 
 	return wg.Wait()
 }
+
 func BuildArtifact(ctx context.Context, log *slog.Logger, a *pipeline.Artifact, opts *pipeline.ArtifactContainerOpts) error {
 	store := opts.Store
 	exists, err := store.Exists(ctx, a)
@@ -204,6 +213,50 @@ func ExportArtifactFunc(ctx context.Context, d *dagger.Client, sm *semaphore.Wei
 
 		log.Info("Done exporting artifact")
 
+		return nil
+	}
+}
+
+func verifyArtifact(ctx context.Context, client *dagger.Client, v *pipeline.Artifact, store pipeline.ArtifactStore) error {
+	switch v.Type {
+	case pipeline.ArtifactTypeDirectory:
+		file, err := store.Directory(ctx, v)
+		if err != nil {
+			return err
+		}
+
+		if err := v.Handler.VerifyDirectory(ctx, client, file); err != nil {
+			return err
+		}
+	case pipeline.ArtifactTypeFile:
+		file, err := store.File(ctx, v)
+		if err != nil {
+			return err
+		}
+
+		if err := v.Handler.VerifyFile(ctx, client, file); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func VerifyArtifactFunc(ctx context.Context, d *dagger.Client, sm *semaphore.Weighted, log *slog.Logger, v *pipeline.Artifact, store pipeline.ArtifactStore, dst string) func() error {
+	return func() error {
+		log.Info("Started verifying artifact...")
+
+		log.Info("Acquiring semaphore")
+		if err := sm.Acquire(ctx, 1); err != nil {
+			log.Info("Error acquiring semaphore", "error", err)
+			return err
+		}
+		log.Info("Acquired semaphore")
+		defer sm.Release(1)
+
+		if err := verifyArtifact(ctx, d, v, store); err != nil {
+			return err
+		}
 		return nil
 	}
 }

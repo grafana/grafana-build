@@ -90,11 +90,25 @@ func (a *ArtifactHandlerLogger) Filename(ctx context.Context) (string, error) {
 }
 
 func (a *ArtifactHandlerLogger) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	a.log.InfoContext(ctx, "verifying file...")
+	if err := a.Handler.VerifyFile(ctx, client, file); err != nil {
+		a.log.InfoContext(ctx, "error verifying file", "error", err)
+		return err
+	}
+	a.log.InfoContext(ctx, "done verifying file")
+
+	return nil
 }
 
 func (a *ArtifactHandlerLogger) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
-	panic("not implemented") // TODO: Implement
+	a.log.InfoContext(ctx, "verifying directory...")
+	if err := a.Handler.VerifyDirectory(ctx, client, dir); err != nil {
+		a.log.InfoContext(ctx, "error verifying file", "error", err)
+		return err
+	}
+	a.log.InfoContext(ctx, "done verifying directory")
+
+	return nil
 }
 
 func ArtifactWithLogging(ctx context.Context, log *slog.Logger, a *Artifact) (*Artifact, error) {

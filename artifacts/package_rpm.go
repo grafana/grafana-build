@@ -31,8 +31,8 @@ var RPMInitializer = Initializer{
 	Arguments: arguments.Join(
 		TargzArguments,
 		[]pipeline.Argument{
-			arguments.GPGPrivateKey,
 			arguments.GPGPublicKey,
+			arguments.GPGPrivateKey,
 			arguments.GPGPassphrase,
 		},
 	),
@@ -50,6 +50,9 @@ type RPM struct {
 	GPGPublicKey  string
 	GPGPrivateKey string
 	GPGPassphrase string
+
+	Src       *dagger.Directory
+	YarnCache *dagger.CacheVolume
 
 	Tarball *pipeline.Artifact
 }
@@ -131,7 +134,7 @@ func (d *RPM) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *RPM) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return fpm.VerifyRpm(ctx, client, file, d.Src, d.YarnCache, d.Distribution, d.Enterprise, d.Sign, d.GPGPublicKey, d.GPGPrivateKey, d.GPGPassphrase)
 }
 
 func (d *RPM) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
@@ -152,6 +155,14 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 		return nil, err
 	}
 	sign, err := options.Bool(flags.Sign)
+	if err != nil {
+		return nil, err
+	}
+	src, err := state.Directory(ctx, arguments.GrafanaDirectory)
+	if err != nil {
+		return nil, err
+	}
+	yarnCache, err := state.CacheVolume(ctx, arguments.YarnCacheDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +208,8 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 			Enterprise:    p.Enterprise,
 			Tarball:       tarball,
 			Sign:          sign,
+			Src:           src,
+			YarnCache:     yarnCache,
 			GPGPublicKey:  gpgPublicKey,
 			GPGPrivateKey: gpgPrivateKey,
 			GPGPassphrase: gpgPassphrase,

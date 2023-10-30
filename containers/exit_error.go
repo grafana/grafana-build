@@ -1,4 +1,4 @@
-package errorutil
+package containers
 
 import (
 	"context"
@@ -24,5 +24,6 @@ func ExitError(ctx context.Context, container *dagger.Container) (*dagger.Contai
 	if errors.As(err, &e) {
 		return container, fmt.Errorf("%w\nstdout: %s\nstderr: %s", ErrorNonZero, e.Stdout, e.Stderr)
 	}
+
 	return container, err
 }

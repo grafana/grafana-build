@@ -7,7 +7,6 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/errorutil"
 	"github.com/grafana/grafana-build/git"
 )
 
@@ -78,7 +77,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 		})
 	}
 
-	if _, err := errorutil.ExitError(ctx, container); err != nil {
+	if _, err := containers.ExitError(ctx, container); err != nil {
 		return fmt.Errorf("container did not exit successfully: %w", err)
 	}
 

@@ -102,7 +102,7 @@ func (b *Backend) Filename(ctx context.Context) (string, error) {
 }
 
 func (b *Backend) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (b *Backend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {

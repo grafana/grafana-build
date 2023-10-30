@@ -8,8 +8,8 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
+	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/daggerutil"
-	"github.com/grafana/grafana-build/errorutil"
 	"github.com/grafana/grafana-build/frontend"
 	"github.com/grafana/grafana-build/git"
 	"github.com/grafana/grafana-build/pipeline"
@@ -122,7 +122,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 	log.Println("Installing yarn deps for grafana dir")
 	log.Println("Installing yarn deps for grafana dir")
 	log.Println("Installing yarn deps for grafana dir")
-	if _, err := errorutil.ExitError(ctx, container); err != nil {
+	if _, err := containers.ExitError(ctx, container); err != nil {
 		return nil, err
 	}
 	log.Println("Done installing yarn deps for grafana dir")

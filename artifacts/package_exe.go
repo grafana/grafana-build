@@ -78,7 +78,7 @@ func (d *Exe) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *Exe) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (d *Exe) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {

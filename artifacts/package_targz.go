@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana-build/arguments"
 	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/e2e"
 	"github.com/grafana/grafana-build/flags"
+	"github.com/grafana/grafana-build/frontend"
 	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
 )
@@ -43,8 +45,10 @@ type Tarball struct {
 	Name         packages.Name
 	BuildID      string
 	Version      string
+	Enterprise   bool
 
-	Grafana *dagger.Directory
+	Grafana   *dagger.Directory
+	YarnCache *dagger.CacheVolume
 
 	// Dependent artifacts
 	Backend        *pipeline.Artifact
@@ -162,6 +166,8 @@ func NewTarball(
 		Version:      version,
 		BuildID:      buildID,
 		Grafana:      src,
+		Enterprise:   enterprise,
+		YarnCache:    cache,
 
 		Backend:        backendArtifact,
 		Frontend:       frontendArtifact,
@@ -273,7 +279,7 @@ func (t *Tarball) Publisher(ctx context.Context, opts *pipeline.ArtifactContaine
 }
 
 func (t *Tarball) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
@@ -281,7 +287,7 @@ func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishD
 }
 
 func (t *Tarball) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return verifyTarball(ctx, client, file, t.Grafana, t.YarnCache, t.Distribution, t.Enterprise)
 }
 
 func (t *Tarball) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
@@ -300,4 +306,46 @@ func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 
 func (t *Tarball) Filename(ctx context.Context) (string, error) {
 	return packages.FileName(t.Name, t.Version, t.BuildID, t.Distribution, "tar.gz")
+}
+
+func verifyTarball(
+	ctx context.Context,
+	d *dagger.Client,
+	pkg *dagger.File,
+	src *dagger.Directory,
+	yarnCache *dagger.CacheVolume,
+	distro backend.Distribution,
+	enterprise bool,
+) error {
+	nodeVersion, err := frontend.NodeVersion(d, src).Stdout(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get node version from source code: %w", err)
+	}
+
+	var (
+		platform = backend.Platform(distro)
+		archive  = containers.ExtractedArchive(d, pkg)
+	)
+
+	// This grafana service runs in the background for the e2e tests
+	service := d.Container(dagger.ContainerOpts{
+		Platform: platform,
+	}).From("ubuntu:22.04").
+		WithExec([]string{"apt-get", "update", "-yq"}).
+		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates", "libfontconfig1"}).
+		WithDirectory("/src", archive).
+		WithWorkdir("/src")
+
+	if err := e2e.ValidateLicense(ctx, service, "/src/LICENSE", enterprise); err != nil {
+		return err
+	}
+
+	service = service.
+		WithExec([]string{"./bin/grafana", "server"}).
+		WithExposedPort(3000)
+
+	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion)); err != nil {
+		return err
+	}
+	return nil
 }

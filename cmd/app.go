@@ -30,7 +30,6 @@ func (c *CLI) App() *cli.App {
 		Usage: "A build tool for Grafana",
 		Commands: []*cli.Command{
 			artifactsCommand,
-			ValidateCommand,
 			ProImageCommand,
 		},
 	}

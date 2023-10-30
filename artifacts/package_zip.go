@@ -56,11 +56,11 @@ func (d *Zip) BuildDir(ctx context.Context, builder *dagger.Container, opts *pip
 }
 
 func (d *Zip) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented") // TODO: Implement
+	return nil, nil
 }
 
 func (d *Zip) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (d *Zip) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
@@ -68,7 +68,7 @@ func (d *Zip) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOp
 }
 
 func (d *Zip) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (d *Zip) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {

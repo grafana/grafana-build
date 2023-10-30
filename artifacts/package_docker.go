@@ -53,6 +53,12 @@ type Docker struct {
 	TagFormat    string
 
 	Tarball *pipeline.Artifact
+
+	// Src is the Grafana source code for running e2e tests when validating.
+	// The grafana source should not be used for anything else when building a docker image. All files in the Docker image, including the Dockerfile, should be
+	// from the tar.gz file.
+	Src       *dagger.Directory
+	YarnCache *dagger.CacheVolume
 }
 
 func (d *Docker) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
@@ -125,7 +131,7 @@ func (d *Docker) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return docker.Verify(ctx, client, file, d.Src, d.YarnCache, d.Distro)
 }
 
 func (d *Docker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
@@ -204,6 +210,16 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 		format = boringFormat
 	}
 
+	src, err := state.Directory(ctx, arguments.GrafanaDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	yarnCache, err := state.CacheVolume(ctx, arguments.YarnCacheDirectory)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Info("initializing Docker artifact", "Org", org, "registry", registry, "repos", repos, "tag", format)
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -222,6 +238,9 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 			Org:          org,
 			Repositories: repos,
 			TagFormat:    format,
+
+			Src:       src,
+			YarnCache: yarnCache,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: DockerFlags,

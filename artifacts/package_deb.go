@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/arguments"
 	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/fpm"
 	"github.com/grafana/grafana-build/packages"
@@ -30,6 +31,10 @@ type Deb struct {
 	Enterprise   bool
 
 	Tarball *pipeline.Artifact
+
+	// Src is the source tree of Grafana. This should only be used in the verify function.
+	Src       *dagger.Directory
+	YarnCache *dagger.CacheVolume
 }
 
 func (d *Deb) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
@@ -100,7 +105,7 @@ func (d *Deb) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *Deb) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return fpm.VerifyDeb(ctx, client, file, d.Src, d.YarnCache, d.Distribution, d.Enterprise)
 }
 
 func (d *Deb) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
@@ -120,6 +125,14 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 	if err != nil {
 		return nil, err
 	}
+	src, err := state.Directory(ctx, arguments.GrafanaDirectory)
+	if err != nil {
+		return nil, err
+	}
+	yarnCache, err := state.CacheVolume(ctx, arguments.YarnCacheDirectory)
+	if err != nil {
+		return nil, err
+	}
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Handler: &Deb{
@@ -129,6 +142,8 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 			Distribution: p.Distribution,
 			Enterprise:   p.Enterprise,
 			Tarball:      tarball,
+			Src:          src,
+			YarnCache:    yarnCache,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: TargzFlags,

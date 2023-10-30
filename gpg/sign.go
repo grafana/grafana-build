@@ -22,11 +22,11 @@ type GPGOpts struct {
 	GPGPassphrase string
 }
 
-func Sign(d *dagger.Client, file *dagger.File, opts GPGOpts) *dagger.File {
+func Signer(d *dagger.Client, pubkey, privkey, passphrase string) *dagger.Container {
 	var (
-		gpgPassphraseSecret = d.SetSecret("gpg-passphrase", opts.GPGPassphrase)
-		gpgPrivateKeySecret = d.SetSecret("gpg-private-key", opts.GPGPrivateKey)
-		gpgPublicKeySecret  = d.SetSecret("gpg-public-key", opts.GPGPublicKey)
+		gpgPublicKeySecret  = d.SetSecret("gpg-public-key", pubkey)
+		gpgPrivateKeySecret = d.SetSecret("gpg-private-key", privkey)
+		gpgPassphraseSecret = d.SetSecret("gpg-passphrase", passphrase)
 	)
 
 	return d.Container().From("debian:sid").
@@ -35,12 +35,17 @@ func Sign(d *dagger.Client, file *dagger.File, opts GPGOpts) *dagger.File {
 		WithMountedSecret("/root/.rpmdb/privkeys/grafana.key", gpgPrivateKeySecret).
 		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
 		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
+		WithExec([]string{"rpm", "--import", "/root/.rpmdb/pubkeys/grafana.key"}).
 		WithNewFile("/root/.rpmmacros", dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 			Contents:    RPMMacros,
 		}).
+		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"})
+}
+
+func Sign(d *dagger.Client, file *dagger.File, opts GPGOpts) *dagger.File {
+	return Signer(d, opts.GPGPublicKey, opts.GPGPrivateKey, opts.GPGPassphrase).
 		WithMountedFile("/src/package.rpm", file).
-		WithExec([]string{"gpg", "--batch", "--yes", "--no-tty", "--allow-secret-key-import", "--import", "/root/.rpmdb/privkeys/grafana.key"}).
 		WithExec([]string{"rpm", "--addsign", "/src/package.rpm"}).
 		File("/src/package.rpm")
 }

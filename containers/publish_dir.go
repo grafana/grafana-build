@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
-	"github.com/grafana/grafana-build/errorutil"
 )
 
 func publishLocalDir(ctx context.Context, dir *dagger.Directory, dst string) error {
@@ -26,7 +25,7 @@ func publishGCSDir(ctx context.Context, d *dagger.Client, dir *dagger.Directory,
 		return err
 	}
 
-	if _, err := errorutil.ExitError(ctx, uploader); err != nil {
+	if _, err := ExitError(ctx, uploader); err != nil {
 		return err
 	}
 

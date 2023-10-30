@@ -46,7 +46,7 @@ func (f *BundledPlugins) BuildDir(ctx context.Context, builder *dagger.Container
 }
 
 func (f *BundledPlugins) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented") // TODO: Implement
+	return nil, nil
 }
 
 func (f *BundledPlugins) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
@@ -54,11 +54,11 @@ func (f *BundledPlugins) PublishFile(ctx context.Context, opts *pipeline.Artifac
 }
 
 func (f *BundledPlugins) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (f *BundledPlugins) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (f *BundledPlugins) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
