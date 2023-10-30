@@ -27,9 +27,12 @@ dagger run --silent go run ./cmd \
   -a docker:enterprise:linux/arm64 \
   -a docker:enterprise:linux/amd64:ubuntu \
   -a docker:enterprise:linux/arm64:ubuntu \
-  --checksum \
   --yarn-cache=${YARN_CACHE_FOLDER} \
+  --checksum \
+  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
+  --grafana-ref=main \
+  --enterprise-ref=main \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \

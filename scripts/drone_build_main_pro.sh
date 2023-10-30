@@ -4,7 +4,6 @@ set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
-
 # Build all of the grafana.tar.gz packages.
 dagger run --silent go run ./cmd \
   artifacts \
@@ -15,12 +14,15 @@ dagger run --silent go run ./cmd \
   -a frontend:enterprise \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
+  --verify \
+  --build-id=${DRONE_BUILD_NUMBER} \
+  --grafana-ref=${SOURCE_COMMIT} \
   --enterprise-ref=${DRONE_COMMIT} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
-  --grafana-ref=${SOURCE_COMMIT} \
-  --build-id=${DRONE_BUILD_NUMBER} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
+  --ubuntu-base=${UBUNTU_BASE} \
+  --alpine-base=${ALPINE_BASE} \
   --destination=${local_dst} > assets.txt
 
 echo "Final list of artifacts:"

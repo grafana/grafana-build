@@ -4,7 +4,6 @@ set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
-
 dagger run --silent go run ./cmd \
  artifacts \
 : -a targz:enterprise:linux/amd64 \
@@ -15,8 +14,11 @@ dagger run --silent go run ./cmd \
   -a docker:enterprise:linux/arm64 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
+  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
-  --grafana-dir=${GRAFANA_DIR} \
+  --grafana-ref=${SOURCE_COMMIT} \
+  --enterprise-ref=${DRONE_COMMIT} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
   --ubuntu-base=${UBUNTU_BASE} \
