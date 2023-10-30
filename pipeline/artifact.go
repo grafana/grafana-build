@@ -54,6 +54,9 @@ type ArtifactHandler interface {
 	// For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
 	// `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
 	Filename(ctx context.Context) (string, error)
+
+	VerifyFile(context.Context, *dagger.Client, *dagger.File) error
+	VerifyDirectory(context.Context, *dagger.Client, *dagger.Directory) error
 }
 
 type Artifact struct {

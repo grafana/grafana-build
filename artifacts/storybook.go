@@ -60,6 +60,14 @@ func (f *Storybook) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublis
 	panic("not implemented") // TODO: Implement
 }
 
+func (f *Storybook) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (f *Storybook) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 // Filename should return a deterministic file or folder name that this build will produce.
 // This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
 // also affect the filename to ensure that there are no collisions.

@@ -280,6 +280,14 @@ func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishD
 	panic("not implemented") // TODO: Implement
 }
 
+func (t *Tarball) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (t *Tarball) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
 	return []*pipeline.Artifact{
 		t.Backend,

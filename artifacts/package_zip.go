@@ -67,6 +67,14 @@ func (d *Zip) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOp
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *Zip) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (d *Zip) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 // Filename should return a deterministic file or folder name that this build will produce.
 // This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
 // also affect the filename to ensure that there are no collisions.

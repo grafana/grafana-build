@@ -124,6 +124,14 @@ func (d *Docker) Filename(ctx context.Context) (string, error) {
 	return packages.FileName(d.Name, d.Version, d.BuildID, d.Distro, ext)
 }
 
+func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (d *Docker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	tarball, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {

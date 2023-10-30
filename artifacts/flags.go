@@ -26,9 +26,10 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Value: true,
 	}
 
-	platformFlag := &cli.StringFlag{
-		Name:  "platform",
-		Value: "linux/amd64",
+	verifyFlag := &cli.BoolFlag{
+		Name:  "verify",
+		Usage: "If true, then the artifacts that are built will be verified with e2e tests or similar after being exported, depending on the artifact",
+		Value: true,
 	}
 
 	flags := flags.Join(
@@ -36,7 +37,8 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 			artifactsFlag,
 			buildFlag,
 			publishFlag,
-			platformFlag,
+			verifyFlag,
+			flags.Platform,
 		},
 		flags.PublishFlags,
 		flags.ConcurrencyFlags,

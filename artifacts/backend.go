@@ -101,6 +101,14 @@ func (b *Backend) Filename(ctx context.Context) (string, error) {
 	return filepath.Join("bin", string(b.Name), string(b.Distribution)), nil
 }
 
+func (b *Backend) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (b *Backend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 type NewBackendOpts struct {
 	Name           packages.Name
 	Enterprise     bool

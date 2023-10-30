@@ -79,6 +79,14 @@ func (f *Frontend) Filename(ctx context.Context) (string, error) {
 	return filepath.Join(f.Version, n, "public"), nil
 }
 
+func (f *Frontend) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (f *Frontend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	options, err := pipeline.ParseFlags(artifact, FrontendFlags)
 	if err != nil {

@@ -89,6 +89,14 @@ func (a *ArtifactHandlerLogger) Filename(ctx context.Context) (string, error) {
 	return f, nil
 }
 
+func (a *ArtifactHandlerLogger) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (a *ArtifactHandlerLogger) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	panic("not implemented") // TODO: Implement
+}
+
 func ArtifactWithLogging(ctx context.Context, log *slog.Logger, a *Artifact) (*Artifact, error) {
 	h := a.Handler
 	f, err := a.Handler.Filename(ctx)
