@@ -177,31 +177,6 @@ var FlagDistros = &cli.StringSliceFlag{
 	Value: cli.NewStringSlice(flags.DefaultDistros...),
 }
 
-var GPGPublicFlag = &cli.StringFlag{
-	Name:  "gpg-public-key-base64",
-	Usage: "Provides a public key encoded in base64 for GPG signing",
-}
-
-var GPGPublicFlags = []cli.Flag{
-	GPGPublicFlag,
-}
-
-var GPGFlags = []cli.Flag{
-	GPGPublicFlag,
-	&cli.StringFlag{
-		Name:  "gpg-private-key-base64",
-		Usage: "Provides a private key encoded in base64 for GPG signing",
-	},
-	&cli.StringFlag{
-		Name:  "gpg-passphrase",
-		Usage: "Provides a private key passphrase encoded in base64 for GPG signing",
-	},
-	&cli.BoolFlag{
-		Name:  "sign",
-		Usage: "Enable GPG signing of RPM packages",
-	},
-}
-
 var ConcurrencyFlags = flags.ConcurrencyFlags
 
 // PackageFlags are flags that are used when building packages or similar artifacts (like binaries) for different distributions

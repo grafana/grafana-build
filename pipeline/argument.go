@@ -218,9 +218,9 @@ func (a Argument) MustCacheVolume(ctx context.Context, opts *ArgumentOpts) *dagg
 	return v
 }
 
-func StringFlagValueFunc(f cli.Flag) func(context.Context, *ArgumentOpts) (any, error) {
+func StringFlagValueFunc(f *cli.StringFlag) func(context.Context, *ArgumentOpts) (any, error) {
 	return func(ctx context.Context, opts *ArgumentOpts) (any, error) {
-		return opts.CLIContext.String(f.Names()[0]), nil
+		return opts.CLIContext.String(f.Name), nil
 	}
 }
 

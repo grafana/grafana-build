@@ -2,23 +2,40 @@ package artifacts
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"log/slog"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/arguments"
 	"github.com/grafana/grafana-build/backend"
+	"github.com/grafana/grafana-build/flags"
 	"github.com/grafana/grafana-build/fpm"
+	"github.com/grafana/grafana-build/gpg"
 	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
 )
 
 var (
 	RPMArguments = TargzArguments
-	RPMFlags     = TargzFlags
+	RPMFlags     = flags.JoinFlags(
+		TargzFlags,
+		[]pipeline.Flag{
+			flags.SignFlag,
+		},
+	)
 )
 
 var RPMInitializer = Initializer{
 	InitializerFunc: NewRPMFromString,
-	Arguments:       TargzArguments,
+	Arguments: arguments.Join(
+		TargzArguments,
+		[]pipeline.Argument{
+			arguments.GPGPrivateKey,
+			arguments.GPGPublicKey,
+			arguments.GPGPassphrase,
+		},
+	),
 }
 
 // PacakgeRPM uses a built tar.gz package to create a .rpm installer for RHEL-ish Linux distributions.
@@ -28,6 +45,11 @@ type RPM struct {
 	BuildID      string
 	Distribution backend.Distribution
 	Enterprise   bool
+	Sign         bool
+
+	GPGPublicKey  string
+	GPGPrivateKey string
+	GPGPassphrase string
 
 	Tarball *pipeline.Artifact
 }
@@ -48,7 +70,7 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		return nil, err
 	}
 
-	return fpm.Build(builder, fpm.BuildOpts{
+	rpm := fpm.Build(builder, fpm.BuildOpts{
 		Name:         d.Name,
 		Enterprise:   d.Enterprise,
 		Version:      d.Version,
@@ -71,7 +93,16 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 			"--rpm-digest=sha256",
 		},
 		EnvFolder: "/pkg/etc/sysconfig",
-	}, targz), nil
+	}, targz)
+
+	if !d.Sign {
+		return rpm, nil
+	}
+	return gpg.Sign(opts.Client, rpm, gpg.GPGOpts{
+		GPGPublicKey:  d.GPGPublicKey,
+		GPGPrivateKey: d.GPGPrivateKey,
+		GPGPassphrase: d.GPGPassphrase,
+	}), nil
 }
 
 func (d *RPM) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
@@ -112,15 +143,55 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 	if err != nil {
 		return nil, err
 	}
+	sign, err := options.Bool(flags.Sign)
+	if err != nil {
+		return nil, err
+	}
+
+	var gpgPublicKey, gpgPrivateKey, gpgPassphrase string
+
+	if sign {
+		pubb64, err := state.String(ctx, arguments.GPGPublicKey)
+		if err != nil {
+			return nil, err
+		}
+		pub, err := base64.StdEncoding.DecodeString(pubb64)
+		if err != nil {
+			return nil, fmt.Errorf("gpg-private-key-base64 cannot be decoded %w", err)
+		}
+
+		privb64, err := state.String(ctx, arguments.GPGPrivateKey)
+		if err != nil {
+			return nil, err
+		}
+		priv, err := base64.StdEncoding.DecodeString(privb64)
+		if err != nil {
+			return nil, fmt.Errorf("gpg-private-key-base64 cannot be decoded %w", err)
+		}
+
+		pass, err := state.String(ctx, arguments.GPGPassphrase)
+		if err != nil {
+			return nil, err
+		}
+
+		gpgPublicKey = string(pub)
+		gpgPrivateKey = string(priv)
+		gpgPassphrase = pass
+	}
+
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Handler: &RPM{
-			Name:         p.Name,
-			Version:      p.Version,
-			BuildID:      p.BuildID,
-			Distribution: p.Distribution,
-			Enterprise:   p.Enterprise,
-			Tarball:      tarball,
+			Name:          p.Name,
+			Version:       p.Version,
+			BuildID:       p.BuildID,
+			Distribution:  p.Distribution,
+			Enterprise:    p.Enterprise,
+			Tarball:       tarball,
+			Sign:          sign,
+			GPGPublicKey:  gpgPublicKey,
+			GPGPrivateKey: gpgPrivateKey,
+			GPGPassphrase: gpgPassphrase,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: TargzFlags,

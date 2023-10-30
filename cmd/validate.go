@@ -21,7 +21,7 @@ var ValidateSignatureCommand = &cli.Command{
 	Usage:  "Validates if a .rpm package is properly signed using the provided GPG public key",
 	Flags: JoinFlagsWithDefault(
 		PackageInputFlags,
-		GPGPublicFlags,
+		// GPGPublicFlags,
 		GCPFlags,
 	),
 }

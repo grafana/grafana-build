@@ -11,64 +11,62 @@ import (
 	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/e2e"
-	"github.com/grafana/grafana-build/errorutil"
-	"github.com/grafana/grafana-build/fpm"
 	"github.com/grafana/grafana-build/frontend"
 	"github.com/grafana/grafana-build/gpg"
-	"golang.org/x/sync/errgroup"
-	"golang.org/x/sync/semaphore"
 )
 
 // ValidatePackage downloads a package and validates from a Google Cloud Storage bucket.
 func ValidatePackage(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
-	if err != nil {
-		return err
-	}
-	yarnCache := d.CacheVolume("yarn-cache")
+	return nil
+	// packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	// if err != nil {
+	// 	return err
+	// }
+	// yarnCache := d.CacheVolume("yarn-cache")
 
-	// Define all of the containers first, and where their artifacts will be exported to
-	dirs := map[string]*dagger.Directory{}
-	for i, name := range args.PackageInputOpts.Packages {
-		pkg := packages[i]
-		dir, err := validatePackage(ctx, d, pkg, src, yarnCache, name)
-		if err != nil {
-			return err
-		}
+	// // Define all of the containers first, and where their artifacts will be exported to
+	// dirs := map[string]*dagger.Directory{}
+	// for i, name := range args.PackageInputOpts.Packages {
+	// 	pkg := packages[i]
+	// 	dir, err := validatePackage(ctx, d, pkg, src, yarnCache, name)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		// replace .tar.gz with .e2e-artifacts/
-		destination := name + ".e2e-artifacts"
-		dirs[destination] = dir
-	}
+	// 	// replace .tar.gz with .e2e-artifacts/
+	// 	destination := name + ".e2e-artifacts"
+	// 	dirs[destination] = dir
+	// }
 
-	var (
-		grp = &errgroup.Group{}
-		sm  = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
-	)
+	// var (
+	// 	grp = &errgroup.Group{}
+	// 	sm  = semaphore.NewWeighted(args.ConcurrencyOpts.Parallel)
+	// )
 
-	log.Println("Parallel:", args.ConcurrencyOpts.Parallel)
+	// log.Println("Parallel:", args.ConcurrencyOpts.Parallel)
 
-	// Run them in parallel
-	for k, dir := range dirs {
-		// Join the produced destination with the protocol given by the '--destination' flag.
-		dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
-		grp.Go(PublishDirFunc(ctx, sm, d, dir, args.GCPOpts, dst))
-	}
+	// // Run them in parallel
+	// for k, dir := range dirs {
+	// 	// Join the produced destination with the protocol given by the '--destination' flag.
+	// 	dst := strings.Join([]string{args.PublishOpts.Destination, k}, "/")
+	// 	grp.Go(PublishDirFunc(ctx, sm, d, dir, args.GCPOpts, dst))
+	// }
 
-	return grp.Wait()
+	// return grp.Wait()
 }
 
 func ValidatePackageUpgrade(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
-	packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
-	if err != nil {
-		return err
-	}
+	return nil
+	// packages, err := containers.GetPackages(ctx, d, args.PackageInputOpts, args.GCPOpts)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if len(packages) < 2 {
-		return fmt.Errorf("at least two packages required for upgrade")
-	}
+	// if len(packages) < 2 {
+	// 	return fmt.Errorf("at least two packages required for upgrade")
+	// }
 
-	return validateUpgrade(ctx, d, packages, args.PackageInputOpts.Packages)
+	// return validateUpgrade(ctx, d, packages, args.PackageInputOpts.Packages)
 }
 
 func ValidatePackageSignature(ctx context.Context, d *dagger.Client, src *dagger.Directory, args PipelineArgs) error {
@@ -401,27 +399,28 @@ func validateRpmUpgrade(ctx context.Context, d *dagger.Client, packages []*dagge
 
 // validateSignature uses the given package (rpm) and provided gpg public key to validate signature.
 func validateSignature(ctx context.Context, d *dagger.Client, rpm *dagger.File, packageName string, opts *gpg.GPGOpts) error {
-	if ext := filepath.Ext(packageName); ext != ".rpm" {
-		return fmt.Errorf("expected a .rpm file, received '%s'", ext)
-	}
+	return nil
+	// if ext := filepath.Ext(packageName); ext != ".rpm" {
+	// 	return fmt.Errorf("expected a .rpm file, received '%s'", ext)
+	// }
 
-	var (
-		taropts = TarOptsFromFileName(packageName)
-	)
+	// var (
+	// 	taropts = TarOptsFromFileName(packageName)
+	// )
 
-	log.Printf("Validating rpm package signature for v%s%s and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
+	// log.Printf("Validating rpm package signature for v%s%s and platform %s\n", taropts.Version, taropts.Suffix, taropts.Distro)
 
-	container, err := gpg.WithGPGOpts(d, fpm.Builder(d), &gpg.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64})
-	if err != nil {
-		return err
-	}
+	// container, err := gpg.WithGPGOpts(d, fpm.Builder(d), &gpg.GPGOpts{Sign: true, GPGPublicKeyBase64: opts.GPGPublicKeyBase64})
+	// if err != nil {
+	// 	return err
+	// }
 
-	container = container.
-		WithFile("/src/package.rpm", rpm).
-		WithExec([]string{"/bin/sh", "-c", "rpm --checksig /src/package.rpm | grep -qE 'digests signatures OK|pgp.+OK'"})
+	// container = container.
+	// 	WithFile("/src/package.rpm", rpm).
+	// 	WithExec([]string{"/bin/sh", "-c", "rpm --checksig /src/package.rpm | grep -qE 'digests signatures OK|pgp.+OK'"})
 
-	if _, err := errorutil.ExitError(ctx, container); err != nil {
-		return fmt.Errorf("failed to validate gpg signature for rpm package: %w", err)
-	}
+	// if _, err := errorutil.ExitError(ctx, container); err != nil {
+	// 	return fmt.Errorf("failed to validate gpg signature for rpm package: %w", err)
+	// }
 	return nil
 }

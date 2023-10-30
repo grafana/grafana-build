@@ -12,6 +12,7 @@ const (
 	Enterprise    pipeline.FlagOption = "enterprise"
 	WireTag       pipeline.FlagOption = "wire-tag"
 	GoExperiments pipeline.FlagOption = "go-experiments"
+	Sign          pipeline.FlagOption = "sign"
 )
 
 // These are the flags that packages (targz, deb, rpm, docker) must have.
@@ -56,6 +57,13 @@ var PackageNameFlags = []pipeline.Flag{
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
 		},
+	},
+}
+
+var SignFlag = pipeline.Flag{
+	Name: "sign",
+	Options: map[pipeline.FlagOption]any{
+		Sign: true,
 	},
 }
 
