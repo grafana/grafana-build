@@ -19,6 +19,8 @@ dagger run --silent go run ./cmd \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
+  --ubuntu-base=${UBUNTU_BASE} \
+  --alpine-base=${ALPINE_BASE} \
   --destination=${local_dst} > assets.txt
 
 cat assets.txt

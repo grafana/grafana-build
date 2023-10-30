@@ -13,54 +13,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func PipelineAction(pf pipelines.PipelineFunc) cli.ActionFunc {
-	return func(c *cli.Context) error {
-		var (
-			ctx  = c.Context
-			opts = []dagger.ClientOpt{}
-		)
-		ctx, span := otel.Tracer("grafana-build").Start(ctx, fmt.Sprintf("pipeline-%s", c.Command.Name))
-		defer span.End()
-
-		if c.Bool("verbose") {
-			opts = append(opts, dagger.WithLogOutput(os.Stderr))
-		}
-		client, err := dagger.Connect(ctx, opts...)
-		if err != nil {
-			otel.RecordFailed(span, err, "failed to connect to Dagger")
-			return err
-		}
-		defer client.Close()
-
-		args, err := pipelines.PipelineArgsFromContext(ctx, c)
-		if err != nil {
-			span.RecordError(err)
-			otel.RecordFailed(span, err, "failed to load arguments")
-			return err
-		}
-
-		// grafanaDir, err := args.GrafanaOpts.Grafana(ctx, client)
-		// if err != nil {
-		// 	otel.RecordFailed(span, err, "failed to load grafana directory")
-		// 	return err
-		// }
-
-		// v, err := args.GrafanaOpts.DetectVersion(ctx, client, grafanaDir)
-		// if err != nil {
-		// 	otel.RecordFailed(span, err, "failed to detect version")
-		// 	return err
-		// }
-		// args.GrafanaOpts.Version = v
-		pipelines.InjectPipelineArgsIntoSpan(span, args)
-
-		// if err := pf(ctx, client, grafanaDir, args); err != nil {
-		// 	otel.RecordFailed(span, err, "pipeline failed")
-		// 	return err
-		// }
-		return nil
-	}
-}
-
 func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) cli.ActionFunc {
 	return func(c *cli.Context) error {
 		var (

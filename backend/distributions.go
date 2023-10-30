@@ -185,6 +185,7 @@ func PackageArch(d Distribution) string {
 func Platform(d Distribution) dagger.Platform {
 	p := strings.ReplaceAll(string(d), "/dynamic-musl", "")
 	p = strings.ReplaceAll(p, "/dynamic", "")
+	p = strings.ReplaceAll(p, "arm/v6", "arm/v7")
 	// for now let's just try to use the distro name as the platform and see if that works...
 	return dagger.Platform(p)
 }

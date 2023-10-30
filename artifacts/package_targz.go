@@ -287,6 +287,13 @@ func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishD
 }
 
 func (t *Tarball) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	// Currently verifying riscv64 is unsupported (because alpine and ubuntu don't have riscv64 images yet)
+	// windows/darwin verification may never be supported.
+	os, arch := backend.OSAndArch(t.Distribution)
+	if os != "linux" || arch == "riscv64" {
+		return nil
+	}
+
 	return verifyTarball(ctx, client, file, t.Grafana, t.YarnCache, t.Distribution, t.Enterprise)
 }
 

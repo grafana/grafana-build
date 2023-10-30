@@ -8,12 +8,12 @@ dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
-  -a targz:enterprise:linux/arm/v6 \
-  -a targz:enterprise:linux/arm/v7 \
+  # -a targz:enterprise:linux/arm/v6 \
+  # -a targz:enterprise:linux/arm/v7 \
   -a deb:enterprise:linux/amd64 \
   -a deb:enterprise:linux/arm64 \
-  -a deb:enterprise:linux/arm/v6 \
-  -a deb:enterprise:linux/arm/v7 \
+  # -a deb:enterprise:linux/arm/v6 \
+  # -a deb:enterprise:linux/arm/v7 \
   -a rpm:enterprise:linux/amd64 \
   -a rpm:enterprise:linux/arm64 \
   -a targz:enterprise:windows/amd64 \
@@ -34,8 +34,7 @@ dagger run --silent go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
   --destination=${local_dst} \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.0" \
-  --gcp-service-account-key-base64=${GCP_KEY_BASE64} >> assets.txt
+  --ubuntu-base="${UBUNTU_BASE}" \
+  --alpine-base="${ALPINE_BASE}" > assets.txt
 
 cat assets.txt

@@ -13,6 +13,9 @@ const (
 	WireTag       pipeline.FlagOption = "wire-tag"
 	GoExperiments pipeline.FlagOption = "go-experiments"
 	Sign          pipeline.FlagOption = "sign"
+
+	// Pretty much only used to set the
+	DebName pipeline.FlagOption = "deb-name"
 )
 
 // These are the flags that packages (targz, deb, rpm, docker) must have.

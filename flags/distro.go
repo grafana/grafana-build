@@ -12,7 +12,6 @@ const (
 var StaticDistributions = []backend.Distribution{
 	backend.DistLinuxAMD64,
 	backend.DistLinuxARM64,
-	backend.DistLinuxARMv6,
 	backend.DistLinuxARMv7,
 	backend.DistLinuxRISCV64,
 }
@@ -27,7 +26,18 @@ var DynamicDistributions = []backend.Distribution{
 }
 
 func DistroFlags() []pipeline.Flag {
-	f := []pipeline.Flag{}
+	// These distributions have specific options that set some stuff.
+	f := []pipeline.Flag{
+		{
+			Name: string(backend.DistLinuxARMv6),
+			Options: map[pipeline.FlagOption]any{
+				Distribution: string(backend.DistLinuxARMv6),
+				Static:       true,
+				DebName:      "grafana-rpi",
+			},
+		},
+	}
+
 	for _, v := range StaticDistributions {
 		d := string(v)
 		f = append(f, pipeline.Flag{

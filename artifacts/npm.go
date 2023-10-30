@@ -60,6 +60,16 @@ func (f *NPMPackages) PublisDir(ctx context.Context, opts *pipeline.ArtifactPubl
 	panic("not implemented") // TODO: Implement
 }
 
+func (n *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	// Not a file
+	return nil
+}
+
+func (n *NPMPackages) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	// Nothing to verify (yet?)
+	return nil
+}
+
 // Filename should return a deterministic file or folder name that this build will produce.
 // This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
 // also affect the filename to ensure that there are no collisions.
@@ -87,14 +97,6 @@ func NewNPMPackagesFromString(ctx context.Context, log *slog.Logger, artifact st
 	}
 
 	return NewNPMPackages(ctx, log, artifact, grafanaDir, version, cache)
-}
-
-func (n *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (n *NPMPackages) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
-	panic("not implemented") // TODO: Implement
 }
 
 func NewNPMPackages(ctx context.Context, log *slog.Logger, artifact string, src *dagger.Directory, version string, cache *dagger.CacheVolume) (*pipeline.Artifact, error) {

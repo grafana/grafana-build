@@ -26,8 +26,9 @@ dagger run --silent go run ./cmd \
   -a docker:enterprise:linux/amd64:ubuntu \
   -a docker:enterprise:linux/arm64:ubuntu \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.3" \
+  --ubuntu-base="${UBUNTU_BASE}" \
+  --alpine-base="${ALPINE_BASE}" \
+  --verify \
   --checksum \
   --build-id=${DRONE_BUILD_NUMBER} \
   --enterprise-ref=${DRONE_TAG} \

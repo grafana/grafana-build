@@ -3,7 +3,6 @@ package arguments
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 
 	"dagger.io/dagger"
@@ -23,7 +22,7 @@ func InitializeEnterprise(d *dagger.Client, grafana *dagger.Directory, enterpris
 		WithDirectory("/src/grafana-enterprise", enterprise).
 		WithWorkdir("/src/grafana-enterprise").
 		WithEntrypoint([]string{}).
-		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .enterprise-commit"}).
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.enterprise-commit"}).
 		File("/src/grafana-enterprise/.buildinfo.enterprise-commit")
 
 	return d.Container().From(BusyboxImage).
@@ -85,23 +84,33 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 	}, nil
 }
 
+func cloneOrMount(client *dagger.Client, localPath, ght, repo, ref string) (*dagger.Directory, error) {
+	// If GrafanaDir was provided, then we can just use that one.
+	if path := localPath; path != "" {
+		slog.Info("Using local Grafana found", "path", path)
+		return daggerutil.HostDir(client, path)
+	}
+
+	src, err := git.CloneWithGitHubToken(client, ght, repo, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return src, nil
+}
+
 func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
 	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
 	if err != nil {
 		return nil, err
 	}
 
-	// If GrafanaDir was provided, then we can just use that one.
-	if path := o.GrafanaDir; path != "" {
-		slog.Info("Using local Grafana found", "path", path)
-		return daggerutil.HostDir(opts.Client, path)
-	}
 	ght, err := o.githubToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	src, err := git.CloneWithGitHubToken(opts.Client, ght, o.GrafanaRepo, o.GrafanaRef)
+	src, err := cloneOrMount(opts.Client, o.GrafanaDir, ght, o.GrafanaRepo, o.GrafanaRef)
 	if err != nil {
 		return nil, err
 	}
@@ -118,22 +127,15 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 
 	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache)
 
-	log.Println("Installing yarn deps for grafana dir")
-	log.Println("Installing yarn deps for grafana dir")
-	log.Println("Installing yarn deps for grafana dir")
-	log.Println("Installing yarn deps for grafana dir")
 	if _, err := containers.ExitError(ctx, container); err != nil {
 		return nil, err
 	}
-	log.Println("Done installing yarn deps for grafana dir")
-	log.Println("Done installing yarn deps for grafana dir")
-	log.Println("Done installing yarn deps for grafana dir")
-	log.Println("Done installing yarn deps for grafana dir")
 
 	return container.Directory("/src"), nil
 }
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
+	// Get the Grafana directory...
 	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
 	if err != nil {
 		return nil, err
@@ -149,7 +151,7 @@ func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any,
 		return nil, err
 	}
 
-	src, err := git.CloneWithGitHubToken(opts.Client, ght, o.EnterpriseRepo, o.EnterpriseRef)
+	src, err := cloneOrMount(opts.Client, o.EnterpriseDir, ght, o.EnterpriseRepo, o.EnterpriseRef)
 	if err != nil {
 		return nil, err
 	}

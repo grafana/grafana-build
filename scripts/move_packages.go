@@ -51,7 +51,7 @@ const (
 
 	// 1: version
 	// 2: package name (@grafana-ui-10.0.0.tgz)
-	npmFormat = "artifacts/npm/v%[1]s/npm-artifacts/%[2]s"
+	npmFormat = "artifacts/npm/v%[1]s/npm-artifacts"
 
 	sha256Ext = ".sha256"
 	grafana   = "grafana"
@@ -62,7 +62,6 @@ type HandlerFunc func(name string) []string
 
 var Handlers = map[string]HandlerFunc{
 	".tar.gz":        TarGZHandler,
-	".tgz":           NPMHandler,
 	".deb":           DebHandler,
 	".rpm":           RPMHandler,
 	".docker.tar.gz": DockerHandler,
@@ -77,15 +76,9 @@ func IsMain() bool {
 func NPMHandler(name string) []string {
 	var (
 		version = strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
-		file    = filepath.Base(name)
 	)
 
-	// The version part of the filename should start with a v:
-	if !strings.Contains(file, "v"+version) {
-		file = strings.Replace(file, version, "v"+version, 1)
-	}
-
-	return []string{fmt.Sprintf(npmFormat, version, file)}
+	return []string{fmt.Sprintf(npmFormat, version)}
 }
 
 func ZipHandler(name string) []string {
@@ -463,14 +456,18 @@ func getHandler(name string, handlers map[string]HandlerFunc) (HandlerFunc, stri
 	handler := handlers[ext]
 	// If there is no extension, then we are either dealing with public assets
 	// or the storybook, which both require some extra handling:
-	if ext == "" {
-		if filepath.Base(name) == "public" {
-			handler = CDNHandler
-		}
-		if filepath.Base(name) == "storybook" {
-			handler = StorybookHandler
-		}
+	if ext != "" {
+		return handler, ext
 	}
-	log.Printf("[%s] Using handler for %s", name, ext)
-	return handler, ext
+
+	if filepath.Base(name) == "public" {
+		return CDNHandler, ""
+	}
+	if filepath.Base(name) == "storybook" {
+		return StorybookHandler, ""
+	}
+	if filepath.Base(name) == "npm-packages" {
+		return NPMHandler, ""
+	}
+	panic("no handler found")
 }

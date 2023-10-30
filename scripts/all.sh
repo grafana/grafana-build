@@ -1,4 +1,4 @@
-dagger run go run ./cmd artifacts \
+go run ./cmd artifacts \
   -a frontend:enterprise \
   -a storybook \
   -a npm:grafana \
@@ -7,11 +7,15 @@ dagger run go run ./cmd artifacts \
   -a targz:grafana:linux/riscv64 \
   -a targz:grafana:linux/arm/v6 \
   -a targz:grafana:linux/arm/v7 \
+  -a targz:grafana:darwin/amd64 \
+  -a targz:grafana:windows/amd64 \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
   -a targz:enterprise:linux/riscv64 \
   -a targz:enterprise:linux/arm/v6 \
   -a targz:enterprise:linux/arm/v7 \
+  -a targz:enterprise:darwin/amd64 \
+  -a targz:enterprise:windows/amd64 \
   -a targz:boring:linux/amd64/dynamic \
   -a deb:grafana:linux/amd64 \
   -a deb:grafana:linux/arm64 \
@@ -43,5 +47,8 @@ dagger run go run ./cmd artifacts \
   -build-id=103 \
   --grafana-ref=v10.1.0 \
   --checksum \
+  --verify \
+  --grafana-dir=$HOME/Work/Grafana/grafana \
+  --enterprise-dir=$HOME/Work/Grafana/grafana-enterprise \
   --enterprise-ref=v10.1.0 > out.txt
 

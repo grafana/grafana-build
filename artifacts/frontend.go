@@ -80,11 +80,13 @@ func (f *Frontend) Filename(ctx context.Context) (string, error) {
 }
 
 func (f *Frontend) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	// Should never be called since this isn't a File.
+	return nil
 }
 
 func (f *Frontend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
-	panic("not implemented") // TODO: Implement
+	// Nothing to do to verify these (for now?)
+	return nil
 }
 
 func NewFrontendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {

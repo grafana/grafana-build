@@ -26,6 +26,7 @@ dagger run --silent go run ./cmd \
   -a targz:grafana:darwin/arm64 \
   -a zip:grafana:windows/amd64 \
   -a exe:grafana:windows/amd64 \
+  --verify \
   --checksum \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --build-id=${DRONE_BUILD_NUMBER} \
@@ -33,8 +34,8 @@ dagger run --silent go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.3" \
+  --ubuntu-base="${UBUNTU_BASE}" \
+  --alpine-base="${ALPINE_BASE}" \
   --destination=${local_dst} > assets.txt
 
 cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease

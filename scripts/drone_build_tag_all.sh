@@ -45,12 +45,11 @@ dagger run go run ./cmd artifacts \
   -a zip:enterprise:windows/arm64 \
   -a exe:grafana:windows/amd64 \
   -a exe:enterprise:windows/amd64 \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.3" \
+  --ubuntu-base="${UBUNTU_BASE}" \
+  --alpine-base="${ALPINE_BASE}" \
+  --go-version="${GO_VERSION}" \
   -build-id=103 \
-  --grafana-ref=v10.1.0 \
-  --checksum \
-  --enterprise-ref=v10.1.0 > out.txt
+  --checksum > out.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease

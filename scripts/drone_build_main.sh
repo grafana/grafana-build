@@ -18,10 +18,13 @@ dagger run --silent go run ./cmd \
   -a docker:grafana:linux/arm64 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
+  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
+  --ubuntu-base=${UBUNTU_BASE} \
+  --alpine-base=${ALPINE_BASE} \
   --destination=${local_dst} > assets.txt
 
 echo "Final list of artifacts:"

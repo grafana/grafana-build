@@ -7,6 +7,7 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
 	"github.com/grafana/grafana-build/backend"
+	"github.com/grafana/grafana-build/flags"
 	"github.com/grafana/grafana-build/fpm"
 	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
@@ -14,7 +15,7 @@ import (
 
 var (
 	DebArguments = TargzArguments
-	DebFlags     = TargzFlags
+	DebFlags     = flags.JoinFlags(TargzFlags)
 )
 
 var DebInitializer = Initializer{
@@ -29,6 +30,7 @@ type Deb struct {
 	BuildID      string
 	Distribution backend.Distribution
 	Enterprise   bool
+	NameOverride string
 
 	Tarball *pipeline.Artifact
 
@@ -60,6 +62,7 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BuildID:      d.BuildID,
 		Distribution: d.Distribution,
 		PackageType:  fpm.PackageTypeDeb,
+		NameOverride: d.NameOverride,
 		ConfigFiles: [][]string{
 			{"/src/packaging/deb/default/grafana-server", "/pkg/etc/default/grafana-server"},
 			{"/src/packaging/deb/init.d/grafana-server", "/pkg/etc/init.d/grafana-server"},
@@ -101,7 +104,12 @@ func (d *Deb) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOp
 // For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
 // `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
 func (d *Deb) Filename(ctx context.Context) (string, error) {
-	return packages.FileName(d.Name, d.Version, d.BuildID, d.Distribution, "deb")
+	name := d.Name
+	if d.NameOverride != "" {
+		name = packages.Name(d.NameOverride)
+	}
+
+	return packages.FileName(name, d.Version, d.BuildID, d.Distribution, "deb")
 }
 
 func (d *Deb) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
@@ -133,6 +141,10 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 	if err != nil {
 		return nil, err
 	}
+
+	// Deliberately ignoring the error here because if nothing sets the deb name then it should just be emptystirng.
+	debname, _ := options.String(flags.DebName)
+
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Handler: &Deb{
@@ -144,6 +156,7 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 			Tarball:      tarball,
 			Src:          src,
 			YarnCache:    yarnCache,
+			NameOverride: debname,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: TargzFlags,

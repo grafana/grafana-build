@@ -131,6 +131,10 @@ func (d *Docker) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	// Currently verifying riscv64 is unsupported (because alpine and ubuntu don't have riscv64 images yet)
+	if _, arch := backend.OSAndArch(d.Distro); arch == "riscv64" {
+		return nil
+	}
 	return docker.Verify(ctx, client, file, d.Src, d.YarnCache, d.Distro)
 }
 

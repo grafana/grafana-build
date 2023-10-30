@@ -41,7 +41,8 @@ func (f *Storybook) Builder(ctx context.Context, opts *pipeline.ArtifactContaine
 }
 
 func (f *Storybook) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
-	panic("not implemented") // Storybook doesn't return a file
+	// Not a file
+	return nil, nil
 }
 
 func (f *Storybook) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
@@ -61,11 +62,12 @@ func (f *Storybook) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublis
 }
 
 func (f *Storybook) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	panic("not implemented") // TODO: Implement
+	// Not a file
+	return nil
 }
 
 func (f *Storybook) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 // Filename should return a deterministic file or folder name that this build will produce.

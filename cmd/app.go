@@ -30,7 +30,28 @@ func (c *CLI) App() *cli.App {
 		Usage: "A build tool for Grafana",
 		Commands: []*cli.Command{
 			artifactsCommand,
+
+			// Legacy commands, should eventually be completely replaced by what's in "artifacts"
+			{
+				Name: "package",
+				Subcommands: []*cli.Command{
+					PackagePublishCommand,
+				},
+			},
+			{
+				Name: "docker",
+				Subcommands: []*cli.Command{
+					DockerPublishCommand,
+				},
+			},
 			ProImageCommand,
+			{
+				Name: "npm",
+				Subcommands: []*cli.Command{
+					PublishNPMCommand,
+				},
+			},
+			GCOMCommand,
 		},
 	}
 }

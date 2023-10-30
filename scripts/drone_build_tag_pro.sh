@@ -19,6 +19,7 @@ dagger run --silent go run ./cmd \
   -a docker:pro:linux/arm64:ubuntu \
   -a targz:pro:darwin/amd64 \
   -a targz:pro:windows/amd64 \
+  --verify \
   --checksum \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --build-id=${DRONE_BUILD_NUMBER} \
@@ -26,10 +27,10 @@ dagger run --silent go run ./cmd \
   --grafana-ref=${DRONE_TAG} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --version=${DRONE_TAG} \
-  --ubuntu-base="ubuntu:22.04" \
-  --alpine-base="alpine:3.18.3" \
+  --go-version=${GO_VERSION} \
+  --ubuntu-base="${UBUNTU_BASE}" \
+  --alpine-base="${ALPINE_BASE}" \
   --destination=${local_dst} > assets.txt
 
 # Move the tar.gz packages to their expected locations

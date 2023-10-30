@@ -53,11 +53,12 @@ func (d *Exe) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 }
 
 func (d *Exe) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	panic("not implemented") // TODO: Implement
+	// Not a directory so this shouldn't be called
+	return nil, nil
 }
 
 func (d *Exe) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented") // TODO: Implement
+	return nil, nil
 }
 
 func (d *Exe) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
@@ -65,7 +66,8 @@ func (d *Exe) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 }
 
 func (d *Exe) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
-	panic("not implemented") // TODO: Implement
+	// Not a directory so this shouldn't be called
+	return nil
 }
 
 // Filename should return a deterministic file or folder name that this build will produce.
