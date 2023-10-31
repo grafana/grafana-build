@@ -7,6 +7,7 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/docker"
 	"github.com/grafana/grafana-build/gcom"
 	"github.com/grafana/grafana-build/gpg"
 	"go.opentelemetry.io/otel/attribute"
@@ -16,44 +17,8 @@ import (
 type PipelineFunc func(context.Context, *dagger.Client, *dagger.Directory, PipelineArgs) error
 type PipelineFuncWithPackageInput func(context.Context, *dagger.Client, PipelineArgs) error
 
-// TODO: remove this when there are no pipelines / artifacts using it
-type DockerOpts struct {
-	// Registry is the docker Registry for the image.
-	// If using '--save', then this will have no effect.
-	// Uses docker hub by default.
-	// Example: us.gcr.io/12345
-	Registry string
-
-	// AlpineBase is supplied as a build-arg when building the Grafana docker image.
-	// When building alpine versions of Grafana it uses this image as its base.
-	AlpineBase string
-
-	// UbuntuBase is supplied as a build-arg when building the Grafana docker image.
-	// When building ubuntu versions of Grafana it uses this image as its base.
-	UbuntuBase string
-
-	// Username is supplied to login to the docker registry when publishing images.
-	Username string
-
-	// Password is supplied to login to the docker registry when publishing images.
-	Password string
-
-	// Org overrides the organization when when publishing images.
-	Org string
-
-	// Repository overrides the repository when when publishing images.
-	Repository string
-
-	// Latest is supplied to also tag as latest when publishing images.
-	Latest bool
-
-	// TagFormat and UbuntuTagFormat should be formatted using go template tags.
-	TagFormat       string
-	UbuntuTagFormat string
-}
-
-func DockerOptsFromFlags(c cliutil.CLIContext) *DockerOpts {
-	return &DockerOpts{
+func DockerOptsFromFlags(c cliutil.CLIContext) *docker.DockerOpts {
+	return &docker.DockerOpts{
 		Registry:        c.String("registry"),
 		AlpineBase:      c.String("alpine-base"),
 		UbuntuBase:      c.String("ubuntu-base"),
@@ -105,7 +70,7 @@ type PipelineArgs struct {
 	// This is set for pipelines that accept a package as input.
 	PackageInputOpts *containers.PackageInputOpts
 	GPGOpts          *gpg.GPGOpts
-	DockerOpts       *DockerOpts
+	DockerOpts       *docker.DockerOpts
 	GCPOpts          *containers.GCPOpts
 	ConcurrencyOpts  *ConcurrencyOpts
 

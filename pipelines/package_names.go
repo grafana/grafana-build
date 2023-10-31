@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-build/backend"
+	"github.com/grafana/grafana-build/packages"
 )
 
 type TarFileOpts struct {
@@ -17,6 +18,16 @@ type TarFileOpts struct {
 	Edition string
 	Distro  backend.Distribution
 	Suffix  string
+}
+
+func (opts *TarFileOpts) NameOpts() packages.NameOpts {
+	return packages.NameOpts{
+		// Name is the name of the product in the package. 99% of the time, this will be "grafana" or "grafana-enterprise".
+		Name:    packages.Name(opts.Name),
+		Version: opts.Version,
+		BuildID: opts.BuildID,
+		Distro:  opts.Distro,
+	}
 }
 
 func WithoutExt(name string) string {
