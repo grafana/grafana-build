@@ -45,7 +45,6 @@ func WithViceroyEnv(log *slog.Logger, container *dagger.Container, distro Distri
 	bopts := fn(distro, opts.ExperimentalFlags, opts.Tags)
 
 	return containers.WithEnv(container, ViceroyEnv(bopts)), nil
-
 }
 
 func ViceroyContainer(

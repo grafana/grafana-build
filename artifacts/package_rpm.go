@@ -208,10 +208,10 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 
 	rpmname := string(p.Name)
 	if nightly, _ := options.Bool(flags.Nightly); nightly {
-		rpmname = rpmname + "-nightly"
+		rpmname += "-nightly"
 	}
 	if rpi, _ := options.Bool(flags.RPI); rpi {
-		rpmname = rpmname + "-rpi"
+		rpmname += "-rpi"
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{

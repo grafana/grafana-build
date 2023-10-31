@@ -17,5 +17,4 @@ func VerifySignature(ctx context.Context, d *dagger.Client, file *dagger.File, p
 		return fmt.Errorf("failed to validate gpg signature for rpm package: %w", err)
 	}
 	return nil
-
 }

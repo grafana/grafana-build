@@ -149,10 +149,10 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 
 	debname := string(p.Name)
 	if nightly, _ := options.Bool(flags.Nightly); nightly {
-		debname = debname + "-nightly"
+		debname += "-nightly"
 	}
 	if rpi, _ := options.Bool(flags.RPI); rpi {
-		debname = debname + "-rpi"
+		debname += "-rpi"
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{

@@ -155,7 +155,6 @@ func BuildArtifact(ctx context.Context, log *slog.Logger, a *pipeline.Artifact, 
 	}
 
 	return nil
-
 }
 
 func Command(r Registerer) func(c *cli.Context) error {
