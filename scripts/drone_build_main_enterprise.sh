@@ -5,8 +5,8 @@ set -e
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
 dagger run --silent go run ./cmd \
- artifacts \
-: -a targz:enterprise:linux/amd64 \
+  artifacts \
+  -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
   -a deb:enterprise:linux/amd64 \
   -a deb:enterprise:linux/arm64 \
