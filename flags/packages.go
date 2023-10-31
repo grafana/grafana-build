@@ -16,6 +16,7 @@ const (
 
 	// Pretty much only used to set the
 	DebName pipeline.FlagOption = "deb-name"
+	RPMName pipeline.FlagOption = "rpm-name"
 )
 
 // These are the flags that packages (targz, deb, rpm, docker) must have.
@@ -59,6 +60,13 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
+		},
+	},
+	{
+		Name: "nightly",
+		Options: map[pipeline.FlagOption]any{
+			DebName: string(packages.PackageNightly),
+			RPMName: string(packages.PackageNightly),
 		},
 	},
 }

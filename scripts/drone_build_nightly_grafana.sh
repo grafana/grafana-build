@@ -29,6 +29,7 @@ dagger run --silent go run ./cmd \
   -a docker:grafana:linux/arm64:ubuntu \
   # -a docker:grafana:linux/arm/v7:ubuntu \
   --checksum \
+  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \

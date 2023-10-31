@@ -15,6 +15,7 @@ const (
 	PackageEnterprise       Name = "grafana-enterprise"
 	PackageEnterpriseBoring Name = "grafana-enterprise-boringcrypto"
 	PackagePro              Name = "grafana-pro"
+	PackageNightly          Name = "grafana-nightly"
 )
 
 type NameOpts struct {

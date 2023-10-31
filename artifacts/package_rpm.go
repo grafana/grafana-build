@@ -46,6 +46,7 @@ type RPM struct {
 	Distribution backend.Distribution
 	Enterprise   bool
 	Sign         bool
+	NameOverride string
 
 	GPGPublicKey  string
 	GPGPrivateKey string
@@ -80,6 +81,7 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BuildID:      d.BuildID,
 		Distribution: d.Distribution,
 		PackageType:  fpm.PackageTypeRPM,
+		NameOverride: d.NameOverride,
 		ConfigFiles: [][]string{
 			{"/src/packaging/rpm/sysconfig/grafana-server", "/pkg/etc/sysconfig/grafana-server"},
 			{"/src/packaging/rpm/init.d/grafana-server", "/pkg/etc/init.d/grafana-server"},
@@ -198,6 +200,9 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 		gpgPassphrase = pass
 	}
 
+	// Deliberately ignoring the error here because if nothing sets the deb name then it should just be emptystirng.
+	rpmname, _ := options.String(flags.RPMName)
+
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Handler: &RPM{
@@ -213,6 +218,7 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 			GPGPublicKey:  gpgPublicKey,
 			GPGPrivateKey: gpgPrivateKey,
 			GPGPassphrase: gpgPassphrase,
+			NameOverride:  rpmname,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: TargzFlags,
