@@ -3,10 +3,10 @@
 The main goal of grafana-build is (as the name already indicates) building Grafana for various platforms. 
 This actually consists of various parts as you need to have a binary of Grafana and the JavaScript/CSS frontend before you can then package everything up.
 
-All of that is encompassed by the `package` command:
+All of that is encompassed by the `artifacts` command, which accepts a list of artifacts and attempts to create them:
 
 ```
-$ dagger run go run ./cmd package --distro linux/amd64 --enterprise
+$ dagger run go run ./cmd artifacts -a targz:grafana:linux/amd64
 ```
 
 The command above will build the backend binary for Linux on an AMD64-compatible CPU and package that up into a [single archive][tarball] with the frontend artifacts: `grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz`
@@ -20,16 +20,16 @@ If you want to use a local checkout of Grafana (for instance if you want to buil
 The following command will create a binary package for `darwin/arm64` of Grafana based on a checkout inside the `$HOME/src/github.com/grafana/grafana` folder:
 
 ```
-$ dagger run go run ./cmd package --distro darwin/arm64 --grafana-dir $HOME/src/github.com/grafana/grafana
+$ dagger run go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=$HOME/src/github.com/grafana/grafana
 ```
 
 ## Platform packages
 
-Now that you have a Grafana tarball with the main binaries and the frontend assets you can continue creating a package for your target distribution.
+Now that you have a Grafana tarball with the main binaries and the frontend assets you can continue creating a package for your target distribution, or skip the tarball step and go straight to your package installer of choice.
 grafana-build supports a handful of these specific [artifact types](../artifact-types/index.md) but for this tutorial let's build a [Debian package][deb]:
 
 ```
-$ dagger run go run ./cmd deb --package file://$PWD/dist/grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz
+$ dagger run go run ./cmd artifacts -a deb:grafana:linux/amd64 --grafana-dir=$HOME/src/github.com/grafana/grafana
 ```
 
 This will produce `grafana_10.1.0-pre_lUJuyyVXnECr_linux_amd64.deb` within the `dist` folder.

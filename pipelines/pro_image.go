@@ -7,6 +7,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/git"
 )
 
 func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
@@ -21,7 +22,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 	debianPackageFile := packages[0]
 
 	log.Printf("Cloning hosted Grafana...")
-	hostedGrafanaRepo, err := containers.CloneWithGitHubToken(dc, args.ProImageOpts.GitHubToken, "https://github.com/grafana/hosted-grafana.git", "main")
+	hostedGrafanaRepo, err := git.CloneWithGitHubToken(dc, args.ProImageOpts.GitHubToken, "https://github.com/grafana/hosted-grafana.git", "main")
 	if err != nil {
 		return fmt.Errorf("cloning hosted-grafana repo: %w", err)
 	}

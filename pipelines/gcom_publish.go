@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/gcom"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 )
 
-func VersionPayloadFromFileName(name string, opts *containers.GCOMOpts) *containers.GCOMVersionPayload {
+func VersionPayloadFromFileName(name string, opts *gcom.GCOMOpts) *gcom.GCOMVersionPayload {
 	var (
 		tarOpts      = TarOptsFromFileName(name)
 		splitVersion = strings.Split(tarOpts.Version, ".")
@@ -34,7 +35,7 @@ func VersionPayloadFromFileName(name string, opts *containers.GCOMOpts) *contain
 		nightly = true
 	}
 
-	return &containers.GCOMVersionPayload{
+	return &gcom.GCOMVersionPayload{
 		Version:         tarOpts.Version,
 		ReleaseDate:     time.Now().Format(time.RFC3339Nano),
 		Stable:          stable,
@@ -45,11 +46,11 @@ func VersionPayloadFromFileName(name string, opts *containers.GCOMOpts) *contain
 	}
 }
 
-func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, file *dagger.File, opts *containers.GCOMOpts) (*containers.GCOMPackagePayload, error) {
+func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, file *dagger.File, opts *gcom.GCOMOpts) (*gcom.GCOMPackagePayload, error) {
 	tarOpts := TarOptsFromFileName(name)
 	ext := filepath.Ext(name)
-	os, _ := executil.OSAndArch(tarOpts.Distro)
-	arch := strings.ReplaceAll(executil.FullArch(tarOpts.Distro), "/", "")
+	os, _ := backend.OSAndArch(tarOpts.Distro)
+	arch := strings.ReplaceAll(backend.FullArch(tarOpts.Distro), "/", "")
 
 	if os == "windows" {
 		os = "win"
@@ -70,7 +71,7 @@ func PackagePayloadFromFile(ctx context.Context, d *dagger.Client, name string, 
 		return nil, err
 	}
 
-	return &containers.GCOMPackagePayload{
+	return &gcom.GCOMPackagePayload{
 		OS:     os,
 		URL:    opts.DownloadURL.JoinPath(name).String(),
 		Sha256: sha256,
@@ -91,7 +92,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 	}
 
 	// Extract the package versions
-	versionPayloads := make(map[string]*containers.GCOMVersionPayload)
+	versionPayloads := make(map[string]*gcom.GCOMVersionPayload)
 	for _, name := range args.PackageInputOpts.Packages {
 		tarOpts := TarOptsFromFileName(name)
 		if _, ok := versionPayloads[tarOpts.Version]; !ok {
@@ -103,7 +104,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 	// Publish each version only once
 	for _, p := range versionPayloads {
 		log.Printf("[%s] Attempting to publish version", p.Version)
-		out, err := containers.PublishGCOMVersion(ctx, d, p, opts)
+		out, err := gcom.PublishGCOMVersion(ctx, d, p, opts)
 		if err != nil {
 			return err
 		}
@@ -118,7 +119,7 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 	return wg.Wait()
 }
 
-func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *containers.GCOMOpts, path string, file *dagger.File) func() error {
+func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Client, opts *gcom.GCOMOpts, path string, file *dagger.File) func() error {
 	return func() error {
 		name := filepath.Base(path)
 		tarOpts := TarOptsFromFileName(name)
@@ -137,7 +138,7 @@ func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagg
 		}
 
 		log.Printf("[%s] Publishing package", name)
-		out, err := containers.PublishGCOMPackage(ctx, d, packagePayload, opts, tarOpts.Version)
+		out, err := gcom.PublishGCOMPackage(ctx, d, packagePayload, opts, tarOpts.Version)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", name, err)
 		}

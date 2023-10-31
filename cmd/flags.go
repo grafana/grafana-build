@@ -1,10 +1,8 @@
 package main
 
 import (
-	"runtime"
-
-	"github.com/grafana/grafana-build/containers"
-	"github.com/grafana/grafana-build/pipelines"
+	"github.com/grafana/grafana-build/arguments"
+	"github.com/grafana/grafana-build/cmd/flags"
 	"github.com/urfave/cli/v2"
 )
 
@@ -57,18 +55,7 @@ var NPMFlags = []cli.Flag{
 
 // PublishFlags are flags that are used in commands that create artifacts.
 // Anything that creates an artifact should have the option to specify a local folder destination or a remote destination.
-var PublishFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name:    "destination",
-		Usage:   "full URL to upload the artifacts to (examples: '/tmp/package.tar.gz', 'file://package.tar.gz', 'file:///tmp/package.tar.gz', 'gs://bucket/grafana/')",
-		Aliases: []string{"d"},
-		Value:   "file://dist",
-	},
-	&cli.BoolFlag{
-		Name:  "checksum",
-		Usage: "When enabled, also creates a `.sha256' checksum file in the destination that matches the checksum of the artifact(s) produced",
-	},
-}
+var PublishFlags = flags.PublishFlags
 
 // GrafanaFlags are flags that are required when working with the grafana source code.
 var GrafanaFlags = []cli.Flag{
@@ -118,18 +105,9 @@ var GrafanaFlags = []cli.Flag{
 		Value:    "main",
 	},
 	&cli.StringFlag{
-		Name:     "build-id",
-		Usage:    "Build ID to use, by default will be what is defined in package.json",
-		Required: false,
-	},
-	&cli.StringFlag{
 		Name:     "github-token",
 		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
 		Required: false,
-	},
-	&cli.StringFlag{
-		Name:  "version",
-		Usage: "Explicit version number. If this is not set then one with will auto-detected based on the source repository",
 	},
 	&cli.StringSliceFlag{
 		Name:    "env",
@@ -144,7 +122,7 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "go-version",
 		Usage:    "The version of Go to be used for building the Grafana backend",
 		Required: false,
-		Value:    containers.DefaultGoVersion,
+		Value:    "1.21.4",
 	},
 	&cli.StringFlag{
 		Name:  "yarn-cache",
@@ -154,40 +132,12 @@ var GrafanaFlags = []cli.Flag{
 
 // DockerFlags are used when producing docker images.
 var DockerFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name:  "registry",
-		Usage: "Prefix the image name with the registry provided",
-		Value: "docker.io",
-	},
-	&cli.StringFlag{
-		Name:  "alpine-base",
-		Usage: "The alpine image to use as the base image when building the Alpine version of the Grafana docker image",
-		Value: "alpine:latest",
-	},
-	&cli.StringFlag{
-		Name:  "ubuntu-base",
-		Usage: "The Ubuntu image to use as the base image when building the Ubuntu version of the Grafana docker image",
-		Value: "ubuntu:latest",
-	},
-	&cli.StringFlag{
-		Name:  "tag-format",
-		Usage: "Provide a go template for formatting the docker tag(s)",
-		Value: pipelines.DefaultTagFormat,
-	},
-	&cli.StringFlag{
-		Name:  "ubuntu-tag-format",
-		Usage: "Provide a go template for formatting the docker tag(s)",
-		Value: pipelines.DefaultUbuntuTagFormat,
-	},
-	&cli.StringFlag{
-		Name:  "org",
-		Usage: "Overrides the organization of the images",
-		Value: "grafana",
-	},
-	&cli.StringFlag{
-		Name:  "repo",
-		Usage: "Overrides the repository of the images",
-	},
+	arguments.DockerRegistryFlag,
+	arguments.AlpineImageFlag,
+	arguments.UbuntuImageFlag,
+	arguments.TagFormatFlag,
+	arguments.UbuntuTagFormatFlag,
+	arguments.DockerOrgFlag,
 }
 
 var DockerPublishFlags = []cli.Flag{
@@ -202,16 +152,6 @@ var DockerPublishFlags = []cli.Flag{
 		Required: true,
 	},
 	&cli.StringFlag{
-		Name:  "registry",
-		Usage: "Prefix the image name with the registry provided",
-		Value: "docker.io",
-	},
-	&cli.StringFlag{
-		Name:  "org",
-		Usage: "Overrides the organization of the images",
-		Value: "grafana",
-	},
-	&cli.StringFlag{
 		Name:  "repo",
 		Usage: "Overrides the repository of the images",
 	},
@@ -224,42 +164,10 @@ var DockerPublishFlags = []cli.Flag{
 var FlagDistros = &cli.StringSliceFlag{
 	Name:  "distro",
 	Usage: "See the list of distributions with 'go tool dist list'. For variations of the same distribution, like 'armv6' or 'armv7', append an extra path part. Example: 'linux/arm/v6', or 'linux/amd64/v3'",
-	Value: cli.NewStringSlice(DefaultDistros...),
+	Value: cli.NewStringSlice(flags.DefaultDistros...),
 }
 
-var GPGPublicFlag = &cli.StringFlag{
-	Name:  "gpg-public-key-base64",
-	Usage: "Provides a public key encoded in base64 for GPG signing",
-}
-
-var GPGPublicFlags = []cli.Flag{
-	GPGPublicFlag,
-}
-
-var GPGFlags = []cli.Flag{
-	GPGPublicFlag,
-	&cli.StringFlag{
-		Name:  "gpg-private-key-base64",
-		Usage: "Provides a private key encoded in base64 for GPG signing",
-	},
-	&cli.StringFlag{
-		Name:  "gpg-passphrase",
-		Usage: "Provides a private key passphrase encoded in base64 for GPG signing",
-	},
-	&cli.BoolFlag{
-		Name:  "sign",
-		Usage: "Enable GPG signing of RPM packages",
-	},
-}
-
-var ConcurrencyFlags = []cli.Flag{
-	&cli.IntFlag{
-		Name:        "parallel",
-		Usage:       "The number of parallel pipelines to run. This can be particularly useful for building for multiple distributions at the same time",
-		DefaultText: "Just like with 'go test', this defaults to GOMAXPROCS",
-		Value:       runtime.GOMAXPROCS(0),
-	},
-}
+var ConcurrencyFlags = flags.ConcurrencyFlags
 
 // PackageFlags are flags that are used when building packages or similar artifacts (like binaries) for different distributions
 // from the grafana source code.
@@ -311,11 +219,7 @@ var ProImageFlags = []cli.Flag{
 }
 
 var DefaultFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name:  "platform",
-		Usage: "The buildkit / dagger platform to run containers when building the backend",
-		Value: DefaultPlatform,
-	},
+	flags.Platform,
 	&cli.BoolFlag{
 		Name:    "verbose",
 		Aliases: []string{"v"},
@@ -351,14 +255,7 @@ var GCOMFlags = []cli.Flag{
 }
 
 // JoinFlags combines several slices of flags into one slice of flags.
-func JoinFlags(f ...[]cli.Flag) []cli.Flag {
-	flags := []cli.Flag{}
-	for _, v := range f {
-		flags = append(flags, v...)
-	}
-
-	return flags
-}
+var JoinFlags = flags.Join
 
 func JoinFlagsWithDefault(f ...[]cli.Flag) []cli.Flag {
 	// Kind of gross but ensures that DeafultFlags are registered before any others.

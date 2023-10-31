@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/backend"
+	"github.com/grafana/grafana-build/packages"
 )
 
 type TarFileOpts struct {
@@ -15,8 +16,18 @@ type TarFileOpts struct {
 	BuildID string
 	// Edition is the flavor text after "grafana-", like "enterprise".
 	Edition string
-	Distro  executil.Distribution
+	Distro  backend.Distribution
 	Suffix  string
+}
+
+func (opts *TarFileOpts) NameOpts() packages.NameOpts {
+	return packages.NameOpts{
+		// Name is the name of the product in the package. 99% of the time, this will be "grafana" or "grafana-enterprise".
+		Name:    packages.Name(opts.Name),
+		Version: opts.Version,
+		BuildID: opts.BuildID,
+		Distro:  opts.Distro,
+	}
 }
 
 func WithoutExt(name string) string {
@@ -42,9 +53,9 @@ func TarFilename(opts TarFileOpts) string {
 
 	var (
 		// This should return something like "linux", "arm"
-		os, arch = executil.OSAndArch(opts.Distro)
+		os, arch = backend.OSAndArch(opts.Distro)
 		// If applicable this will be set to something like "7" (for arm7)
-		archv = executil.ArchVersion(opts.Distro)
+		archv = backend.ArchVersion(opts.Distro)
 	)
 
 	if archv != "" {
@@ -93,7 +104,7 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		Edition: edition,
 		Version: version,
 		BuildID: buildID,
-		Distro:  executil.Distribution(strings.Join([]string{os, arch}, "/")),
+		Distro:  backend.Distribution(strings.Join([]string{os, arch}, "/")),
 		Suffix:  suffix,
 	}
 }

@@ -1,43 +1,31 @@
 #!/usr/bin/env sh
-local_dst="file://dist/${DRONE_BUILD_EVENT}"
+local_dst="./dist/${DRONE_BUILD_EVENT}"
 set -e
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
-
 # Build all of the grafana.tar.gz packages.
 dagger run --silent go run ./cmd \
-  package \
+  artifacts \
+  -a targz:pro:linux/amd64 \
+  -a targz:pro:linux/arm64 \
+  -a deb:pro:linux/amd64 \
+  -a deb:pro:linux/arm64 \
+  -a frontend:enterprise \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --distro=linux/amd64 \
-  --distro=linux/arm64 \
-  --env GO_BUILD_TAGS=pro \
-  --env WIRE_TAGS=pro \
-  --go-tags=pro \
-  --edition=pro \
   --checksum \
-  --enterprise \
-  --enterprise-ref=${DRONE_COMMIT} \
-  --grafana=false \
-  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
-  --grafana-ref=${SOURCE_COMMIT} \
+  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
+  --grafana-ref=${SOURCE_COMMIT} \
+  --enterprise-ref=${DRONE_COMMIT} \
+  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
+  --ubuntu-base=${UBUNTU_BASE} \
+  --alpine-base=${ALPINE_BASE} \
   --destination=${local_dst} > assets.txt
 
-# Use the non-windows, non-darwin, non-rpi packages and create deb packages from them.
-dagger run --silent go run ./cmd deb \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep -v arm-6 | awk '{print "--package=" $0}') \
-  --checksum \
-  --destination=${local_dst} >> assets.txt
-
-dagger run --silent go run ./cmd cdn \
-  $(cat assets.txt | grep tar.gz | grep -v docker | grep -v sha256 | grep -v windows | grep -v darwin | grep amd64 | awk '{print "--package=" $0}') \
-  --destination=${local_dst}/public > cdn.txt
-
 echo "Final list of artifacts:"
-cat assets.txt
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
-cat cdn.txt | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./scripts/move_packages.go ./dist/cdn
+cat assets.txt | grep -v "public" | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | grep "public" | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./scripts/move_packages.go ./dist/cdn

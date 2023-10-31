@@ -3,7 +3,7 @@ package pipelines_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana-build/executil"
+	"github.com/grafana/grafana-build/backend"
 	"github.com/grafana/grafana-build/pipelines"
 )
 
@@ -45,7 +45,7 @@ func TestDestinationName(t *testing.T) {
 
 func TestTarFilename(t *testing.T) {
 	t.Run("It should use the correct name if Enterprise is false", func(t *testing.T) {
-		distro := executil.Distribution("plan9/amd64")
+		distro := backend.Distribution("plan9/amd64")
 		opts := pipelines.TarFileOpts{
 			Edition: "",
 			Version: "v1.0.1-test",
@@ -59,7 +59,7 @@ func TestTarFilename(t *testing.T) {
 		}
 	})
 	t.Run("It should use the correct name if Enterprise is true", func(t *testing.T) {
-		distro := executil.Distribution("plan9/amd64")
+		distro := backend.Distribution("plan9/amd64")
 		opts := pipelines.TarFileOpts{
 			Edition: "enterprise",
 			Version: "v1.0.1-test",
@@ -73,7 +73,7 @@ func TestTarFilename(t *testing.T) {
 		}
 	})
 	t.Run("It should use include the arch version if one is supplied in the distro", func(t *testing.T) {
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		opts := pipelines.TarFileOpts{
 			Edition: "enterprise",
 			Version: "v1.0.1-test",
@@ -87,7 +87,7 @@ func TestTarFilename(t *testing.T) {
 		}
 	})
 	t.Run("It should support editions with multiple hyphens", func(t *testing.T) {
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		opts := pipelines.TarFileOpts{
 			Edition: "enterprise-rpi",
 			Version: "v1.0.1-test",
@@ -105,7 +105,7 @@ func TestTarFilename(t *testing.T) {
 func TestOptsFromFile(t *testing.T) {
 	t.Run("It should get the correct tar file opts from a valid name", func(t *testing.T) {
 		name := "grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := pipelines.TarFileOpts{
 			Edition: "enterprise",
 			Version: "v1.0.1-test",
@@ -128,7 +128,7 @@ func TestOptsFromFile(t *testing.T) {
 	})
 	t.Run("It should consider only the basename", func(t *testing.T) {
 		name := "somewhere/grafana-enterprise_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := pipelines.TarFileOpts{
 			Edition: "enterprise",
 			Version: "v1.0.1-test",
@@ -151,7 +151,7 @@ func TestOptsFromFile(t *testing.T) {
 	})
 	t.Run("It should support editions with multiple hyphens", func(t *testing.T) {
 		name := "somewhere/grafana-enterprise-rpi_v1.0.1-test_333_plan9_arm-6.tar.gz"
-		distro := executil.Distribution("plan9/arm/v6")
+		distro := backend.Distribution("plan9/arm/v6")
 		expect := pipelines.TarFileOpts{
 			Edition: "enterprise-rpi",
 			Version: "v1.0.1-test",
