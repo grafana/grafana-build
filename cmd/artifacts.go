@@ -5,6 +5,7 @@ import (
 )
 
 var Artifacts = map[string]artifacts.Initializer{
+	"backend":   artifacts.BackendInitializer,
 	"frontend":  artifacts.FrontendInitializer,
 	"npm":       artifacts.NPMPackagesInitializer,
 	"targz":     artifacts.TargzInitializer,

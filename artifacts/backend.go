@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-build/pipeline"
 )
 
-const BackendKey = "backend"
-
 var (
 	BackendArguments = []pipeline.Argument{
 		arguments.GrafanaDirectory,
@@ -28,6 +26,11 @@ var (
 		flags.DistroFlags(),
 	)
 )
+
+var BackendInitializer = Initializer{
+	InitializerFunc: NewBackendFromString,
+	Arguments:       BackendArguments,
+}
 
 type Backend struct {
 	// Name allows different backend compilations to be different even if all other factors are the same.
@@ -102,11 +105,13 @@ func (b *Backend) Filename(ctx context.Context) (string, error) {
 }
 
 func (b *Backend) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	// Not a file
 	return nil
 }
 
 func (b *Backend) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
-	panic("not implemented") // TODO: Implement
+	// Nothing to do (yet)
+	return nil
 }
 
 type NewBackendOpts struct {
@@ -121,6 +126,70 @@ type NewBackendOpts struct {
 	Tags           []string
 	Static         bool
 	WireTag        string
+}
+
+func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	goVersion, err := state.String(ctx, arguments.GoVersion)
+	if err != nil {
+		return nil, err
+	}
+	viceroyVersion, err := state.String(ctx, arguments.ViceroyVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	// 1. Figure out the options that were provided as part of the artifact string.
+	//    For example, `linux/amd64:grafana`.
+	options, err := pipeline.ParseFlags(artifact, TargzFlags)
+	if err != nil {
+		return nil, err
+	}
+	static, err := options.Bool(flags.Static)
+	if err != nil {
+		return nil, err
+	}
+
+	wireTag, err := options.String(flags.WireTag)
+	if err != nil {
+		return nil, err
+	}
+
+	experiments, err := options.StringSlice(flags.GoExperiments)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := GetPackageDetails(ctx, options, state)
+	if err != nil {
+		return nil, err
+	}
+
+	src, err := GrafanaDir(ctx, state, p.Enterprise)
+	if err != nil {
+		return nil, err
+	}
+
+	bopts := &backend.BuildOpts{
+		Version:           p.Version,
+		Enterprise:        p.Enterprise,
+		ExperimentalFlags: experiments,
+		Static:            static,
+		WireTag:           wireTag,
+	}
+
+	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
+		ArtifactString: artifact,
+		Type:           pipeline.ArtifactTypeDirectory,
+		Flags:          BackendFlags,
+		Handler: &Backend{
+			Name:           p.Name,
+			Distribution:   p.Distribution,
+			BuildOpts:      bopts,
+			GoVersion:      goVersion,
+			ViceroyVersion: viceroyVersion,
+			Src:            src,
+		},
+	})
 }
 
 func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *NewBackendOpts) (*pipeline.Artifact, error) {
