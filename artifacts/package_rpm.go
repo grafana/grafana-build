@@ -133,7 +133,12 @@ func (d *RPM) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOp
 // For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
 // `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
 func (d *RPM) Filename(ctx context.Context) (string, error) {
-	return packages.FileName(d.Name, d.Version, d.BuildID, d.Distribution, "rpm")
+	name := d.Name
+	if d.NameOverride != "" {
+		name = packages.Name(d.NameOverride)
+	}
+
+	return packages.FileName(name, d.Version, d.BuildID, d.Distribution, "rpm")
 }
 
 func (d *RPM) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
