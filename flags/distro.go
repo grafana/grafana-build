@@ -33,7 +33,7 @@ func DistroFlags() []pipeline.Flag {
 			Options: map[pipeline.FlagOption]any{
 				Distribution: string(backend.DistLinuxARMv6),
 				Static:       true,
-				DebName:      "grafana-rpi",
+				RPI:          true,
 			},
 		},
 	}
