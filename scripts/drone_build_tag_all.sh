@@ -26,8 +26,8 @@ dagger run go run ./cmd artifacts \
   -a deb:enterprise:linux/arm64 \
   -a deb:enterprise:linux/arm/v6 \
   -a deb:enterprise:linux/arm/v7 \
-  -a rpm:grafana:linux/amd64 \
-  -a rpm:grafana:linux/arm64 \
+  -a rpm:grafana:linux/amd64:sign \
+  -a rpm:grafana:linux/arm64:sign \
   -a rpm:enterprise:linux/amd64 \
   -a rpm:enterprise:linux/arm64 \
   -a docker:grafana:linux/amd64 \

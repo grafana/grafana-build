@@ -7,8 +7,8 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 
   # -a targz:enterprise:linux/arm/v6 \
   # -a targz:enterprise:linux/arm/v7 \
-  # -a deb:enterprise:linux/arm/v6 \
-  # -a deb:enterprise:linux/arm/v7 \
+  # -a deb:enterprise:linux/arm/v6:nightly \
+  # -a deb:enterprise:linux/arm/v7:nightly \
   # -a docker:enterprise:linux/arm/v7 \
   # -a docker:enterprise:linux/arm/v7:ubuntu \
   
@@ -16,10 +16,10 @@ dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
-  -a deb:enterprise:linux/amd64 \
-  -a deb:enterprise:linux/arm64 \
-  -a rpm:enterprise:linux/amd64 \
-  -a rpm:enterprise:linux/arm64 \
+  -a deb:enterprise:linux/amd64:nightly \
+  -a deb:enterprise:linux/arm64:nightly \
+  -a rpm:enterprise:linux/amd64:sign:nightly \
+  -a rpm:enterprise:linux/arm64:sign:nightly \
   -a targz:enterprise:windows/amd64 \
   -a targz:enterprise:windows/arm64 \
   -a zip:enterprise:windows/amd64 \
