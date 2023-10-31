@@ -7,6 +7,7 @@ import (
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
 	"github.com/grafana/grafana-build/containers"
+	"github.com/grafana/grafana-build/gcom"
 	"github.com/grafana/grafana-build/gpg"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -117,7 +118,7 @@ type PipelineArgs struct {
 	NpmTags     []string
 
 	// GCOMOpts will be populated if GCOMFlags are enabled on the current sub-command.
-	GCOMOpts *containers.GCOMOpts
+	GCOMOpts *gcom.GCOMOpts
 }
 
 // PipelineArgsFromContext populates a pipelines.PipelineArgs from a CLI context.
@@ -131,7 +132,7 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 	// if err != nil {
 	// 	return PipelineArgs{}, err
 	// }
-	gcomOpts, err := containers.GCOMOptsFromFlags(c)
+	gcomOpts, err := gcom.GCOMOptsFromFlags(c)
 	if err != nil {
 		return PipelineArgs{}, err
 	}

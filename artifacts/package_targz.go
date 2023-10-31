@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-build/frontend"
 	"github.com/grafana/grafana-build/packages"
 	"github.com/grafana/grafana-build/pipeline"
+	"github.com/grafana/grafana-build/targz"
 )
 
 var (
@@ -260,9 +261,9 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 
 	root := fmt.Sprintf("grafana-%s", version)
 
-	return containers.TargzFile(
+	return targz.Build(
 		b,
-		&containers.TargzFileOpts{
+		&targz.Opts{
 			Root:        root,
 			Files:       files,
 			Directories: directories,
