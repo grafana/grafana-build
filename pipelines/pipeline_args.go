@@ -116,6 +116,9 @@ func PipelineArgsFromContext(ctx context.Context, c cliutil.CLIContext) (Pipelin
 		ConcurrencyOpts:  ConcurrencyOptsFromFlags(c),
 		ProImageOpts:     containers.ProImageOptsFromFlags(c),
 		GCOMOpts:         gcomOpts,
+		NpmToken:         c.String("token"),
+		NpmRegistry:      c.String("registry"),
+		NpmTags:          c.StringSlice("tag"),
 	}, nil
 }
 
