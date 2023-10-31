@@ -9,9 +9,11 @@ import (
 )
 
 var YarnCacheDirFlag = &cli.StringFlag{
-	Name:  "yarn-cache-dir",
-	Usage: "Path to the yarn cache directory to mount during 'yarn install' commands (if there is one)",
-	Value: "",
+	Name:    "yarn-cache-dir",
+	Aliases: []string{"yarn-cache"},
+	Usage:   "Path to the yarn cache directory to mount during 'yarn install' commands (if there is one)",
+	EnvVars: []string{"YARN_CACHE_FOLDER", "YARN_CACHE_DIR"},
+	Value:   "",
 }
 
 var YarnCacheDirectory = pipeline.Argument{
