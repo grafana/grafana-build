@@ -29,7 +29,7 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 	verifyFlag := &cli.BoolFlag{
 		Name:  "verify",
 		Usage: "If true, then the artifacts that are built will be verified with e2e tests or similar after being exported, depending on the artifact",
-		Value: true,
+		Value: false,
 	}
 
 	flags := flags.Join(
