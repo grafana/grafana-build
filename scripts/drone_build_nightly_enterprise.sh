@@ -4,16 +4,20 @@ local_dst="${DRONE_WORKSPACE}/dist"
 
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt --install all
+
+  # -a targz:enterprise:linux/arm/v6 \
+  # -a targz:enterprise:linux/arm/v7 \
+  # -a deb:enterprise:linux/arm/v6 \
+  # -a deb:enterprise:linux/arm/v7 \
+  # -a docker:enterprise:linux/arm/v7 \
+  # -a docker:enterprise:linux/arm/v7:ubuntu \
+  
 dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
-  # -a targz:enterprise:linux/arm/v6 \
-  # -a targz:enterprise:linux/arm/v7 \
   -a deb:enterprise:linux/amd64 \
   -a deb:enterprise:linux/arm64 \
-  # -a deb:enterprise:linux/arm/v6 \
-  # -a deb:enterprise:linux/arm/v7 \
   -a rpm:enterprise:linux/amd64 \
   -a rpm:enterprise:linux/arm64 \
   -a targz:enterprise:windows/amd64 \
