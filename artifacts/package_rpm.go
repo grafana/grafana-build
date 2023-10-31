@@ -22,6 +22,7 @@ var (
 		TargzFlags,
 		[]pipeline.Flag{
 			flags.SignFlag,
+			flags.NightlyFlag,
 		},
 	)
 )
@@ -200,8 +201,13 @@ func NewRPMFromString(ctx context.Context, log *slog.Logger, artifact string, st
 		gpgPassphrase = pass
 	}
 
-	// Deliberately ignoring the error here because if nothing sets the deb name then it should just be emptystirng.
-	rpmname, _ := options.String(flags.RPMName)
+	rpmname := string(p.Name)
+	if nightly, _ := options.Bool(flags.Nightly); nightly {
+		rpmname = rpmname + "-nightly"
+	}
+	if rpi, _ := options.Bool(flags.RPI); rpi {
+		rpmname = rpmname + "-rpi"
+	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,

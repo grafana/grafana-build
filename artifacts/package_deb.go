@@ -15,7 +15,12 @@ import (
 
 var (
 	DebArguments = TargzArguments
-	DebFlags     = flags.JoinFlags(TargzFlags)
+	DebFlags     = flags.JoinFlags(
+		TargzFlags,
+		[]pipeline.Flag{
+			flags.NightlyFlag,
+		},
+	)
 )
 
 var DebInitializer = Initializer{
@@ -142,8 +147,13 @@ func NewDebFromString(ctx context.Context, log *slog.Logger, artifact string, st
 		return nil, err
 	}
 
-	// Deliberately ignoring the error here because if nothing sets the deb name then it should just be emptystirng.
-	debname, _ := options.String(flags.DebName)
+	debname := string(p.Name)
+	if nightly, _ := options.Bool(flags.Nightly); nightly {
+		debname = debname + "-nightly"
+	}
+	if rpi, _ := options.Bool(flags.RPI); rpi {
+		debname = debname + "-rpi"
+	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,

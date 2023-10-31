@@ -14,9 +14,9 @@ const (
 	GoExperiments pipeline.FlagOption = "go-experiments"
 	Sign          pipeline.FlagOption = "sign"
 
-	// Pretty much only used to set the
-	DebName pipeline.FlagOption = "deb-name"
-	RPMName pipeline.FlagOption = "rpm-name"
+	// Pretty much only used to set the deb or RPM internal package name (and file name) to `{}-nightly` and/or `{}-rpi`
+	Nightly pipeline.FlagOption = "nightly"
+	RPI     pipeline.FlagOption = "rpi"
 )
 
 // These are the flags that packages (targz, deb, rpm, docker) must have.
@@ -62,19 +62,19 @@ var PackageNameFlags = []pipeline.Flag{
 			GoExperiments:      []string{"boringcrypto"},
 		},
 	},
-	{
-		Name: "nightly",
-		Options: map[pipeline.FlagOption]any{
-			DebName: string(packages.PackageNightly),
-			RPMName: string(packages.PackageNightly),
-		},
-	},
 }
 
 var SignFlag = pipeline.Flag{
 	Name: "sign",
 	Options: map[pipeline.FlagOption]any{
 		Sign: true,
+	},
+}
+
+var NightlyFlag = pipeline.Flag{
+	Name: "nightly",
+	Options: map[pipeline.FlagOption]any{
+		Nightly: true,
 	},
 }
 
