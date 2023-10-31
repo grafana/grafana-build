@@ -84,11 +84,16 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 	}, nil
 }
 
-func cloneOrMount(client *dagger.Client, localPath, ght, repo, ref string) (*dagger.Directory, error) {
+func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, o *GrafanaDirectoryOpts) (*dagger.Directory, error) {
 	// If GrafanaDir was provided, then we can just use that one.
 	if path := localPath; path != "" {
 		slog.Info("Using local Grafana found", "path", path)
 		return daggerutil.HostDir(client, path)
+	}
+
+	ght, err := o.githubToken(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	src, err := git.CloneWithGitHubToken(client, ght, repo, ref)
@@ -105,12 +110,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		return nil, err
 	}
 
-	ght, err := o.githubToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	src, err := cloneOrMount(opts.Client, o.GrafanaDir, ght, o.GrafanaRepo, o.GrafanaRef)
+	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, o)
 	if err != nil {
 		return nil, err
 	}
@@ -146,12 +146,7 @@ func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any,
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	ght, err := o.githubToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	src, err := cloneOrMount(opts.Client, o.EnterpriseDir, ght, o.EnterpriseRepo, o.EnterpriseRef)
+	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, o)
 	if err != nil {
 		return nil, err
 	}
