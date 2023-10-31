@@ -11,7 +11,7 @@ $ dagger run go run ./cmd artifacts -a targz:grafana:linux/amd64
 
 The command above will build the backend binary for Linux on an AMD64-compatible CPU and package that up into a [single archive][tarball] with the frontend artifacts: `grafana-enterprise-10.1.0-pre_lUJuyyVXnECr_linux_amd64.tar.gz`
 
-If you then extract that package and run `./bin/grafana-server`, Grafana will launch and you will be able to access it via <http://localhost:3000>.
+If you then extract that package (`tar -xvf *.tar.gz`) and run `./bin/grafana-server`, Grafana will launch and you will be able to access it via <http://localhost:3000>.
 
 ## Local checkout
 
