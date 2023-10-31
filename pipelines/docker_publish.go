@@ -14,6 +14,10 @@ import (
 )
 
 func ImageManifest(tag string) string {
+	log.Println(tag)
+	log.Println(tag)
+	log.Println(tag)
+	log.Println(tag)
 	manifest := strings.ReplaceAll(tag, "-image-tags", "")
 	lastDash := strings.LastIndex(manifest, "-")
 	return manifest[:lastDash]
@@ -48,15 +52,17 @@ func PublishDocker(ctx context.Context, d *dagger.Client, args PipelineArgs) err
 	for i, name := range args.PackageInputOpts.Packages {
 		// For each package we retrieve the tags grafana-image-tags and grafana-oss-image-tags, or grafana-enterprise-image-tags
 		format := opts.TagFormat
-		tarOpts := TarOptsFromFileName(name)
 		if strings.Contains(name, "ubuntu") {
 			format = opts.UbuntuTagFormat
 		}
+
+		tarOpts := TarOptsFromFileName(name)
 
 		tags, err := docker.Tags(opts.Org, opts.Registry, []string{opts.Repository}, format, tarOpts.NameOpts())
 		if err != nil {
 			return err
 		}
+		log.Println(tags)
 		for _, tag := range tags {
 			// For each tag we publish an image and add the tag to the list of tags for a specific manifest
 			// Since each package has a maximum of 2 tags, this for loop will only run twice on a worst case scenario
@@ -96,7 +102,7 @@ func PublishPackageImageFunc(ctx context.Context, sm *semaphore.Weighted, d *dag
 		log.Printf("[%s] Acquired semaphore", tag)
 
 		log.Printf("[%s] Publishing image", tag)
-		out, err := docker.PublishPackageImage(ctx, d, pkg, tag, tag, opts.Password, opts.Registry)
+		out, err := docker.PublishPackageImage(ctx, d, pkg, tag, opts.Username, opts.Password, opts.Registry)
 		if err != nil {
 			return fmt.Errorf("[%s] error: %w", tag, err)
 		}
