@@ -331,8 +331,18 @@ func DockerHandler(name string) []string {
 
 func CDNHandler(name string) []string {
 	if IsMain() {
-		opts := pipelines.TarOptsFromFileName(strings.ReplaceAll(name, "/public", ".tar.gz"))
-		return []string{fmt.Sprintf(cdnMainFormat, opts.Version)}
+		// This folder is is always ${dist}/${version}/${name}/${public}
+		dist, err := filepath.Rel(".", filepath.Join(name, "../../../"))
+		if err != nil {
+			panic(err)
+		}
+
+		path, err := filepath.Rel(dist, name)
+		if err != nil {
+			panic(err)
+		}
+		s := strings.Split(path, string(os.PathSeparator))
+		return []string{fmt.Sprintf(cdnMainFormat, s[0])}
 	}
 	version := strings.TrimPrefix(os.Getenv("DRONE_TAG"), "v")
 	return []string{fmt.Sprintf(cdnFormat, version, grafana)}

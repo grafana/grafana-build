@@ -1,13 +1,6 @@
 package main
 
 var cdnMapping = map[string]m{
-	"PRO: Linux AMD64 on Main": {
-		input: "file://dist/custom/public/grafana-pro_1.2.3-100_eUhiborAbwIo_linux_amd64/public",
-		output: []string{
-			"grafana/1.2.3-100/public",
-		},
-		env: map[string]string{"IS_MAIN": "true"},
-	},
 	"OSS: Linux AMD64": {
 		input: "gs://bucket/tag/grafana_v1.2.3_102_linux_amd64/public",
 		output: []string{
@@ -28,5 +21,12 @@ var cdnMapping = map[string]m{
 			"artifacts/static-assets/grafana/1.2.3/public",
 		},
 		env: map[string]string{"DRONE_TAG": "1.2.3"},
+	},
+	"main": {
+		input: "dist/10.3.0-62960/grafana-enterprise/public",
+		output: []string{
+			"grafana/10.3.0-62960/public",
+		},
+		env: map[string]string{"IS_MAIN": "true"},
 	},
 }
