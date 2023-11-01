@@ -128,7 +128,7 @@ func Builder(
 	)
 
 	// make gen-go creates a file at "pkg/server/wire_gen.go".
-	wire := Wire(d, src, platform, goVersion, opts.WireTag)
+	src = Wire(d, src, platform, goVersion, opts.WireTag)
 
 	// for some distros we use the golang official iamge. For others, we use viceroy.
 	builder, err := GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
@@ -137,8 +137,7 @@ func Builder(
 	}
 
 	builder = builder.WithMountedDirectory("/src", src).
-		WithWorkdir("/src").
-		WithMountedFile("pkg/server/wire_gen.go", wire)
+		WithWorkdir("/src")
 
 	builder = golang.WithCachedGoDependencies(
 		builder,
@@ -148,12 +147,12 @@ func Builder(
 	return builder, nil
 }
 
-func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
+func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.Directory {
 	return golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "make"}).
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithEnvVariable("WIRE_TAGS", wireTag).
 		WithExec([]string{"make", "gen-go"}).
-		File("pkg/server/wire_gen.go")
+		Directory("/src")
 }

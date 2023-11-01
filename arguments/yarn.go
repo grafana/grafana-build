@@ -42,7 +42,7 @@ var YarnCacheDirectory = pipeline.Argument{
 			From("alpine").
 			WithMountedCache("/cache", cache).
 			WithMountedDirectory("/data", dir).
-			WithExec([]string{"/bin/sh", "-c", "cp -r /data/* /cache"}).
+			WithExec([]string{"/bin/sh", "-c", "cp -r /data/* /cache || return 0"}).
 			Sync(ctx)
 
 		if err != nil {
