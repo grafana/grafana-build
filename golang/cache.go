@@ -26,11 +26,12 @@ func WithCachedGoDependencies(container *dagger.Container, dir *dagger.Directory
 	})
 }
 
-func ModuleDir(d *dagger.Client, platform dagger.Platform, gomod, gosum *dagger.File, goVersion string) *dagger.Directory {
+func ModuleDir(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, goVersion string) *dagger.Directory {
 	container := Container(d, platform, goVersion).
 		WithWorkdir("/src").
-		WithMountedFile("/src/go.mod", gomod).
-		WithMountedFile("/src/go.sum", gosum).
+		// We need to mount the whole src directory as it might contain local
+		// Go modules:
+		WithMountedDirectory("/src", src).
 		WithExec([]string{"go", "mod", "download"})
 
 	return container.Directory("/go/pkg/mod")
