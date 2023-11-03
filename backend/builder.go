@@ -123,7 +123,7 @@ func Builder(
 	var (
 		version  = opts.Version
 		cacheKey = "go-mod-" + version
-		cacheDir = golang.ModuleDir(d, platform, src.File("go.mod"), src.File("go.sum"), goVersion)
+		cacheDir = golang.ModuleDir(d, platform, src, goVersion)
 		cache    = d.CacheVolume(cacheKey)
 	)
 
