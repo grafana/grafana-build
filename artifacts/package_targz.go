@@ -85,6 +85,11 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 
+	tags, err := options.StringSlice(flags.GoTags)
+	if err != nil {
+		return nil, err
+	}
+
 	experiments, err := options.StringSlice(flags.GoExperiments)
 	if err != nil {
 		return nil, err
@@ -105,7 +110,7 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 	if err != nil {
 		return nil, err
 	}
-	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, static, wireTag, goVersion, viceroyVersion, experiments)
+	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, static, wireTag, tags, goVersion, viceroyVersion, experiments)
 }
 
 // NewTarball returns a properly initialized Tarball artifact.
@@ -123,6 +128,7 @@ func NewTarball(
 	cache *dagger.CacheVolume,
 	static bool,
 	wireTag string,
+	tags []string,
 	goVersion string,
 	viceroyVersion string,
 	experiments []string,
@@ -134,6 +140,7 @@ func NewTarball(
 		Src:            src,
 		Static:         static,
 		WireTag:        wireTag,
+		Tags:           tags,
 		GoVersion:      goVersion,
 		ViceroyVersion: viceroyVersion,
 		Experiments:    experiments,

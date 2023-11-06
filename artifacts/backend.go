@@ -159,6 +159,11 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 
+	tags, err := options.StringSlice(flags.GoTags)
+	if err != nil {
+		return nil, err
+	}
+
 	p, err := GetPackageDetails(ctx, options, state)
 	if err != nil {
 		return nil, err
@@ -175,6 +180,7 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		ExperimentalFlags: experiments,
 		Static:            static,
 		WireTag:           wireTag,
+		Tags:              tags,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{

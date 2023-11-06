@@ -31,6 +31,7 @@ func GoBuildCommand(output string, ldflags map[string][]string, tags []string, m
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),
 		"-trimpath",
+		fmt.Sprintf("-tags=%s", strings.Join(tags, ",")),
 		// Go is weird and paths referring to packages within a module to be prefixed with "./".
 		// Otherwise, the path is assumed to be relative to $GOROOT
 		"./" + main,

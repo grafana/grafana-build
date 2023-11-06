@@ -11,6 +11,7 @@ const (
 	Static        pipeline.FlagOption = "static"
 	Enterprise    pipeline.FlagOption = "enterprise"
 	WireTag       pipeline.FlagOption = "wire-tag"
+	GoTags        pipeline.FlagOption = "go-tag"
 	GoExperiments pipeline.FlagOption = "go-experiments"
 	Sign          pipeline.FlagOption = "sign"
 
@@ -30,6 +31,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         false,
 			WireTag:            "oss",
 			GoExperiments:      []string{},
+			GoTags:             []string{},
 		},
 	},
 	{
@@ -40,6 +42,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{},
+			GoTags:             []string{},
 		},
 	},
 	{
@@ -50,6 +53,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "pro",
 			GoExperiments:      []string{},
+			GoTags:             []string{"pro"},
 		},
 	},
 	{
