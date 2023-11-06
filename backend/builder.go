@@ -152,7 +152,6 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 		WithExec([]string{"apk", "add", "make"}).
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithEnvVariable("WIRE_TAGS", wireTag).
-		WithExec([]string{"make", "gen-go"}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("make gen-go WIRE_TAGS=%s", wireTag)}).
 		Directory("/src")
 }
