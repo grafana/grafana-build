@@ -64,6 +64,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
+			GoTags:             []string{},
 		},
 	},
 }
