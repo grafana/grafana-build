@@ -6,11 +6,6 @@ import (
 
 // Builder mounts all of the necessary files to run yarn build commands and includes a yarn install exec
 func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, nodeVersion string, cache *dagger.CacheVolume) *dagger.Container {
-	container := WithYarnCache(
-		NodeContainer(d, NodeImage(nodeVersion), platform),
-		cache,
-	).WithMountedDirectory("/src", src).WithWorkdir("/src")
-
 	// TODO: Should figure out exactly what we can include without all the extras so we can take advantage of caching better.
 	// This had to be commented because storybook builds on branches older than 10.1.x were failing.
 
@@ -30,5 +25,5 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 	// })
 
 	// This yarn install is ran just to rebuild the yarn pnp files; all of the dependencies should be in the cache by now
-	return container.WithExec([]string{"yarn", "install", "--immutable"})
+	return YarnInstall(d, src, nodeVersion, cache)
 }
