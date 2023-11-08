@@ -58,6 +58,7 @@ func Build(
 		"grafana",
 		"grafana-server",
 		"grafana-cli",
+		"grafana-example-apiserver",
 	}
 
 	for _, v := range cmd {
