@@ -1,7 +1,9 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -62,7 +64,13 @@ func Build(
 	}
 
 	for _, v := range cmd {
-		cmd := GoBuildCommand(path.Join(out, v), ldflags, opts.Tags, path.Join("pkg", "cmd", v))
+		// Some CLI packages such as grafana-example-apiserver don't exist in earlier Grafana Versions <10.3
+		// Below check skips building them as needed
+		pkgPath := path.Join("pkg", "cmd", v)
+		if _, err := os.Stat(pkgPath); errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		cmd := GoBuildCommand(path.Join(out, v), ldflags, opts.Tags, pkgPath)
 		builder = builder.
 			WithExec([]string{"/bin/sh", "-c", strings.Join(cmd, " ")})
 	}
