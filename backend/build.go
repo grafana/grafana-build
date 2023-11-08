@@ -68,7 +68,7 @@ func Build(
 
 		cmd := GoBuildCommand(path.Join(out, v), ldflags, opts.Tags, pkgPath)
 		builder = builder.
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`if [ -e %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))})
+			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))})
 	}
 
 	return builder.Directory(out)
