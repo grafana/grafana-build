@@ -19,10 +19,15 @@ func Action(r Registerer, c *cli.Context) error {
 	// targz:linux/amd64:enterprise
 	artifactStrings := c.StringSlice("artifacts")
 
+	logLevel := slog.LevelInfo
+	if c.Bool("verbose") {
+		logLevel = slog.LevelDebug
+	}
+
 	var (
 		ctx = c.Context
 		log = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
+			Level: logLevel,
 		}))
 		parallel    = c.Int64("parallel")
 		destination = c.String("destination")
@@ -36,7 +41,11 @@ func Action(r Registerer, c *cli.Context) error {
 	}
 
 	log.Debug("Connecting to dagger daemon...")
-	client, err := dagger.Connect(ctx)
+	daggerOpts := []dagger.ClientOpt{}
+	if logLevel == slog.LevelDebug {
+		daggerOpts = append(daggerOpts, dagger.WithLogOutput(os.Stderr))
+	}
+	client, err := dagger.Connect(ctx, daggerOpts...)
 	if err != nil {
 		return err
 	}

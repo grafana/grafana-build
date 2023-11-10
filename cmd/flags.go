@@ -218,16 +218,6 @@ var ProImageFlags = []cli.Flag{
 	},
 }
 
-var DefaultFlags = []cli.Flag{
-	flags.Platform,
-	&cli.BoolFlag{
-		Name:    "verbose",
-		Aliases: []string{"v"},
-		Usage:   "Increase log verbosity. WARNING: This setting could potentially log sensitive data",
-		Value:   false,
-	},
-}
-
 var GCOMFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "api-url",
@@ -259,5 +249,5 @@ var JoinFlags = flags.Join
 
 func JoinFlagsWithDefault(f ...[]cli.Flag) []cli.Flag {
 	// Kind of gross but ensures that DeafultFlags are registered before any others.
-	return JoinFlags(append([][]cli.Flag{DefaultFlags}, f...)...)
+	return JoinFlags(append([][]cli.Flag{flags.DefaultFlags}, f...)...)
 }
