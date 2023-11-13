@@ -37,7 +37,7 @@ go run ./cmd artifacts \
   -a docker:enterprise:linux/arm64 \
   -a docker:enterprise:linux/amd64:ubuntu \
   -a docker:enterprise:linux/arm64:ubuntu \
-  -a docker:boring:linux/amd64/dynamic-musl \
+  -a docker:boring:linux/amd64/dynamic \
   -a zip:grafana:windows/amd64 \
   -a zip:enterprise:windows/amd64 \
   -a zip:grafana:windows/arm64 \
