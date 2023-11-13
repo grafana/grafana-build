@@ -31,7 +31,7 @@ func Action(r Registerer, c *cli.Context) error {
 		}))
 		parallel    = c.Int64("parallel")
 		destination = c.String("destination")
-		platform    = c.String("platform")
+		platform    = dagger.Platform(c.String("platform"))
 		verify      = c.Bool("verify")
 		checksum    = c.Bool("checksum")
 	)
@@ -55,6 +55,7 @@ func Action(r Registerer, c *cli.Context) error {
 		Log:        log,
 		Client:     client,
 		CLIContext: c,
+		Platform:   platform,
 	}
 
 	registered := r.Initializers()
@@ -80,7 +81,7 @@ func Action(r Registerer, c *cli.Context) error {
 		Client:   client,
 		Log:      log,
 		State:    state,
-		Platform: dagger.Platform(platform),
+		Platform: platform,
 		Store:    store,
 	}
 
