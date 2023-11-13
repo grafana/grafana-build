@@ -61,12 +61,18 @@ func Build(
 		"grafana-example-apiserver",
 	}
 
+	os, _ := OSAndArch(distro)
+
 	for _, v := range cmd {
 		// Some CLI packages such as grafana-example-apiserver don't exist in earlier Grafana Versions <10.3
 		// Below check skips building them as needed
 		pkgPath := path.Join("pkg", "cmd", v)
+		out := path.Join(out, v)
+		if os == "windows" {
+			out += ".exe"
+		}
 
-		cmd := GoBuildCommand(path.Join(out, v), ldflags, opts.Tags, pkgPath)
+		cmd := GoBuildCommand(out, ldflags, opts.Tags, pkgPath)
 		builder = builder.
 			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))})
 	}

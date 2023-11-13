@@ -86,7 +86,8 @@ func GolangContainer(
 	opts *BuildOpts,
 ) (*dagger.Container, error) {
 	os, _ := OSAndArch(distro)
-	if os == "darwin" || os == "windows" {
+	// Only use viceroy for all darwin and only windows/amd64
+	if os == "darwin" || distro == DistWindowsAMD64 {
 		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
 	}
 

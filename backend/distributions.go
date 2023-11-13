@@ -208,10 +208,6 @@ func LDFlagsDynamic(info *VCSInfo) map[string][]string {
 	}
 }
 
-var DefaultTags = []string{
-	"osusergo",
-}
-
 func ZigCC(distro Distribution) string {
 	target, ok := ZigTargets[distro]
 	if !ok {
@@ -307,6 +303,20 @@ func BuildOptsWithoutZig(distro Distribution, experiments []string, tags []strin
 	}
 }
 
+func ViceroyBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, arch = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "viceroycc",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              arch,
+		CGOEnabled:        true,
+	}
+}
+
 var ZigTargets = map[Distribution]string{
 	DistLinuxAMD64:            "x86_64-linux-musl",
 	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
@@ -317,6 +327,8 @@ var ZigTargets = map[Distribution]string{
 	DistLinuxARMv6:            "arm-linux-musleabihf",
 	DistLinuxARMv7:            "arm-linux-musleabihf",
 	DistLinuxRISCV64:          "riscv64-linux-musl",
+	DistWindowsAMD64:          "x86_64-windows-gnu",
+	DistWindowsARM64:          "aarch64-windows-gnu",
 }
 
 var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
@@ -333,11 +345,11 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
-	DistDarwinAMD64: BuildOptsWithoutZig,
-	DistDarwinARM64: BuildOptsWithoutZig,
+	DistWindowsAMD64: ViceroyBuildOpts,
+	DistWindowsARM64: StdZigBuildOpts,
+	DistDarwinAMD64:  ViceroyBuildOpts,
+	DistDarwinARM64:  ViceroyBuildOpts,
 
-	DistWindowsAMD64:          BuildOptsWithoutZig,
-	DistWindowsARM64:          BuildOptsWithoutZig,
 	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
 
