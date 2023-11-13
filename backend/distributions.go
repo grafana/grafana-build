@@ -303,6 +303,20 @@ func BuildOptsWithoutZig(distro Distribution, experiments []string, tags []strin
 	}
 }
 
+func ViceroyBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, arch = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "viceroycc",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              arch,
+		CGOEnabled:        true,
+	}
+}
+
 var ZigTargets = map[Distribution]string{
 	DistLinuxAMD64:            "x86_64-linux-musl",
 	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
@@ -331,11 +345,11 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
-	DistDarwinAMD64: BuildOptsWithoutZig,
-	DistDarwinARM64: BuildOptsWithoutZig,
+	DistWindowsAMD64: ViceroyBuildOpts,
+	DistWindowsARM64: StdZigBuildOpts,
+	DistDarwinAMD64:  ViceroyBuildOpts,
+	DistDarwinARM64:  ViceroyBuildOpts,
 
-	DistWindowsAMD64:          StdZigBuildOpts,
-	DistWindowsARM64:          StdZigBuildOpts,
 	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
 
