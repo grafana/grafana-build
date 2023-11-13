@@ -42,6 +42,9 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		},
 		flags.PublishFlags,
 		flags.ConcurrencyFlags,
+		[]cli.Flag{
+			flags.Verbose,
+		},
 	)
 
 	// All of these artifacts are the registered artifacts. These should mostly stay the same no matter what.
