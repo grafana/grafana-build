@@ -314,6 +314,7 @@ var ZigTargets = map[Distribution]string{
 	DistLinuxARMv7:            "arm-linux-musleabihf",
 	DistLinuxRISCV64:          "riscv64-linux-musl",
 	DistWindowsAMD64:          "x86_64-windows-gnu",
+	DistWindowsARM64:          "aarch64-windows-gnu",
 }
 
 var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
@@ -334,7 +335,7 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistDarwinARM64: BuildOptsWithoutZig,
 
 	DistWindowsAMD64:          StdZigBuildOpts,
-	DistWindowsARM64:          BuildOptsWithoutZig,
+	DistWindowsARM64:          StdZigBuildOpts,
 	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
 
