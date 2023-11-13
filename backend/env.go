@@ -1,6 +1,8 @@
 package backend
 
-import "strings"
+import (
+	"strings"
+)
 
 type (
 	BuildMode string
@@ -103,7 +105,12 @@ func ViceroyEnv(opts *GoBuildOpts) map[string]string {
 		arch = opts.Arch
 	)
 
-	env := map[string]string{"VICEROYOS": os, "VICEROYARCH": arch}
+	env := map[string]string{
+		"VICEROYOS":   os,
+		"GOOS":        os,
+		"VICEROYARCH": arch,
+		"GOARCH":      arch,
+	}
 
 	if arch == "arm" {
 		env["VICEROYARM"] = string(opts.GoARM)

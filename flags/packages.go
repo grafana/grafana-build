@@ -5,6 +5,10 @@ import (
 	"github.com/grafana/grafana-build/pipeline"
 )
 
+var DefaultTags = []string{
+	"osusergo",
+}
+
 const (
 	PackageName   pipeline.FlagOption = "package-name"
 	Distribution  pipeline.FlagOption = "distribution"
@@ -31,7 +35,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         false,
 			WireTag:            "oss",
 			GoExperiments:      []string{},
-			GoTags:             []string{},
+			GoTags:             DefaultTags,
 		},
 	},
 	{
@@ -42,7 +46,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{},
-			GoTags:             []string{},
+			GoTags:             DefaultTags,
 		},
 	},
 	{
@@ -53,7 +57,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "pro",
 			GoExperiments:      []string{},
-			GoTags:             []string{"pro"},
+			GoTags:             append(DefaultTags, "pro"),
 		},
 	},
 	{
@@ -64,7 +68,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
-			GoTags:             []string{},
+			GoTags:             DefaultTags,
 		},
 	},
 }

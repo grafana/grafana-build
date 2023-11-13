@@ -208,10 +208,6 @@ func LDFlagsDynamic(info *VCSInfo) map[string][]string {
 	}
 }
 
-var DefaultTags = []string{
-	"osusergo",
-}
-
 func ZigCC(distro Distribution) string {
 	target, ok := ZigTargets[distro]
 	if !ok {
@@ -317,6 +313,7 @@ var ZigTargets = map[Distribution]string{
 	DistLinuxARMv6:            "arm-linux-musleabihf",
 	DistLinuxARMv7:            "arm-linux-musleabihf",
 	DistLinuxRISCV64:          "riscv64-linux-musl",
+	DistWindowsAMD64:          "x86_64-windows-gnu",
 }
 
 var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
@@ -336,7 +333,7 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistDarwinAMD64: BuildOptsWithoutZig,
 	DistDarwinARM64: BuildOptsWithoutZig,
 
-	DistWindowsAMD64:          BuildOptsWithoutZig,
+	DistWindowsAMD64:          StdZigBuildOpts,
 	DistWindowsARM64:          BuildOptsWithoutZig,
 	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
 }
