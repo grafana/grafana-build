@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"path/filepath"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -45,7 +46,7 @@ func (f *NPMPackages) BuildFile(ctx context.Context, builder *dagger.Container, 
 }
 
 func (f *NPMPackages) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.NPMPackages(builder, f.Src, f.Version), nil
+	return frontend.NPMPackages(builder, f.Src, strings.TrimPrefix(f.Version, "v")), nil
 }
 
 func (f *NPMPackages) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {

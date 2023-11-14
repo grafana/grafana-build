@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"dagger.io/dagger"
@@ -37,7 +38,7 @@ func WithVCSInfo(container *dagger.Container, version string, enterprise bool) (
 
 func (v *VCSInfo) X() []string {
 	flags := []string{
-		fmt.Sprintf("main.version=%s", v.Version),
+		fmt.Sprintf("main.version=%s", strings.TrimPrefix(v.Version, "v")),
 		`main.commit=$(cat ./.buildinfo.commit)`,
 		`main.buildBranch=$(cat ./.buildinfo.branch)`,
 		fmt.Sprintf("main.buildstamp=%d", v.Timestamp.Unix()),
