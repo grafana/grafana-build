@@ -64,12 +64,12 @@ func (a *GCPInheritedAuth) Authenticate(d *dagger.Client, c *dagger.Container) (
 		return c.WithMountedDirectory("/auth/credentials.json", d.Host().Directory(val)).WithEnvVariable("GOOGLE_APPLICATION_CREDENTIALS", "/auth/credentials.json"), nil
 	}
 
-	cfg, err := os.UserConfigDir()
+	cfg, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
 
-	return c.WithMountedDirectory("/root/.config/gcloud", d.Host().Directory(filepath.Join(cfg, "gcloud"))), nil
+	return c.WithMountedDirectory("/root/.config/gcloud", d.Host().Directory(filepath.Join(cfg, ".config", "gcloud"))), nil
 }
 
 func GCSUploadDirectory(d *dagger.Client, image string, auth GCPAuthenticator, dir *dagger.Directory, dst string) (*dagger.Container, error) {

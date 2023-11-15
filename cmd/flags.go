@@ -197,6 +197,12 @@ var ProImageFlags = []cli.Flag{
 		Required: true,
 	},
 	&cli.StringFlag{
+		Name:     "repo",
+		Usage:    "The docker image repo",
+		Value:    "hosted-grafana-pro",
+		Required: false,
+	},
+	&cli.StringFlag{
 		Name:     "image-tag",
 		Usage:    "The docker image tag",
 		Required: true,

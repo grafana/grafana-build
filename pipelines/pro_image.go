@@ -30,7 +30,7 @@ func ProImage(ctx context.Context, dc *dagger.Client, args PipelineArgs) error {
 	socketPath := "/var/run/docker.sock"
 	socket := dc.Host().UnixSocket(socketPath)
 
-	hostedGrafanaImage := fmt.Sprintf("%s/hosted-grafana-pro:%s", args.ProImageOpts.ContainerRegistry, args.ProImageOpts.ImageTag)
+	hostedGrafanaImage := fmt.Sprintf("%s/%s:%s", args.ProImageOpts.ContainerRegistry, args.ProImageOpts.Repo, args.ProImageOpts.ImageTag)
 
 	log.Printf("Building hosted Grafana image: %s", hostedGrafanaImage)
 	container := dc.Container().From("google/cloud-sdk:433.0.0-alpine").
