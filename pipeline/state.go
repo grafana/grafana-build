@@ -34,6 +34,7 @@ type State struct {
 	// These two fields are only here so that the state can call the ValueFunc of each argument if it's not already available in the state.
 	CLIContext cliutil.CLIContext
 	Client     *dagger.Client
+	Platform   dagger.Platform
 }
 
 func (s *State) ArgumentOpts() *ArgumentOpts {
@@ -42,6 +43,7 @@ func (s *State) ArgumentOpts() *ArgumentOpts {
 		CLIContext: s.CLIContext,
 		Client:     s.Client,
 		State:      s,
+		Platform:   s.Platform,
 	}
 }
 

@@ -125,7 +125,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		return nil, err
 	}
 
-	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache)
+	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache, opts.Platform)
 
 	if _, err := containers.ExitError(ctx, container); err != nil {
 		return nil, err

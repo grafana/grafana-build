@@ -31,6 +31,7 @@ type ArgumentOpts struct {
 	CLIContext cliutil.CLIContext
 	Client     *dagger.Client
 	State      StateHandler
+	Platform   dagger.Platform
 }
 
 type ArgumentValueFunc func(ctx context.Context, opts *ArgumentOpts) (any, error)
