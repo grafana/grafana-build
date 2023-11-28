@@ -1,23 +1,15 @@
 ---
 kind: pipeline
-name: main
+type: docker
+name: default
 
 steps:
-- name: docker
-  image: plugins/docker
-  settings:
-    repo: grafana/grafana-build
-    tags:
-    - latest
-    - main
-
-trigger:
-  event:
-  - push
-  branch:
-  - main
+- name: backend
+  image: golang
+  commands:
+  - go version
 ---
 kind: signature
-hmac: 66f31f76fd7902b2ae6dca34ba027671f8fd091175e626e71f3f6de5452ae5be
+hmac: 04b72fe2f49995dcb0d54e959aade920c08cdc5824cfbf75b8db8e4526effd6a
 
 ...
