@@ -46,6 +46,7 @@ type Tarball struct {
 	Name         packages.Name
 	BuildID      string
 	Version      string
+	GoVersion    string
 	Enterprise   bool
 
 	Grafana   *dagger.Directory
@@ -172,6 +173,7 @@ func NewTarball(
 		Name:         name,
 		Distribution: distro,
 		Version:      version,
+		GoVersion:    goVersion,
 		BuildID:      buildID,
 		Grafana:      src,
 		Enterprise:   enterprise,
@@ -245,11 +247,12 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 	}
 
 	files := map[string]*dagger.File{
-		"VERSION":    b.File("VERSION"),
-		"LICENSE":    grafanaDir.File("LICENSE"),
-		"NOTICE.md":  grafanaDir.File("NOTICE.md"),
-		"README.md":  grafanaDir.File("README.md"),
-		"Dockerfile": grafanaDir.File("Dockerfile"),
+		"VERSION":            b.File("VERSION"),
+		"LICENSE":            grafanaDir.File("LICENSE"),
+		"NOTICE.md":          grafanaDir.File("NOTICE.md"),
+		"README.md":          grafanaDir.File("README.md"),
+		"Dockerfile":         grafanaDir.File("Dockerfile"),
+		"tools/zoneinfo.zip": opts.Client.Container().From(fmt.Sprintf("golang:%s", t.GoVersion)).File("/usr/local/go/lib/time/zoneinfo.zip"),
 	}
 
 	directories := map[string]*dagger.Directory{
