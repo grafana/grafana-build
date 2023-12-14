@@ -8,8 +8,12 @@ dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
+  -a targz:enterprise:linux/arm/v6 \
+  -a targz:enterprise:linux/arm/v7 \
   -a deb:enterprise:linux/amd64 \
   -a deb:enterprise:linux/arm64 \
+  -a deb:enterprise:linux/arm/v6 \
+  -a deb:enterprise:linux/arm/v7 \
   -a docker:enterprise:linux/amd64 \
   -a docker:enterprise:linux/arm64 \
   --yarn-cache=${YARN_CACHE_FOLDER} \

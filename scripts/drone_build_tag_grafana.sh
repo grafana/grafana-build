@@ -12,8 +12,12 @@ dagger run --silent go run ./cmd \
   -a storybook \
   -a targz:grafana:linux/amd64 \
   -a targz:grafana:linux/arm64 \
+  -a targz:grafana:linux/arm/v6 \
+  -a targz:grafana:linux/arm/v7 \
   -a deb:grafana:linux/amd64 \
   -a deb:grafana:linux/arm64 \
+  -a deb:grafana:linux/arm/v6 \
+  -a deb:grafana:linux/arm/v7 \
   -a rpm:grafana:linux/amd64:sign \
   -a rpm:grafana:linux/arm64:sign \
   -a docker:grafana:linux/amd64 \

@@ -10,8 +10,12 @@ dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
+  -a targz:enterprise:linux/arm/v6 \
+  -a targz:enterprise:linux/arm/v7 \
   -a deb:enterprise:linux/amd64 \
   -a deb:enterprise:linux/arm64 \
+  -a deb:enterprise:linux/arm/v6 \
+  -a deb:enterprise:linux/arm/v7 \
   -a rpm:enterprise:linux/amd64:sign \
   -a rpm:enterprise:linux/arm64:sign \
   -a targz:enterprise:windows/amd64 \
