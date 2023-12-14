@@ -20,6 +20,7 @@ dagger run --silent go run ./cmd \
   -a deb:grafana:linux/arm/v7 \
   -a docker:grafana:linux/amd64 \
   -a docker:grafana:linux/arm64 \
+  -a docker:grafana:linux/arm/v7 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
   --verify \
