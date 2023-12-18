@@ -18,6 +18,7 @@ dagger run --silent go run ./cmd \
   -a deb:enterprise:linux/arm/v7 \
   -a rpm:enterprise:linux/amd64:sign \
   -a rpm:enterprise:linux/arm64:sign \
+  -a rpm:enterprise:linux/arm/v7:sign \
   -a targz:enterprise:windows/amd64 \
   -a targz:enterprise:windows/arm64 \
   -a targz:enterprise:darwin/amd64 \

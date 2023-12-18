@@ -20,6 +20,7 @@ dagger run --silent go run ./cmd \
   -a deb:grafana:linux/arm/v7 \
   -a rpm:grafana:linux/amd64:sign \
   -a rpm:grafana:linux/arm64:sign \
+  -a rpm:grafana:linux/arm/v7:sign \
   -a docker:grafana:linux/amd64 \
   -a docker:grafana:linux/arm64 \
   -a docker:grafana:linux/arm/v7 \
