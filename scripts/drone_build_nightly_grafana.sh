@@ -17,7 +17,6 @@ dagger run --silent go run ./cmd \
   -a deb:grafana:linux/arm/v7:nightly \
   -a rpm:grafana:linux/amd64:sign:nightly \
   -a rpm:grafana:linux/arm64:sign:nightly \
-  -a rpm:grafana:linux/arm/v7:sign:nightly \
   -a targz:grafana:windows/amd64 \
   -a targz:grafana:windows/arm64 \
   -a targz:grafana:darwin/amd64 \

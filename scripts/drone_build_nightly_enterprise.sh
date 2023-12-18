@@ -24,7 +24,6 @@ dagger run --silent go run ./cmd \
   -a deb:enterprise:linux/arm/v7:nightly \
   -a rpm:enterprise:linux/amd64:sign:nightly \
   -a rpm:enterprise:linux/arm64:sign:nightly \
-  -a rpm:enterprise:linux/arm/v7:sign:nightly \
   -a targz:enterprise:windows/amd64 \
   -a targz:enterprise:windows/arm64 \
   -a targz:enterprise:darwin/amd64 \
