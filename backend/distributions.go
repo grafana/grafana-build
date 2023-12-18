@@ -186,8 +186,6 @@ func Platform(d Distribution) dagger.Platform {
 	p := strings.ReplaceAll(string(d), "/dynamic-musl", "")
 	p = strings.ReplaceAll(p, "/dynamic", "")
 	p = strings.ReplaceAll(p, "arm/v6", "arm/v7")
-	// we have to do this as there's no arm/v6 or arm/v7 image for redhat/ubi8
-	p = strings.ReplaceAll(p, "arm/v7", "arm64")
 	// for now let's just try to use the distro name as the platform and see if that works...
 	return dagger.Platform(p)
 }
