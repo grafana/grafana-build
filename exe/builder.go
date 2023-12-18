@@ -15,7 +15,7 @@ func Builder(d *dagger.Client) (*dagger.Container, error) {
 
 	debian := d.Container().From("debian:sid").
 		WithExec([]string{"apt-get", "update", "-yq"}).
-		WithExec([]string{"apt-get", "install", "tar", "nsis"})
+		WithExec([]string{"apt-get", "install", "-yq", "tar", "nsis"})
 
 	builder, err := containers.WithEmbeddedFS(d, debian, "/src", grafanabuild.WindowsPackaging)
 	if err != nil {
