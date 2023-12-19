@@ -27,8 +27,10 @@ dagger run --silent go run ./cmd \
   -a exe:enterprise:windows/amd64 \
   -a docker:enterprise:linux/amd64 \
   -a docker:enterprise:linux/arm64 \
+  -a docker:enterprise:linux/arm/v7 \
   -a docker:enterprise:linux/amd64:ubuntu \
   -a docker:enterprise:linux/arm64:ubuntu \
+  -a docker:enterprise:linux/arm/v7:ubuntu \
   -a docker:boring:linux/amd64/dynamic \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --verify \
