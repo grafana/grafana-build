@@ -35,7 +35,7 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --verify \
   --checksum \
-  --parallel=2 \
+  --parallel=1 \
   --build-id=${DRONE_BUILD_NUMBER} \
   --enterprise-ref=${DRONE_TAG} \
   --grafana-ref=${DRONE_TAG} \
