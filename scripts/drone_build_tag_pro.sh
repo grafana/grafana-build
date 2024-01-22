@@ -25,6 +25,7 @@ dagger run --silent go run ./cmd \
   -a targz:pro:windows/amd64 \
   --verify \
   --checksum \
+  --parallel=1 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --build-id=${DRONE_BUILD_NUMBER} \
   --enterprise-ref=${DRONE_TAG} \
