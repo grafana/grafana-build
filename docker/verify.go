@@ -34,6 +34,7 @@ func Verify(
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
 	}).
+		WithUser("root").
 		Import(image).
 		WithExposedPort(3000)
 
