@@ -34,7 +34,7 @@ func Verify(
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
 	}).
-		WithUser("root").
+		WithMountedTemp("/var/lib/grafana/plugins").
 		Import(image).
 		WithExposedPort(3000)
 

@@ -27,7 +27,6 @@ func ValidatePackage(d *dagger.Client, service *dagger.Container, src *dagger.Di
 		WithServiceBinding("grafana", service).
 		WithEnvVariable("HOST", "grafana").
 		WithEnvVariable("PORT", "3000").
-		WithUser("root").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"/bin/sh", "-c", "/src/e2e/verify-release"})
 }
