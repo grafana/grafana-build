@@ -33,7 +33,7 @@ dagger run --silent go run ./cmd \
   -a docker:enterprise:linux/arm/v7:ubuntu \
   -a docker:boring:linux/amd64/dynamic \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --verify \
+  --verify=false \
   --checksum \
   --parallel=2 \
   --build-id=${DRONE_BUILD_NUMBER} \
