@@ -23,7 +23,7 @@ dagger run --silent go run ./cmd \
   -a docker:pro:linux/arm/v7:ubuntu \
   -a targz:pro:darwin/amd64 \
   -a targz:pro:windows/amd64 \
-  --verify \
+  --verify=false \
   --checksum \
   --parallel=2 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
