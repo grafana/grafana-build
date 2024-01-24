@@ -6,7 +6,7 @@ set -e
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # Build all of the grafana.tar.gz packages.
-dagger run --silent go run ./cmd \
+dagger run go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
@@ -35,7 +35,7 @@ dagger run --silent go run ./cmd \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --verify \
   --checksum \
-  --parallel=2 \
+  --parallel=5 \
   --build-id=${DRONE_BUILD_NUMBER} \
   --enterprise-ref=${DRONE_TAG} \
   --grafana-ref=${DRONE_TAG} \
