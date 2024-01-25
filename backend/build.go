@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"strings"
 
@@ -41,13 +42,16 @@ func GoBuildCommand(output string, ldflags map[string][]string, tags []string, m
 }
 
 func Build(
+	d *dagger.Client,
 	builder *dagger.Container,
 	src *dagger.Directory,
 	distro Distribution,
 	out string,
 	opts *BuildOpts,
 ) *dagger.Directory {
-	builder, vcsinfo := WithVCSInfo(builder, opts.Version, opts.Enterprise)
+	vcsinfo := GetVCSInfo(d, src, opts.Version, opts.Enterprise)
+	builder = WithVCSInfo(builder, vcsinfo, opts.Enterprise)
+
 	ldflags := LDFlagsDynamic(vcsinfo)
 
 	if opts.Static {
@@ -73,8 +77,12 @@ func Build(
 		}
 
 		cmd := GoBuildCommand(out, ldflags, opts.Tags, pkgPath)
+
+		script := fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))
+		log.Printf("Building with command '%s'", script)
+
 		builder = builder.
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))})
+			WithExec([]string{"/bin/sh", "-c", script})
 	}
 
 	return builder.Directory(out)

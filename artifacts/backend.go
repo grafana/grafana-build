@@ -75,6 +75,7 @@ func (b *Backend) BuildDir(ctx context.Context, builder *dagger.Container, opts 
 	}
 
 	return backend.Build(
+		opts.Client,
 		builder,
 		b.Src,
 		b.Distribution,
