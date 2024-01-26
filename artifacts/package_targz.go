@@ -246,27 +246,27 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		return nil, err
 	}
 
-	files := map[string]*dagger.File{
-		"VERSION":            b.File("VERSION"),
-		"LICENSE":            grafanaDir.File("LICENSE"),
-		"NOTICE.md":          grafanaDir.File("NOTICE.md"),
-		"README.md":          grafanaDir.File("README.md"),
-		"Dockerfile":         grafanaDir.File("Dockerfile"),
-		"tools/zoneinfo.zip": opts.Client.Container().From(fmt.Sprintf("golang:%s", t.GoVersion)).File("/usr/local/go/lib/time/zoneinfo.zip"),
+	files := []targz.MappedFile{
+		{"VERSION", b.File("VERSION")},
+		{"LICENSE", grafanaDir.File("LICENSE")},
+		{"NOTICE.md", grafanaDir.File("NOTICE.md")},
+		{"README.md", grafanaDir.File("README.md")},
+		{"Dockerfile", grafanaDir.File("Dockerfile")},
+		{"tools/zoneinfo.zip", opts.Client.Container().From(fmt.Sprintf("golang:%s", t.GoVersion)).File("/usr/local/go/lib/time/zoneinfo.zip")},
 	}
 
-	directories := map[string]*dagger.Directory{
-		"conf":               grafanaDir.Directory("conf"),
-		"docs/sources":       grafanaDir.Directory("docs/sources"),
-		"packaging/deb":      grafanaDir.Directory("packaging/deb"),
-		"packaging/rpm":      grafanaDir.Directory("packaging/rpm"),
-		"packaging/docker":   grafanaDir.Directory("packaging/docker"),
-		"packaging/wrappers": grafanaDir.Directory("packaging/wrappers"),
-		"bin":                backendDir,
-		"public":             frontendDir,
-		"npm-artifacts":      npmDir,
-		"storybook":          storybookDir,
-		"plugins-bundled":    pluginsDir,
+	directories := []targz.MappedDirectory{
+		{"conf", grafanaDir.Directory("conf")},
+		{"docs/sources", grafanaDir.Directory("docs/sources")},
+		{"packaging/deb", grafanaDir.Directory("packaging/deb")},
+		{"packaging/rpm", grafanaDir.Directory("packaging/rpm")},
+		{"packaging/docker", grafanaDir.Directory("packaging/docker")},
+		{"packaging/wrappers", grafanaDir.Directory("packaging/wrappers")},
+		{"bin", backendDir},
+		{"public", frontendDir},
+		{"npm-artifacts", npmDir},
+		{"storybook", storybookDir},
+		{"plugins-bundled", pluginsDir},
 	}
 
 	root := fmt.Sprintf("grafana-%s", version)

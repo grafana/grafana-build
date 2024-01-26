@@ -9,17 +9,22 @@ import (
 	"dagger.io/dagger"
 )
 
-func GoLDFlags(flags map[string][]string) string {
+type LDFlag struct {
+	Name   string
+	Values []string
+}
+
+func GoLDFlags(flags []LDFlag) string {
 	ldflags := strings.Builder{}
-	for k, v := range flags {
-		if v == nil {
-			ldflags.WriteString(k + " ")
+	for _, v := range flags {
+		if v.Values == nil {
+			ldflags.WriteString(v.Name + " ")
 			continue
 		}
 
-		for _, value := range v {
+		for _, value := range v.Values {
 			// For example, "-X 'main.version=v1.0.0'"
-			ldflags.WriteString(fmt.Sprintf(`%s \"%s\" `, k, value))
+			ldflags.WriteString(fmt.Sprintf(`%s \"%s\" `, v.Name, value))
 		}
 	}
 
@@ -27,7 +32,7 @@ func GoLDFlags(flags map[string][]string) string {
 }
 
 // GoBuildCommand returns the arguments for go build to be used in 'WithExec'.
-func GoBuildCommand(output string, ldflags map[string][]string, tags []string, main string) []string {
+func GoBuildCommand(output string, ldflags []LDFlag, tags []string, main string) []string {
 	args := []string{"go", "build",
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),

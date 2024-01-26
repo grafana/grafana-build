@@ -6,6 +6,16 @@ import (
 	"dagger.io/dagger"
 )
 
+type MappedDirectory struct {
+	Path      string
+	Directory *dagger.Directory
+}
+
+type MappedFile struct {
+	Path string
+	File *dagger.File
+}
+
 type Opts struct {
 	// Root is the root folder that holds all of the packaged data.
 	// It is common for targz packages to have a root folder.
@@ -14,31 +24,31 @@ type Opts struct {
 
 	// A map of directory paths relative to the root, like 'bin', 'public', 'npm-artifacts'
 	// to dagger directories.
-	Directories map[string]*dagger.Directory
-	Files       map[string]*dagger.File
+	Directories []MappedDirectory
+	Files       []MappedFile
 }
 
 func Build(packager *dagger.Container, opts *Opts) *dagger.File {
 	root := opts.Root
 
-	for k, v := range opts.Directories {
+	for _, v := range opts.Directories {
 		packager = packager.
-			WithMountedDirectory(path.Join("/src", root, k), v)
+			WithMountedDirectory(path.Join("/src", root, v.Path), v.Directory)
 	}
 
 	packager = packager.
 		WithWorkdir("/src")
 
 	paths := []string{}
-	for k, v := range opts.Files {
-		path := path.Join(root, k)
-		packager = packager.WithMountedFile(path, v)
+	for _, v := range opts.Files {
+		path := path.Join(root, v.Path)
+		packager = packager.WithMountedFile(path, v.File)
 		paths = append(paths, path)
 	}
 
-	for k, v := range opts.Directories {
-		path := path.Join(root, k)
-		packager = packager.WithMountedDirectory(path, v)
+	for _, v := range opts.Directories {
+		path := path.Join(root, v.Path)
+		packager = packager.WithMountedDirectory(path, v.Directory)
 		paths = append(paths, path)
 	}
 

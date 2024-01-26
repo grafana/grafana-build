@@ -192,19 +192,19 @@ func Platform(d Distribution) dagger.Platform {
 
 type DistroBuildOptsFunc func(distro Distribution, experiments []string, tags []string) *GoBuildOpts
 
-func LDFlagsStatic(info *VCSInfo) map[string][]string {
-	return map[string][]string{
-		"-w":                  nil,
-		"-s":                  nil,
-		"-X":                  info.X(),
-		"-linkmode=external":  nil,
-		"-extldflags=-static": nil,
+func LDFlagsStatic(info *VCSInfo) []LDFlag {
+	return []LDFlag{
+		{"-w", nil},
+		{"-s", nil},
+		{"-X", info.X()},
+		{"-linkmode=external", nil},
+		{"-extldflags=-static", nil},
 	}
 }
 
-func LDFlagsDynamic(info *VCSInfo) map[string][]string {
-	return map[string][]string{
-		"-X": info.X(),
+func LDFlagsDynamic(info *VCSInfo) []LDFlag {
+	return []LDFlag{
+		{"-X", info.X()},
 	}
 }
 
