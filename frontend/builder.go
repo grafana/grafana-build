@@ -17,7 +17,6 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 				WithoutDirectory(".git").
 				WithoutDirectory("devenv").
 				WithoutDirectory(".github").
-				WithoutDirectory("scripts").
 				WithoutDirectory("docs").
 				WithoutDirectory("pkg"),
 			dagger.ContainerWithDirectoryOpts{
