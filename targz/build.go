@@ -31,11 +31,6 @@ type Opts struct {
 func Build(packager *dagger.Container, opts *Opts) *dagger.File {
 	root := opts.Root
 
-	for _, v := range opts.Directories {
-		packager = packager.
-			WithMountedDirectory(path.Join("/src", root, v.Path), v.Directory)
-	}
-
 	packager = packager.
 		WithWorkdir("/src")
 
