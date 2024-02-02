@@ -9,7 +9,26 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 	container := WithYarnCache(
 		NodeContainer(d, NodeImage(nodeVersion), platform),
 		cache,
-	).WithMountedDirectory("/src", src).WithWorkdir("/src")
+	).
+		WithDirectory("/src",
+			src.
+				WithoutFile("go.mod").
+				WithoutFile("go.sum").
+				WithoutDirectory(".git").
+				WithoutDirectory("devenv").
+				WithoutDirectory(".github").
+				WithoutDirectory("scripts").
+				WithoutDirectory("docs").
+				WithoutDirectory("pkg"),
+			dagger.ContainerWithDirectoryOpts{
+				Exclude: []string{
+					"*drone*",
+					"*.go",
+					"*.md",
+				},
+			},
+		).
+		WithWorkdir("/src")
 
 	// TODO: Should figure out exactly what we can include without all the extras so we can take advantage of caching better.
 	// This had to be commented because storybook builds on branches older than 10.1.x were failing.

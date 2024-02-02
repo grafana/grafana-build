@@ -2,23 +2,29 @@ package backend
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"strings"
 
 	"dagger.io/dagger"
 )
 
-func GoLDFlags(flags map[string][]string) string {
+type LDFlag struct {
+	Name   string
+	Values []string
+}
+
+func GoLDFlags(flags []LDFlag) string {
 	ldflags := strings.Builder{}
-	for k, v := range flags {
-		if v == nil {
-			ldflags.WriteString(k + " ")
+	for _, v := range flags {
+		if v.Values == nil {
+			ldflags.WriteString(v.Name + " ")
 			continue
 		}
 
-		for _, value := range v {
+		for _, value := range v.Values {
 			// For example, "-X 'main.version=v1.0.0'"
-			ldflags.WriteString(fmt.Sprintf(`%s \"%s\" `, k, value))
+			ldflags.WriteString(fmt.Sprintf(`%s \"%s\" `, v.Name, value))
 		}
 	}
 
@@ -26,7 +32,7 @@ func GoLDFlags(flags map[string][]string) string {
 }
 
 // GoBuildCommand returns the arguments for go build to be used in 'WithExec'.
-func GoBuildCommand(output string, ldflags map[string][]string, tags []string, main string) []string {
+func GoBuildCommand(output string, ldflags []LDFlag, tags []string, main string) []string {
 	args := []string{"go", "build",
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),
@@ -41,13 +47,16 @@ func GoBuildCommand(output string, ldflags map[string][]string, tags []string, m
 }
 
 func Build(
+	d *dagger.Client,
 	builder *dagger.Container,
 	src *dagger.Directory,
 	distro Distribution,
 	out string,
 	opts *BuildOpts,
 ) *dagger.Directory {
-	builder, vcsinfo := WithVCSInfo(builder, opts.Version, opts.Enterprise)
+	vcsinfo := GetVCSInfo(d, src, opts.Version, opts.Enterprise)
+	builder = WithVCSInfo(builder, vcsinfo, opts.Enterprise)
+
 	ldflags := LDFlagsDynamic(vcsinfo)
 
 	if opts.Static {
@@ -73,8 +82,12 @@ func Build(
 		}
 
 		cmd := GoBuildCommand(out, ldflags, opts.Tags, pkgPath)
+
+		script := fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))
+		log.Printf("Building with command '%s'", script)
+
 		builder = builder.
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`if [ -d %s ]; then %s; fi`, pkgPath, strings.Join(cmd, " "))})
+			WithExec([]string{"/bin/sh", "-c", script})
 	}
 
 	return builder.Directory(out)

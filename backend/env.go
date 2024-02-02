@@ -2,6 +2,8 @@ package backend
 
 import (
 	"strings"
+
+	"github.com/grafana/grafana-build/containers"
 )
 
 type (
@@ -62,75 +64,76 @@ type GoBuildOpts struct {
 }
 
 // GoBuildEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.
-func GoBuildEnv(opts *GoBuildOpts) map[string]string {
+func GoBuildEnv(opts *GoBuildOpts) []containers.Env {
 	var (
 		os   = opts.OS
 		arch = opts.Arch
 	)
 
-	env := map[string]string{"GOOS": os, "GOARCH": arch}
+	env := []containers.Env{{"GOOS", os}, {"GOARCH", arch}}
 
 	if arch == "arm" {
-		env["GOARM"] = string(opts.GoARM)
+		env = append(env, containers.Env{"GOARM", string(opts.GoARM)})
 	}
 
 	if opts.CGOEnabled {
-		env["CGO_ENABLED"] = "1"
+		env = append(env, containers.Env{"GOARM", string(opts.GoARM)})
+		env = append(env, containers.Env{"CGO_ENABLED", "1"})
 
 		// https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
-		env["CGO_CFLAGS"] = "-D_LARGEFILE64_SOURCE"
+		env = append(env, containers.Env{"CGO_CFLAGS", "-D_LARGEFILE64_SOURCE"})
 	} else {
-		env["CGO_ENABLED"] = "0"
+		env = append(env, containers.Env{"CGO_ENABLED", "0"})
 	}
 
 	if opts.ExperimentalFlags != nil {
-		env["GOEXPERIMENT"] = strings.Join(opts.ExperimentalFlags, ",")
+		env = append(env, containers.Env{"GOEXPERIMENT", strings.Join(opts.ExperimentalFlags, ",")})
 	}
 
 	if opts.CC != "" {
-		env["CC"] = opts.CC
+		env = append(env, containers.Env{"CC", opts.CC})
 	}
 
 	if opts.CXX != "" {
-		env["CXX"] = opts.CXX
+		env = append(env, containers.Env{"CXX", opts.CXX})
 	}
 
 	return env
 }
 
 // ViceroyEnv returns the environment variables that must be set for a 'go build' command given the provided 'GoBuildOpts'.
-func ViceroyEnv(opts *GoBuildOpts) map[string]string {
+func ViceroyEnv(opts *GoBuildOpts) []containers.Env {
 	var (
 		os   = opts.OS
 		arch = opts.Arch
 	)
 
-	env := map[string]string{
-		"VICEROYOS":   os,
-		"GOOS":        os,
-		"VICEROYARCH": arch,
-		"GOARCH":      arch,
+	env := []containers.Env{
+		{"VICEROYOS", os},
+		{"GOOS", os},
+		{"VICEROYARCH", arch},
+		{"GOARCH", arch},
 	}
 
 	if arch == "arm" {
-		env["VICEROYARM"] = string(opts.GoARM)
+		env = append(env, containers.Env{"VICEROYARM", string(opts.GoARM)})
 	}
 
 	if opts.CGOEnabled {
-		env["CGO_ENABLED"] = "1"
+		env = append(env, containers.Env{"CGO_ENABLED", "1"})
 
 		// https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
-		env["CGO_CFLAGS"] = "-D_LARGEFILE64_SOURCE"
+		env = append(env, containers.Env{"CGO_CFLAGS", "-D_LARGEFILE64_SOURCE"})
 	} else {
-		env["CGO_ENABLED"] = "0"
+		env = append(env, containers.Env{"CGO_ENABLED", "0"})
 	}
 
 	if opts.ExperimentalFlags != nil {
-		env["GOEXPERIMENT"] = strings.Join(opts.ExperimentalFlags, ",")
+		env = append(env, containers.Env{"GOEXPERIMENT", strings.Join(opts.ExperimentalFlags, ",")})
 	}
 
 	if opts.CC != "" {
-		env["CC"] = "viceroycc"
+		env = append(env, containers.Env{"CC", "viceroycc"})
 	}
 
 	return env

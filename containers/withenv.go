@@ -4,10 +4,15 @@ import (
 	"dagger.io/dagger"
 )
 
-func WithEnv(c *dagger.Container, env map[string]string) *dagger.Container {
+type Env struct {
+	Name  string
+	Value string
+}
+
+func WithEnv(c *dagger.Container, env []Env) *dagger.Container {
 	container := c
-	for k, v := range env {
-		container = container.WithEnvVariable(k, v)
+	for _, v := range env {
+		container = container.WithEnvVariable(v.Name, v.Value)
 	}
 
 	return container

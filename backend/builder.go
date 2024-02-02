@@ -128,16 +128,27 @@ func Builder(
 		cache    = d.CacheVolume(cacheKey)
 	)
 
-	// make gen-go creates a file at "pkg/server/wire_gen.go".
-	src = Wire(d, src, platform, goVersion, opts.WireTag)
-
 	// for some distros we use the golang official iamge. For others, we use viceroy.
 	builder, err := GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	builder = builder.WithMountedDirectory("/src", src).
+	builder = builder.
+		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/emails", src.Directory("emails")).
+		WithDirectory("/src/cue.mod", src.Directory("cue.mod")).
+		WithDirectory("/src/kinds", src.Directory("kinds")).
+		WithDirectory("/src/packages/grafana-schema", src.Directory("packages/grafana-schema"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.cue"},
+		}).
+		WithDirectory("/src/public/app/plugins", src.Directory("public/app/plugins"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.cue", "**/plugin.json"},
+		}).
+		WithFile("/src/go.mod", src.File("go.mod")).
+		WithFile("/src/go.sum", src.File("go.sum")).
+		WithFile("/src/embed.go", src.File("embed.go")).
+		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithWorkdir("/src")
 
 	builder = golang.WithCachedGoDependencies(
@@ -148,11 +159,15 @@ func Builder(
 	return builder, nil
 }
 
-func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.Directory {
+func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
 	return golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "make"}).
-		WithMountedDirectory("/src", src).
+		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/.bingo", src.Directory(".bingo")).
+		WithFile("/src/Makefile", src.File("Makefile")).
+		WithFile("/src/go.mod", src.File("go.mod")).
+		WithFile("/src/go.sum", src.File("go.sum")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
-		Directory("/src")
+		File("/src/pkg/server/wire_gen.go")
 }
