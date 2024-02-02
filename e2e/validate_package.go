@@ -16,7 +16,7 @@ func CypressContainer(d *dagger.Client, base string) *dagger.Container {
 	return container
 }
 
-func ValidatePackage(d *dagger.Client, service *dagger.Container, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) *dagger.Container {
+func ValidatePackage(d *dagger.Client, service *dagger.Service, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) *dagger.Container {
 	// The cypress container should never be cached
 	c := CypressContainer(d, CypressImage(nodeVersion))
 
@@ -32,7 +32,7 @@ func ValidatePackage(d *dagger.Client, service *dagger.Container, src *dagger.Di
 }
 
 // NodeContainer returns a docker container with everything set up that is needed to build or run frontend tests.
-func ValidatePackageSpecs(d *dagger.Client, service *dagger.Container, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) *dagger.Directory {
+func ValidatePackageSpecs(d *dagger.Client, service *dagger.Service, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) *dagger.Directory {
 	c := ValidatePackage(d, service, src, yarnCacheVolume, nodeVersion)
 	return c.Directory("e2e/verify/specs")
 }
