@@ -362,7 +362,7 @@ func verifyTarball(
 		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion)); err != nil {
+	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service.AsService(), src, yarnCache, nodeVersion)); err != nil {
 		return err
 	}
 	return nil

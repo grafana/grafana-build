@@ -39,7 +39,7 @@ func Verify(
 		WithExposedPort(3000)
 
 		// TODO: Add LICENSE to containers and implement validation
-	container := e2e.ValidatePackage(d, service, src, yarnCache, nodeVersion)
+	container := e2e.ValidatePackage(d, service.AsService(), src, yarnCache, nodeVersion)
 	_, err = containers.ExitError(ctx, container)
 	return err
 }
