@@ -151,6 +151,14 @@ func Builder(
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithWorkdir("/src")
 
+	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
+
+	if opts.Enterprise {
+		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
+	} else {
+		builder = builder.WithFile("/src/.buildinfo.commit", commitInfo.Commit)
+	}
+
 	builder = golang.WithCachedGoDependencies(
 		builder,
 		cacheDir, cache,
