@@ -134,6 +134,8 @@ func Builder(
 		return nil, err
 	}
 
+	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
+
 	builder = builder.
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/emails", src.Directory("emails")).
@@ -149,14 +151,11 @@ func Builder(
 		WithFile("/src/go.sum", src.File("go.sum")).
 		WithFile("/src/embed.go", src.File("embed.go")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
+		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
 		WithWorkdir("/src")
-
-	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
 
 	if opts.Enterprise {
 		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
-	} else {
-		builder = builder.WithFile("/src/.buildinfo.commit", commitInfo.Commit)
 	}
 
 	builder = golang.WithCachedGoDependencies(

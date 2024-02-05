@@ -30,7 +30,7 @@ func WithVCSInfo(c *dagger.Container, info *VCSInfo, enterprise bool) *dagger.Co
 func GetVCSInfo(d *dagger.Client, src *dagger.Directory, version string, enterprise bool) *VCSInfo {
 	c := d.Container().From("alpine/git").
 		WithEntrypoint([]string{}).
-		WithMountedDirectory("/src/.git", src.Directory(".git")).
+		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.commit"}).
 		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD > .buildinfo.branch"})
