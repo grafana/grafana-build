@@ -5,7 +5,6 @@ import (
 )
 
 func Build(builder *dagger.Container) *dagger.Directory {
-	// Get the node version from the 'src' directories '.nvmrc' file.
 	public := builder.
 		WithExec([]string{"yarn", "run", "build"}).
 		Directory("/src/public")
@@ -14,7 +13,6 @@ func Build(builder *dagger.Container) *dagger.Directory {
 }
 
 func BuildPlugins(builder *dagger.Container) *dagger.Directory {
-	// Get the node version from the 'src' directories '.nvmrc' file.
 	public := builder.
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
