@@ -102,6 +102,19 @@ func GolangContainer(
 	return WithGoEnv(log, container, distro, opts)
 }
 
+func withCue(c *dagger.Container, src *dagger.Directory) *dagger.Container {
+	return c.
+		WithDirectory("/src/cue.mod", src.Directory("cue.mod")).
+		WithDirectory("/src/kinds", src.Directory("kinds")).
+		WithDirectory("/src/packages/grafana-schema", src.Directory("packages/grafana-schema"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.cue"},
+		}).
+		WithDirectory("/src/public/app/plugins", src.Directory("public/app/plugins"), dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.cue", "**/plugin.json"},
+		}).
+		WithFile("/src/embed.go", src.File("embed.go"))
+}
+
 // Builder returns the container that is used to build the Grafana backend binaries.
 // The build container:
 // * Will be based on rfratto/viceroy for Darwin or Windows
@@ -136,20 +149,11 @@ func Builder(
 
 	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
 
-	builder = builder.
+	builder = withCue(builder, src).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/emails", src.Directory("emails")).
-		WithDirectory("/src/cue.mod", src.Directory("cue.mod")).
-		WithDirectory("/src/kinds", src.Directory("kinds")).
-		WithDirectory("/src/packages/grafana-schema", src.Directory("packages/grafana-schema"), dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.cue"},
-		}).
-		WithDirectory("/src/public/app/plugins", src.Directory("public/app/plugins"), dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.cue", "**/plugin.json"},
-		}).
 		WithFile("/src/go.mod", src.File("go.mod")).
 		WithFile("/src/go.sum", src.File("go.sum")).
-		WithFile("/src/embed.go", src.File("embed.go")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
 		WithWorkdir("/src")
@@ -167,7 +171,8 @@ func Builder(
 }
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
-	return golang.Container(d, platform, goVersion).
+	// withCue is only required during `make gen-go` in 9.5.x or older.
+	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
