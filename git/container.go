@@ -77,10 +77,15 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 	}
 
 	cloneURLSecret := d.SetSecret("git-clone-url", cloneURL)
+
+	// GIT_REFS is included as an environment variable here to control caching.
+	// 1. We should ALWAYS be using the commit hash to clone / checkout git refs.
+	// 2. If the ref changes, then we should run 'fetch' again.
 	container = container.
-		WithEnvVariable("CACHE", "0").
 		WithSecretVariable("GIT_CLONE_URL", cloneURLSecret).
-		WithExec([]string{"/bin/sh", "-c", strings.Join(cloneArgs, " ")})
+		WithExec([]string{"/bin/sh", "-c", strings.Join(cloneArgs, " ")}).
+		WithEnvVariable("GIT_REFS", opts.Ref).
+		WithExec([]string{"git", "-C", "src", "fetch"})
 
 	ref := "main"
 	if opts.Ref != "" {

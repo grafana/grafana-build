@@ -14,7 +14,6 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 			src.
 				WithoutFile("go.mod").
 				WithoutFile("go.sum").
-				WithoutDirectory(".git").
 				WithoutDirectory("devenv").
 				WithoutDirectory(".github").
 				WithoutDirectory("docs").
