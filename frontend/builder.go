@@ -17,7 +17,8 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 				WithoutDirectory("devenv").
 				WithoutDirectory(".github").
 				WithoutDirectory("docs").
-				WithoutDirectory("pkg"),
+				WithoutDirectory("pkg").
+				WithoutDirectory(".nx"),
 			dagger.ContainerWithDirectoryOpts{
 				Exclude: []string{
 					"*drone*",
