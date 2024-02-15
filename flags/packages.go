@@ -7,6 +7,7 @@ import (
 
 var DefaultTags = []string{
 	"osusergo",
+	"sqlexpressions",
 }
 
 const (
