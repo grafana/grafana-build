@@ -7,7 +7,6 @@ import (
 
 var DefaultTags = []string{
 	"osusergo",
-	"sqlexpressions",
 }
 
 const (
@@ -70,6 +69,17 @@ var PackageNameFlags = []pipeline.Flag{
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
 			GoTags:             DefaultTags,
+		},
+	},
+	{
+		Name: "sqlexpressions",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-image-tags", "grafana-oss-image-tags"},
+			PackageName:        string(packages.PackageEnterpriseBoring),
+			Enterprise:         false,
+			WireTag:            "oss",
+			GoExperiments:      []string{"boringcrypto"},
+			GoTags:             append(DefaultTags, "sqlexpressions"),
 		},
 	},
 }

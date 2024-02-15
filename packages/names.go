@@ -16,6 +16,7 @@ const (
 	PackageEnterpriseBoring Name = "grafana-enterprise-boringcrypto"
 	PackagePro              Name = "grafana-pro"
 	PackageNightly          Name = "grafana-nightly"
+	PackageSQLExpressions   Name = "grafana-sqlexpressions"
 )
 
 type NameOpts struct {
