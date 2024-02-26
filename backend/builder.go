@@ -175,7 +175,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
-		WithDirectory("/src/go.mod", src.Directory(""), dagger.ContainerWithDirectoryOpts{
+		WithDirectory("/src/", src.Directory(""), dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
