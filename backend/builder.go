@@ -150,12 +150,89 @@ func Builder(
 	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
 
 	builder = withCue(builder, src).
-		WithDirectory("/src/pkg", src.Directory("pkg")).
-		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/go.mod", src.File("go.mod")).
-		WithFile("/src/go.sum", src.File("go.sum")).
-		WithFile("/src/go.work", src.File("go.work")).
-		WithFile("/src/go.work.sum", src.File("go.work.sum")).
+		WithDirectory("/src",
+			// to generate this list, run this from the root of grafana:  ls -a . | xargs -n1  -I '{}' echo 'WithoutFile("{}").'
+			// and remove the files that are required for the build.
+			src.
+				WithoutFile(".betterer.results").
+				WithoutFile(".betterer.results.json").
+				WithoutFile(".betterer.ts").
+				WithoutFile("bin").
+				WithoutFile(".bingo").
+				WithoutFile(".bra.toml").
+				WithoutFile(".browserslistrc").
+				WithoutFile("build.go").
+				WithoutFile(".changelog-archive").
+				WithoutFile("CHANGELOG.md").
+				WithoutFile("CODE_OF_CONDUCT.md").WithoutFile("conf").
+				WithoutFile("contribute").
+				WithoutFile("CONTRIBUTING.md").
+				WithoutFile("crowdin.yml").
+				WithoutFile("cue.mod").
+				WithoutFile("cypress.config.js").
+				WithoutFile("data").
+				WithoutFile("devenv").
+				WithoutFile("Dockerfile").
+				WithoutFile(".dockerignore").
+				WithoutFile("docs").
+				WithoutFile(".drone.star").
+				WithoutFile(".drone.yml").
+				WithoutFile("e2e").
+				WithoutFile(".editorconfig").
+				WithoutFile("embed.go").
+				WithoutFile(".eslintignore").
+				WithoutFile(".eslintrc").
+				WithoutFile(".git").
+				WithoutFile(".gitattributes").
+				WithoutFile(".github").
+				WithoutFile(".gitignore").
+				WithoutFile(".golangci.toml").
+				WithoutFile("GOVERNANCE.md").
+				WithoutFile("grafana-mixin").
+				WithoutFile("hack").
+				WithoutFile("HALL_OF_FAME.md").
+				WithoutFile(".husky").
+				WithoutFile("jest.config.js").
+				WithoutFile("kinds").
+				WithoutFile("latest.json").
+				WithoutFile("lefthook.rc").
+				WithoutFile("lefthook.yml").
+				WithoutFile("lerna.json").
+				WithoutFile(".levignore.js").
+				WithoutFile("LICENSE").
+				WithoutFile("LICENSING.md").
+				WithoutFile("local").
+				WithoutFile("MAINTAINERS.md").
+				WithoutFile("Makefile").
+				WithoutFile("node_modules").
+				WithoutFile("NOTICE.md").
+				WithoutFile(".nvmrc").
+				WithoutFile(".pa11yci.conf.js").
+				WithoutFile(".pa11yci-pr.conf.js").
+				WithoutFile("package.json").
+				WithoutFile("packages").
+				WithoutFile("packaging").
+				WithoutFile("playwright.config.ts").
+				WithoutFile("plugins-bundled").
+				WithoutFile(".prettierignore").
+				WithoutFile(".prettierrc.js").
+				WithoutFile("public").
+				WithoutFile("README.md").
+				WithoutFile("ROADMAP.md").
+				WithoutFile("scripts").
+				WithoutFile("SECURITY.md").
+				WithoutFile("stylelint.config.js").
+				WithoutFile("SUPPORT.md").
+				WithoutFile("tools").
+				WithoutFile("tsconfig.json").
+				WithoutFile("tsconfig.tsbuildinfo").
+				WithoutFile(".vim").
+				WithoutFile(".vscode").
+				WithoutFile("WORKFLOW.md").
+				WithoutFile(".yarn").
+				WithoutFile("yarn.lock").
+				WithoutFile(".yarnrc.yml"),
+		).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
 		WithWorkdir("/src")
@@ -176,13 +253,88 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
-		WithDirectory("/src/pkg", src.Directory("pkg")).
-		WithDirectory("/src/.bingo", src.Directory(".bingo")).
-		WithFile("/src/Makefile", src.File("Makefile")).
-		WithFile("/src/go.mod", src.File("go.mod")).
-		WithFile("/src/go.sum", src.File("go.sum")).
-		WithFile("/src/go.work", src.File("go.work")).
-		WithFile("/src/go.work.sum", src.File("go.work.sum")).
+		WithDirectory("/src",
+			// to generate this list, run this from the root of grafana:  ls -a . | xargs -n1  -I '{}' echo 'WithoutFile("{}").'
+			// and remove the files that are required for the build.
+			src.
+				WithoutFile(".betterer.results").
+				WithoutFile(".betterer.results.json").
+				WithoutFile(".betterer.ts").
+				WithoutFile("bin").
+				WithoutFile(".bra.toml").
+				WithoutFile(".browserslistrc").
+				WithoutFile("build.go").
+				WithoutFile(".changelog-archive").
+				WithoutFile("CHANGELOG.md").
+				WithoutFile("CODE_OF_CONDUCT.md").
+				WithoutFile("conf").
+				WithoutFile("contribute").
+				WithoutFile("CONTRIBUTING.md").
+				WithoutFile("crowdin.yml").
+				WithoutFile("cue.mod").
+				WithoutFile("cypress.config.js").
+				WithoutFile("data").
+				WithoutFile("devenv").
+				WithoutFile("Dockerfile").
+				WithoutFile(".dockerignore").
+				WithoutFile("docs").
+				WithoutFile(".drone.star").
+				WithoutFile(".drone.yml").
+				WithoutFile("e2e").
+				WithoutFile(".editorconfig").
+				WithoutFile("embed.go").
+				WithoutFile(".eslintignore").
+				WithoutFile(".eslintrc").
+				WithoutFile(".git").
+				WithoutFile(".gitattributes").
+				WithoutFile(".github").
+				WithoutFile(".gitignore").
+				WithoutFile(".golangci.toml").
+				WithoutFile("GOVERNANCE.md").
+				WithoutFile("grafana-mixin").
+				WithoutFile("hack").
+				WithoutFile("HALL_OF_FAME.md").
+				WithoutFile(".husky").
+				WithoutFile("jest.config.js").
+				WithoutFile("kinds").
+				WithoutFile("latest.json").
+				WithoutFile("lefthook.rc").
+				WithoutFile("lefthook.yml").
+				WithoutFile("lerna.json").
+				WithoutFile(".levignore.js").
+				WithoutFile("LICENSE").
+				WithoutFile("LICENSING.md").
+				WithoutFile("local").
+				WithoutFile("MAINTAINERS.md").
+				WithoutFile("node_modules").
+				WithoutFile("NOTICE.md").
+				WithoutFile(".nvmrc").
+				WithoutFile(".pa11yci.conf.js").
+				WithoutFile(".pa11yci-pr.conf.js").
+				WithoutFile("package.json").
+				WithoutFile("packages").
+				WithoutFile("packaging").
+				WithoutFile("playwright.config.ts").
+				WithoutFile("plugins-bundled").
+				WithoutFile(".prettierignore").
+				WithoutFile(".prettierrc.js").
+				WithoutFile("public").
+				WithoutFile("README.md").
+				WithoutFile("ROADMAP.md").
+				WithoutFile("scripts").
+				WithoutFile("SECURITY.md").
+				WithoutFile("stylelint.config.js").
+				WithoutFile("SUPPORT.md").
+				WithoutFile("tools").
+				WithoutFile("tsconfig.json").
+				WithoutFile("tsconfig.tsbuildinfo").
+				WithoutFile(".vim").
+				WithoutFile(".vscode").
+				WithoutFile("WORKFLOW.md").
+				WithoutFile(".yarn").
+				WithoutFile("yarn.lock").
+				WithoutFile(".yarnrc.yml"),
+		).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
 		File("/src/pkg/server/wire_gen.go")
