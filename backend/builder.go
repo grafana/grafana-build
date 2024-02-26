@@ -154,46 +154,56 @@ func Builder(
 			// to generate this list, run this from the root of grafana:  ls -a . | xargs -n1  -I '{}' echo 'WithoutFile("{}").'
 			// and remove the files that are required for the build.
 			src.
+				WithoutDirectory(".bingo").
+				WithoutDirectory(".changelog-archive").
+				WithoutDirectory(".github").
+				WithoutDirectory(".husky").
+				WithoutDirectory(".vscode").
+				WithoutDirectory("bin").
+				WithoutDirectory("conf").
+				WithoutDirectory("contribute").
+				WithoutDirectory("cue.mod").
+				WithoutDirectory("data").
+				WithoutDirectory("devenv").
+				WithoutDirectory("docs").
+				WithoutDirectory("e2e").
+				WithoutDirectory("emails").
+				WithoutDirectory("grafana-mixin").
+				WithoutDirectory("hack").
+				WithoutDirectory("kinds").
+				WithoutDirectory("local").
+				WithoutDirectory("node_modules").
+				WithoutDirectory("packages").
+				WithoutDirectory("packaging").
+				WithoutDirectory("plugins-bundled").
+				WithoutDirectory("public").
+				WithoutDirectory("scripts").
+				WithoutDirectory("tools").
 				WithoutFile(".betterer.results").
 				WithoutFile(".betterer.results.json").
 				WithoutFile(".betterer.ts").
-				WithoutFile("bin").
-				WithoutFile(".bingo").
 				WithoutFile(".bra.toml").
 				WithoutFile(".browserslistrc").
 				WithoutFile("build.go").
-				WithoutFile(".changelog-archive").
 				WithoutFile("CHANGELOG.md").
-				WithoutFile("CODE_OF_CONDUCT.md").WithoutFile("conf").
-				WithoutFile("contribute").
+				WithoutFile("CODE_OF_CONDUCT.md").
 				WithoutFile("CONTRIBUTING.md").
 				WithoutFile("crowdin.yml").
-				WithoutFile("cue.mod").
 				WithoutFile("cypress.config.js").
-				WithoutFile("data").
-				WithoutFile("devenv").
 				WithoutFile("Dockerfile").
 				WithoutFile(".dockerignore").
-				WithoutFile("docs").
 				WithoutFile(".drone.star").
 				WithoutFile(".drone.yml").
-				WithoutFile("e2e").
 				WithoutFile(".editorconfig").
 				WithoutFile("embed.go").
 				WithoutFile(".eslintignore").
 				WithoutFile(".eslintrc").
-				WithoutFile(".git").
 				WithoutFile(".gitattributes").
-				WithoutFile(".github").
 				WithoutFile(".gitignore").
 				WithoutFile(".golangci.toml").
 				WithoutFile("GOVERNANCE.md").
-				WithoutFile("grafana-mixin").
-				WithoutFile("hack").
 				WithoutFile("HALL_OF_FAME.md").
-				WithoutFile(".husky").
 				WithoutFile("jest.config.js").
-				WithoutFile("kinds").
 				WithoutFile("latest.json").
 				WithoutFile("lefthook.rc").
 				WithoutFile("lefthook.yml").
@@ -201,35 +211,24 @@ func Builder(
 				WithoutFile(".levignore.js").
 				WithoutFile("LICENSE").
 				WithoutFile("LICENSING.md").
-				WithoutFile("local").
 				WithoutFile("MAINTAINERS.md").
 				WithoutFile("Makefile").
-				WithoutFile("node_modules").
 				WithoutFile("NOTICE.md").
 				WithoutFile(".nvmrc").
 				WithoutFile(".pa11yci.conf.js").
 				WithoutFile(".pa11yci-pr.conf.js").
 				WithoutFile("package.json").
-				WithoutFile("packages").
-				WithoutFile("packaging").
 				WithoutFile("playwright.config.ts").
-				WithoutFile("plugins-bundled").
 				WithoutFile(".prettierignore").
 				WithoutFile(".prettierrc.js").
-				WithoutFile("public").
 				WithoutFile("README.md").
 				WithoutFile("ROADMAP.md").
-				WithoutFile("scripts").
 				WithoutFile("SECURITY.md").
 				WithoutFile("stylelint.config.js").
 				WithoutFile("SUPPORT.md").
-				WithoutFile("tools").
 				WithoutFile("tsconfig.json").
 				WithoutFile("tsconfig.tsbuildinfo").
-				WithoutFile(".vim").
-				WithoutFile(".vscode").
 				WithoutFile("WORKFLOW.md").
-				WithoutFile(".yarn").
 				WithoutFile("yarn.lock").
 				WithoutFile(".yarnrc.yml"),
 		).
@@ -257,46 +256,55 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 			// to generate this list, run this from the root of grafana:  ls -a . | xargs -n1  -I '{}' echo 'WithoutFile("{}").'
 			// and remove the files that are required for the build.
 			src.
+				WithoutDirectory(".changelog-archive").
+				WithoutDirectory(".github").
+				WithoutDirectory(".husky").
+				WithoutDirectory(".vscode").
+				WithoutDirectory("bin").
+				WithoutDirectory("conf").
+				WithoutDirectory("contribute").
+				WithoutDirectory("cue.mod").
+				WithoutDirectory("data").
+				WithoutDirectory("devenv").
+				WithoutDirectory("docs").
+				WithoutDirectory("e2e").
+				WithoutDirectory("emails").
+				WithoutDirectory("grafana-mixin").
+				WithoutDirectory("hack").
+				WithoutDirectory("kinds").
+				WithoutDirectory("local").
+				WithoutDirectory("node_modules").
+				WithoutDirectory("packages").
+				WithoutDirectory("packaging").
+				WithoutDirectory("plugins-bundled").
+				WithoutDirectory("public").
+				WithoutDirectory("scripts").
+				WithoutDirectory("tools").
 				WithoutFile(".betterer.results").
 				WithoutFile(".betterer.results.json").
 				WithoutFile(".betterer.ts").
-				WithoutFile("bin").
 				WithoutFile(".bra.toml").
 				WithoutFile(".browserslistrc").
 				WithoutFile("build.go").
-				WithoutFile(".changelog-archive").
 				WithoutFile("CHANGELOG.md").
 				WithoutFile("CODE_OF_CONDUCT.md").
-				WithoutFile("conf").
-				WithoutFile("contribute").
 				WithoutFile("CONTRIBUTING.md").
 				WithoutFile("crowdin.yml").
-				WithoutFile("cue.mod").
 				WithoutFile("cypress.config.js").
-				WithoutFile("data").
-				WithoutFile("devenv").
 				WithoutFile("Dockerfile").
 				WithoutFile(".dockerignore").
-				WithoutFile("docs").
 				WithoutFile(".drone.star").
 				WithoutFile(".drone.yml").
-				WithoutFile("e2e").
 				WithoutFile(".editorconfig").
 				WithoutFile("embed.go").
 				WithoutFile(".eslintignore").
 				WithoutFile(".eslintrc").
-				WithoutFile(".git").
 				WithoutFile(".gitattributes").
-				WithoutFile(".github").
 				WithoutFile(".gitignore").
 				WithoutFile(".golangci.toml").
 				WithoutFile("GOVERNANCE.md").
-				WithoutFile("grafana-mixin").
-				WithoutFile("hack").
 				WithoutFile("HALL_OF_FAME.md").
-				WithoutFile(".husky").
 				WithoutFile("jest.config.js").
-				WithoutFile("kinds").
 				WithoutFile("latest.json").
 				WithoutFile("lefthook.rc").
 				WithoutFile("lefthook.yml").
@@ -304,34 +312,23 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 				WithoutFile(".levignore.js").
 				WithoutFile("LICENSE").
 				WithoutFile("LICENSING.md").
-				WithoutFile("local").
 				WithoutFile("MAINTAINERS.md").
-				WithoutFile("node_modules").
 				WithoutFile("NOTICE.md").
 				WithoutFile(".nvmrc").
 				WithoutFile(".pa11yci.conf.js").
 				WithoutFile(".pa11yci-pr.conf.js").
 				WithoutFile("package.json").
-				WithoutFile("packages").
-				WithoutFile("packaging").
 				WithoutFile("playwright.config.ts").
-				WithoutFile("plugins-bundled").
 				WithoutFile(".prettierignore").
 				WithoutFile(".prettierrc.js").
-				WithoutFile("public").
 				WithoutFile("README.md").
 				WithoutFile("ROADMAP.md").
-				WithoutFile("scripts").
 				WithoutFile("SECURITY.md").
 				WithoutFile("stylelint.config.js").
 				WithoutFile("SUPPORT.md").
-				WithoutFile("tools").
 				WithoutFile("tsconfig.json").
 				WithoutFile("tsconfig.tsbuildinfo").
-				WithoutFile(".vim").
-				WithoutFile(".vscode").
 				WithoutFile("WORKFLOW.md").
-				WithoutFile(".yarn").
 				WithoutFile("yarn.lock").
 				WithoutFile(".yarnrc.yml"),
 		).
