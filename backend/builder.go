@@ -150,12 +150,11 @@ func Builder(
 	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
 
 	builder = withCue(builder, src).
+		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/go.mod", src.File("go.mod")).
-		WithFile("/src/go.sum", src.File("go.sum")).
-		WithFile("/src/go.work", src.File("go.work")).
-		WithFile("/src/go.work.sum", src.File("go.work.sum")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
 		WithWorkdir("/src")
@@ -176,13 +175,12 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
+		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithFile("/src/Makefile", src.File("Makefile")).
-		WithFile("/src/go.mod", src.File("go.mod")).
-		WithFile("/src/go.sum", src.File("go.sum")).
-		WithFile("/src/go.work", src.File("go.work")).
-		WithFile("/src/go.work.sum", src.File("go.work.sum")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
 		File("/src/pkg/server/wire_gen.go")
