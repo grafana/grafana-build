@@ -122,7 +122,7 @@ var GrafanaFlags = []cli.Flag{
 		Name:     "go-version",
 		Usage:    "The version of Go to be used for building the Grafana backend",
 		Required: false,
-		Value:    "1.21.4",
+		Value:    "1.21.8",
 	},
 	&cli.StringFlag{
 		Name:  "yarn-cache",
