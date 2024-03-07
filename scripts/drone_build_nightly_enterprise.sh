@@ -16,21 +16,26 @@ dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
+  -a targz:enterprise:linux/arm/v7 \
+  -a targz:enterprise:linux/arm/v6 \
   -a deb:enterprise:linux/amd64:nightly \
   -a deb:enterprise:linux/arm64:nightly \
+  -a deb:enterprise:linux/arm/v6:nightly \
+  -a deb:enterprise:linux/arm/v7:nightly \
   -a rpm:enterprise:linux/amd64:sign:nightly \
   -a rpm:enterprise:linux/arm64:sign:nightly \
   -a targz:enterprise:windows/amd64 \
   -a targz:enterprise:windows/arm64 \
-  -a zip:enterprise:windows/amd64 \
-  -a zip:enterprise:windows/arm64 \
   -a targz:enterprise:darwin/amd64 \
   -a targz:enterprise:darwin/arm64 \
+  -a zip:enterprise:windows/amd64 \
   -a exe:enterprise:windows/amd64 \
   -a docker:enterprise:linux/amd64 \
   -a docker:enterprise:linux/arm64 \
+  -a docker:enterprise:linux/arm/v7 \
   -a docker:enterprise:linux/amd64:ubuntu \
   -a docker:enterprise:linux/arm64:ubuntu \
+  -a docker:enterprise:linux/arm/v7:ubuntu \
   --checksum \
   --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
