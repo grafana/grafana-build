@@ -3,7 +3,7 @@ module github.com/grafana/grafana-build
 go 1.21
 
 require (
-	dagger.io/dagger v0.9.8
+	dagger.io/dagger v0.10.2
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/stretchr/testify v1.9.0
