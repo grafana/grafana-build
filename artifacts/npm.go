@@ -46,7 +46,7 @@ func (f *NPMPackages) BuildFile(ctx context.Context, builder *dagger.Container, 
 }
 
 func (f *NPMPackages) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	return frontend.NPMPackages(ctx, builder, opts.Client, opts.Log, f.Src, strings.TrimPrefix(f.Version, "v"))
+	return frontend.NPMPackages(ctx, builder, opts.Log, f.Src, strings.TrimPrefix(f.Version, "v"))
 }
 
 func (f *NPMPackages) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
