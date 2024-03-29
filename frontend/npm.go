@@ -28,7 +28,7 @@ func NPMPackages(ctx context.Context, builder *dagger.Container, log *slog.Logge
 	if hasNx {
 		return builder.WithExec([]string{"mkdir", "npm-packages"}).
 			WithExec([]string{"yarn", "packages:build"}).
-			WithExec([]string{"yarn", "nx", "release", "version", ersion, "--no-git-tag", "--no-git-commit", "--no-stage-changes", "--group", "grafanaPackages"}).
+			WithExec([]string{"yarn", "nx", "release", "version", ersion, "--no-git-commit", "--no-git-tag", "--no-stage-changes", "--group", "fixed"}).
 			WithExec([]string{"yarn", "workspaces", "foreach", "--no-private", "--include='@grafana/*'", "-A", "exec", "yarn", "pack", "--out", fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)}).
 			Directory("./npm-packages"), nil
 	}
