@@ -9,36 +9,28 @@ checks = [
   "all",
 ]
 
-
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
 [linters-settings.revive]
-ignore-generated-header = false
-severity = "warning"
 confidence = 3
 
-[linters-settings.depguard]
-list-type = "blacklist"
-include-go-root = true
-packages = ["io/ioutil"]
-[[linters-settings.depguard.packages-with-error-message]]
-"io/ioutil" = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."
-"gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
-
-[linters-settings.gocritic]
-enabled-checks = []
-[linters-settings.gocritic.settings.ruleguard]
-rules = "./ruleguard.rules.go"
+[linters-settings.errcheck]
+exclude-functions = [
+  "(*os.File).Close",
+  "(*compress/gzip.Writer).Close",
+  "(*compress/gzip.Reader).Close",
+  "(*archive/tar.Writer).Close",
+  "(*dagger.io/dagger.Client).Close",
+]
 
 [linters]
 disable-all = true
 enable = [
   "bodyclose",
-  "depguard",
   "dogsled",
-  #"errcheck", # Disabling errcheck because IMO checking the error result of 'f.Close' is almost never actionable. willing to reconsider of course but i'm just feeling lazy.
-  # "gochecknoinits",
+  "errcheck",
+  "gochecknoinits",
   "goconst",
   "gocritic",
   "goimports",

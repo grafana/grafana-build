@@ -24,7 +24,7 @@ func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc,
 	if val, ok := DistributionGoOpts[distro]; ok {
 		return DistroOptsLogger(log, val), nil
 	}
-	return nil, errors.New("unrecognized distirbution")
+	return nil, errors.New("unrecognized distribution")
 }
 
 func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {

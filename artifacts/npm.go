@@ -61,12 +61,12 @@ func (f *NPMPackages) PublisDir(ctx context.Context, opts *pipeline.ArtifactPubl
 	panic("not implemented") // TODO: Implement
 }
 
-func (n *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+func (f *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
 	// Not a file
 	return nil
 }
 
-func (n *NPMPackages) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+func (f *NPMPackages) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	// Nothing to verify (yet?)
 	return nil
 }

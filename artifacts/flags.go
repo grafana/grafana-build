@@ -19,7 +19,6 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Name:  "build",
 		Value: true,
 	}
-
 	publishFlag := &cli.BoolFlag{
 		Name:  "publish",
 		Usage: "If true, then the artifacts that are built will be published. If `--build=false` and the artifacts are found in the --destination, then those artifacts are not built and are published instead.",

@@ -28,12 +28,11 @@ type NameOpts struct {
 }
 
 // WithoutExt removes the file extension from the given package string.
-// It is aware of multiple-period exnteions, like ".docker.tar.gz", ".ubuntu.deb", etc.
+// It is aware of multiple-period extensions, like ".docker.tar.gz", ".ubuntu.deb", etc.
 func WithoutExt(name string) string {
 	cmp := strings.Split(name, "_")
 	last := cmp[len(cmp)-1]
-	exti := strings.Index(last, ".")
-	lastWithoutExt := last[:exti]
+	lastWithoutExt, _, _ := strings.Cut(last, ".")
 
 	return strings.Join(append(cmp[:len(cmp)-1], lastWithoutExt), "_")
 }

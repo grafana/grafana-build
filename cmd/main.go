@@ -52,18 +52,17 @@ func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) c
 	}
 }
 
-func init() {
+func main() {
+	ctx := context.Background()
+	shutdown := otel.Setup(ctx)
+
 	// TODO change the registerer if the user is running using a JSON file etc
 	for k, v := range Artifacts {
 		if err := globalCLI.Register(k, v); err != nil {
 			panic(err)
 		}
 	}
-}
 
-func main() {
-	ctx := context.Background()
-	shutdown := otel.Setup(ctx)
 	app := globalCLI.App()
 
 	if err := app.RunContext(otel.FindParentTrace(ctx), os.Args); err != nil {

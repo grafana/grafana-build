@@ -18,6 +18,11 @@ func TestWithoutExt(t *testing.T) {
 		"grafana-enterprise_v1.0.1-test_333_plan9_arm-6.ubuntu.docker.tar.gz":          "grafana-enterprise_v1.0.1-test_333_plan9_arm-6",
 		"grafana-enterprise_v1.0.1-test_333_plan9_arm-6.docker.docker.docker.tar.gz":   "grafana-enterprise_v1.0.1-test_333_plan9_arm-6",
 		"grafana-enterprise_v1.0.1-test_333_plan9_arm-6.ubuntu.docker.deb.rpm.deb.rpm": "grafana-enterprise_v1.0.1-test_333_plan9_arm-6",
+
+		// a few edge cases
+		"grafana_v1.0.1-test_333_plan9_amd64": "grafana_v1.0.1-test_333_plan9_amd64",
+		"bogus":                               "bogus",
+		"":                                    "",
 	}
 
 	for k, v := range names {
