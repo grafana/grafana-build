@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -109,25 +108,6 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 	return container, nil
 }
 
-// Clone returns the directory with the cloned repository ('url') and checked out ref ('ref').
-func Clone(d *dagger.Client, url, ref string) (*dagger.Directory, error) {
-	container, err := CloneContainer(d, &GitCloneOptions{
-		URL: url,
-		Ref: ref,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	container, err = containers.ExitError(context.Background(), container)
-	if err != nil {
-		return nil, err
-	}
-
-	return container.Directory("src"), nil
-}
-
 func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Directory, error) {
 	container, err := CloneContainer(d, &GitCloneOptions{
 		URL:      url,
@@ -135,33 +115,6 @@ func CloneWithGitHubToken(d *dagger.Client, token, url, ref string) (*dagger.Dir
 		Username: "x-oauth-token",
 		Password: token,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	container, err = containers.ExitError(context.Background(), container)
-	if err != nil {
-		return nil, err
-	}
-
-	return container.Directory("src"), nil
-}
-
-func HostDir(d *dagger.Client, localPath string) (*dagger.Directory, error) {
-	if _, err := os.Stat(localPath); err != nil {
-		return nil, err
-	}
-	return d.Host().Directory(localPath), nil
-}
-
-// CloneWithSSHAuth returns the directory with the cloned repository ('url') and checked out ref ('ref').
-func CloneWithSSHAuth(d *dagger.Client, sshKeyPath, url, ref string) (*dagger.Directory, error) {
-	container, err := CloneContainer(d, &GitCloneOptions{
-		URL:        url,
-		Ref:        ref,
-		SSHKeyPath: sshKeyPath,
-	})
-
 	if err != nil {
 		return nil, err
 	}

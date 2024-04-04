@@ -129,15 +129,6 @@ const (
 	DistWindowsARM64        Distribution = "windows/arm64"
 )
 
-func DistrosFromStringSlice(s []string) []Distribution {
-	d := make([]Distribution, len(s))
-	for i, v := range s {
-		d[i] = Distribution(v)
-	}
-
-	return d
-}
-
 func IsWindows(d Distribution) bool {
 	return strings.Split(string(d), "/")[0] == "windows"
 }
@@ -235,24 +226,6 @@ var DefaultBuildOpts = func(distro Distribution, experiments []string, tags []st
 		ExperimentalFlags: experiments,
 		OS:                os,
 		Arch:              arch,
-		CGOEnabled:        true,
-	}
-}
-
-// BuildOptsDynamicARM builds Grafana statically for the armv6/v7 architectures (not aarch64/arm64)
-func BuildOptsDynamicARM(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
-	var (
-		os, _ = OSAndArch(distro)
-		arm   = ArchVersion(distro)
-	)
-
-	return &GoBuildOpts{
-		CC:                "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc",
-		CXX:               "/toolchain/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-cpp",
-		ExperimentalFlags: experiments,
-		OS:                os,
-		Arch:              "arm",
-		GoARM:             GoARM(arm),
 		CGOEnabled:        true,
 	}
 }
