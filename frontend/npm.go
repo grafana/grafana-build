@@ -29,7 +29,7 @@ func NPMPackages(ctx context.Context, builder *dagger.Container, log *slog.Logge
 		return builder.WithExec([]string{"mkdir", "npm-packages"}).
 			WithExec([]string{"yarn", "packages:build"}).
 			WithExec([]string{"yarn", "nx", "release", "version", ersion, "--no-git-commit", "--no-git-tag", "--no-stage-changes", "--group", "fixed"}).
-			WithExec([]string{"yarn", "workspaces", "foreach", "--no-private", "--include='@grafana/*'", "-A", "exec", "yarn", "pack", "--out", fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)}).
+			WithExec([]string{"/bin/sh", "-c", `yarn workspaces foreach --no-private --include='@grafana/*' -A exec yarn pack --out ` + fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)}).
 			Directory("./npm-packages"), nil
 	}
 
