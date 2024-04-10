@@ -24,8 +24,8 @@ const (
 	RPI     pipeline.FlagOption = "rpi"
 )
 
-// These are the flags that packages (targz, deb, rpm, docker) must have.
-// Essentially they must have all of the same things that the targz package have.
+// PackageNameFlags - flags that packages (targz, deb, rpm, docker) must have.
+// Essentially they must have all of the same things that the targz package has.
 var PackageNameFlags = []pipeline.Flag{
 	{
 		Name: "grafana",

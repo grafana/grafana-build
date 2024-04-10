@@ -30,9 +30,3 @@ func ValidatePackage(d *dagger.Client, service *dagger.Service, src *dagger.Dire
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"/bin/sh", "-c", "/src/e2e/verify-release"})
 }
-
-// NodeContainer returns a docker container with everything set up that is needed to build or run frontend tests.
-func ValidatePackageSpecs(d *dagger.Client, service *dagger.Service, src *dagger.Directory, yarnCacheVolume *dagger.CacheVolume, nodeVersion string) *dagger.Directory {
-	c := ValidatePackage(d, service, src, yarnCacheVolume, nodeVersion)
-	return c.Directory("e2e/verify/specs")
-}

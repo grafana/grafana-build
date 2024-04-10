@@ -44,29 +44,6 @@ func WithoutExt(name string) string {
 	return n
 }
 
-// TarFilename returns a file name that matches this format: {grafana|grafana-enterprise}_{version}_{os}_{arch}_{build_number}.tar.gz
-func TarFilename(opts TarFileOpts) string {
-	name := "grafana"
-	if opts.Edition != "" {
-		name = fmt.Sprintf("grafana-%s", opts.Edition)
-	}
-
-	var (
-		// This should return something like "linux", "arm"
-		os, arch = backend.OSAndArch(opts.Distro)
-		// If applicable this will be set to something like "7" (for arm7)
-		archv = backend.ArchVersion(opts.Distro)
-	)
-
-	if archv != "" {
-		arch = strings.Join([]string{arch, archv}, "-")
-	}
-
-	p := []string{name, opts.Version, opts.BuildID, os, arch}
-
-	return fmt.Sprintf("%s.tar.gz", strings.Join(p, "_"))
-}
-
 func TarOptsFromFileName(filename string) TarFileOpts {
 	filename = filepath.Base(filename)
 	n := WithoutExt(filename)
@@ -107,17 +84,4 @@ func TarOptsFromFileName(filename string) TarFileOpts {
 		Distro:  backend.Distribution(strings.Join([]string{os, arch}, "/")),
 		Suffix:  suffix,
 	}
-}
-
-// ReplaceExt replaces the extension of the given package name.
-// For example, if the input package name (original) is grafana_v1.0.0_linux-arm64_1.tar.gz, then
-// derivatives should have the same name, but with a different extension.
-// This function also removes the leading directory and removes the URL scheme prefix.
-func ReplaceExt(original, extension string) string {
-	n := strings.TrimPrefix(WithoutExt(original), "file://")
-	if extension == "" {
-		return filepath.Base(n)
-	}
-
-	return filepath.Base(fmt.Sprintf("%s.%s", n, extension))
 }
