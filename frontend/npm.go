@@ -2,8 +2,10 @@ package frontend
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
@@ -12,7 +14,7 @@ import (
 
 // NPMPackages versions and packs the npm packages into tarballs into `npm-packages` directory.
 // It then returns the npm-packages directory as a dagger.Directory.
-func NPMPackages(ctx context.Context, builder *dagger.Container, log *slog.Logger, src *dagger.Directory, ersion string) (*dagger.Directory, error) {
+func NPMPackages(ctx context.Context, builder *dagger.Container, d *dagger.Client, log *slog.Logger, src *dagger.Directory, ersion string) (*dagger.Directory, error) {
 	// Check if the version of Grafana uses lerna or nx to manage package versioning.
 	hasLerna := daggerutil.FileExists(ctx, src, "./lerna.json")
 	hasNx := daggerutil.FileExists(ctx, src, "./nx.json")
@@ -26,10 +28,23 @@ func NPMPackages(ctx context.Context, builder *dagger.Container, log *slog.Logge
 	}
 
 	if hasNx {
+		packages, err := containers.GetJSONValue(ctx, d, src, "nx.json", "release.groups.grafanaPackages.projects")
+		if err != nil {
+			return nil, err
+		}
+
+		var packagesToPack []string
+		err = json.Unmarshal(([]byte)(packages), &packagesToPack)
+		if err != nil {
+			return nil, err
+		}
+
+		grafanaPackages := strings.Join(packagesToPack, ",")
+
 		return builder.WithExec([]string{"mkdir", "npm-packages"}).
 			WithExec([]string{"yarn", "packages:build"}).
-			WithExec([]string{"yarn", "nx", "release", "version", ersion, "--no-git-commit", "--no-git-tag", "--no-stage-changes", "--group", "fixed"}).
-			WithExec([]string{"/bin/sh", "-c", `yarn workspaces foreach --no-private --include='@grafana/*' -A exec yarn pack --out ` + fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)}).
+			WithExec([]string{"yarn", "nx", "release", "version", ersion, "--no-git-commit", "--no-git-tag", "--no-stage-changes", "--group", "grafanaPackages"}).
+			WithExec([]string{"yarn", "nx", "exec", fmt.Sprintf(`--projects="%s"`, grafanaPackages), "--", "yarn", "pack", "--out", fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)}).
 			Directory("./npm-packages"), nil
 	}
 
