@@ -9,7 +9,7 @@ ADD https://github.com/dagger/dagger/releases/download/${DAGGER_VERSION}/dagger_
 RUN tar zxf /tmp/dagger_${DAGGER_VERSION}_linux_amd64.tar.gz -C /tmp
 RUN mv /tmp/dagger /bin/dagger
 
-FROM golang:1.21-alpine
+FROM golang:1.22-alpine
 
 ARG DAGGER_VERSION=v0.9.8
 
