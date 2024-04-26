@@ -3,6 +3,7 @@ package arguments
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"path"
 	"path/filepath"
@@ -162,7 +163,7 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 
 	ght, err := o.githubToken(ctx)
 	if err != nil {
-		return nil, err
+		log.Println("No github token found:", err)
 	}
 
 	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, ght)
