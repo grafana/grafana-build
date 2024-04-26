@@ -1,4 +1,4 @@
-FROM ghcr.io/equinix-labs/otel-cli:0.4.5 as otel-cli
+FROM ghcr.io/equinix-labs/otel-cli:v0.4.5 as otel-cli
 
 FROM alpine:3.19 AS dagger
 
