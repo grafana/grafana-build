@@ -27,8 +27,6 @@ dagger run --silent go run ./cmd \
   --go-version=${GO_VERSION} \
   --ubuntu-base=${UBUNTU_BASE} \
   --alpine-base=${ALPINE_BASE} \
-  --patches-repo=${PATCHES_REPO} \
-  --patches-path=${PATCHES_PATH} \
   --destination=${local_dst} > assets.txt
 
 cat assets.txt
