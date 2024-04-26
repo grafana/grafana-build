@@ -31,7 +31,9 @@ func ModuleDir(d *dagger.Client, platform dagger.Platform, src *dagger.Directory
 		WithWorkdir("/src").
 		// We need to mount the whole src directory as it might contain local
 		// Go modules:
-		WithMountedDirectory("/src", src).
+		WithDirectory("/src", src, dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/go.mod", "**/go.sum", "**/go.work"},
+		}).
 		WithExec([]string{"go", "mod", "download"})
 
 	return container.Directory("/go/pkg/mod")

@@ -50,15 +50,15 @@ func (f *NPMPackages) BuildDir(ctx context.Context, builder *dagger.Container, o
 }
 
 func (f *NPMPackages) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented") // TODO: Implement
+	return FrontendBuilder(ctx, f.Src, f.YarnCache, opts)
 }
 
 func (f *NPMPackages) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
-	panic("not implemented") // TODO: Implement
+	panic("not implemented") // NPMPackages doesn't return a file
 }
 
 func (f *NPMPackages) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
-	panic("not implemented") // TODO: Implement
+	return nil
 }
 
 func (f *NPMPackages) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {

@@ -7,9 +7,7 @@ import (
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
-	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/daggerutil"
-	"github.com/grafana/grafana-build/frontend"
 	"github.com/grafana/grafana-build/git"
 	"github.com/grafana/grafana-build/pipeline"
 	"github.com/urfave/cli/v2"
@@ -22,7 +20,7 @@ func InitializeEnterprise(d *dagger.Client, grafana *dagger.Directory, enterpris
 		WithDirectory("/src/grafana-enterprise", enterprise).
 		WithWorkdir("/src/grafana-enterprise").
 		WithEntrypoint([]string{}).
-		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.enterprise-commit"}).
+		WithExec([]string{"/bin/sh", "-c", `if [ -d .git ]; then git rev-parse HEAD; else echo "unknown"; fi > .buildinfo.enterprise-commit`}).
 		File("/src/grafana-enterprise/.buildinfo.enterprise-commit")
 
 	return d.Container().From(BusyboxImage).
@@ -88,7 +86,7 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 	// If GrafanaDir was provided, then we can just use that one.
 	if path := localPath; path != "" {
 		slog.Info("Using local Grafana found", "path", path)
-		return daggerutil.HostDir(client, path)
+		return daggerutil.HostDir(client, path, ".git", "node_modules", "public/build", "bin")
 	}
 
 	ght, err := o.githubToken(ctx)
@@ -115,23 +113,23 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		return nil, err
 	}
 
-	nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node version from source code: %w", err)
-	}
+	// nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get node version from source code: %w", err)
+	// }
 
-	yarnCache, err := opts.State.CacheVolume(ctx, YarnCacheDirectory)
-	if err != nil {
-		return nil, err
-	}
+	// yarnCache, err := opts.State.CacheVolume(ctx, YarnCacheDirectory)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache, opts.Platform)
+	// container := frontend.YarnInstall(opts.Client, src, nodeVersion, yarnCache, opts.Platform)
 
-	if _, err := containers.ExitError(ctx, container); err != nil {
-		return nil, err
-	}
+	// if _, err := containers.ExitError(ctx, container); err != nil {
+	// 	return nil, err
+	// }
 
-	return container.Directory("/src"), nil
+	return src, nil
 }
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
