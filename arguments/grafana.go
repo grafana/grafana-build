@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
