@@ -20,8 +20,10 @@ type Include struct {
 	Directories map[string]dagger.Directory
 }
 type Gitignore struct {
-	Include Include
-	Exclude Paths
+	IncludePaths []string
+	ExcludePaths []string
+	Include      Paths
+	Exclude      Paths
 }
 
 func IsDirectory(path string) (bool, bool, error) {
@@ -78,6 +80,7 @@ func ParseGitignore(basePath string, daggerDir *dagger.Directory, contents strin
 	for _, line := range strings.Split(contents, "\n") {
 		if line != "" {
 			line = strings.TrimSpace(line)
+			line, _ = strings.CutPrefix(line, "/")
 			// Ignore comments
 			if strings.HasPrefix(line, "#") {
 				continue
@@ -90,18 +93,19 @@ func ParseGitignore(basePath string, daggerDir *dagger.Directory, contents strin
 		}
 	}
 
-	includeFiles := map[string]dagger.File{}
-	includeDirectories := map[string]dagger.Directory{}
-	for _, file := range include.Files {
-		includeFiles[file] = *daggerDir.File(file)
-	}
-	for _, dir := range include.Directories {
-		includeDirectories[dir] = *daggerDir.Directory(dir)
-	}
+	allIncludePaths := []string{}
+	allIncludePaths = append(allIncludePaths, include.Files...)
+	allIncludePaths = append(allIncludePaths, include.Directories...)
+	allIncludePaths = append(allIncludePaths, include.Globs...)
+	allExcludePaths := []string{}
+	allExcludePaths = append(allExcludePaths, exclude.Files...)
+	allExcludePaths = append(allExcludePaths, exclude.Directories...)
+	allExcludePaths = append(allExcludePaths, exclude.Globs...)
 
-	gitignore.Include.Files = includeFiles
-	gitignore.Include.Directories = includeDirectories
+	gitignore.Include = include
+	gitignore.IncludePaths = allIncludePaths
 	gitignore.Exclude = exclude
+	gitignore.ExcludePaths = allExcludePaths
 	slog.Info("successfully parsed gitignore")
 	return gitignore
 }

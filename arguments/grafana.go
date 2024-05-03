@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
@@ -119,9 +120,10 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 		}
 		parsed := git.ParseGitignore(path, grafanaDir, string(gitignore))
 
-		grafanaDir = daggerutil.RemoveFilesAndDirs(grafanaDir, parsed.Exclude)
-		grafanaDir = daggerutil.AddFilesAndDirs(grafanaDir, parsed.Include)
-
+		grafanaDir = client.Host().Directory(path, dagger.HostDirectoryOpts{
+			Exclude: parsed.ExcludePaths,
+		})
+		grafanaDir = daggerutil.AddFilesAndDirs(path, client, grafanaDir, parsed.Include)
 		return grafanaDir, nil
 	}
 
