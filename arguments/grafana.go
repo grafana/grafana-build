@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
@@ -96,9 +98,31 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 
 func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, ght string) (*dagger.Directory, error) {
 	// If GrafanaDir was provided, then we can just use that one.
-	if path := localPath; path != "" {
+	if path, _ := strings.CutSuffix(localPath, "/"); path != "" {
+		path += "/"
 		slog.Info("Using local Grafana found", "path", path)
-		return daggerutil.HostDir(client, path)
+		grafanaDir, err := daggerutil.HostDir(client, path)
+		if err != nil {
+			return nil, err
+		}
+		slog.Info("reading gitignore")
+		gitignoreFile := grafanaDir.File(".gitignore")
+		if gitignoreFile == nil {
+			slog.Warn("unable to find .gitignore file, mounting full directory")
+			return grafanaDir, nil
+		}
+
+		gitignore, err := os.ReadFile(path + ".gitignore")
+		if err != nil {
+			slog.Error("error reading contents of .gitignore file, mounting full directory error: %w", err)
+			return grafanaDir, nil
+		}
+		parsed := git.ParseGitignore(path, grafanaDir, string(gitignore))
+
+		grafanaDir = daggerutil.RemoveFilesAndDirs(grafanaDir, parsed.Exclude)
+		grafanaDir = daggerutil.AddFilesAndDirs(grafanaDir, parsed.Include)
+
+		return grafanaDir, nil
 	}
 
 	return git.CloneWithGitHubToken(client, ght, repo, ref)
