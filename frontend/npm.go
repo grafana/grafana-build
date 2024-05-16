@@ -28,27 +28,6 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f .nx ]; then %s; else %s; fi", nxBuild, lernaBuild)}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f .nx ]; then %s; else %s; fi", nxPack, lernaPack)}).
 		Directory("./npm-packages"), nil
-
-	// if hasNx {
-	// 	packages, err := containers.GetJSONValue(ctx, d, src, "nx.json", "release.groups.grafanaPackages.projects")
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	var packagesToPack []string
-	// 	err = json.Unmarshal(([]byte)(packages), &packagesToPack)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	grafanaPackages := strings.Join(packagesToPack, ",")
-
-	// 	return builder.
-	// 		Directory("./npm-packages"), nil
-	// }
-
-	// log.Error("No lerna.json or nx.json found in source directory")
-	// return nil, fmt.Errorf("no lerna.json or nx.json found in source directory")
 }
 
 // PublishNPM publishes a npm package to the given destination.
