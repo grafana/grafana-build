@@ -5,3 +5,4 @@ bin/
 .idea/
 dist/
 grafana/
+.DS_Store
