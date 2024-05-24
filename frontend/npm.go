@@ -25,8 +25,8 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 
 	return builder.WithExec([]string{"mkdir", "npm-packages"}).
 		WithExec([]string{"yarn", "packages:build"}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f .nx ]; then %s; else %s; fi", nxBuild, lernaBuild)}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f .nx ]; then %s; else %s; fi", nxPack, lernaPack)}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
+		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaPack, nxPack)}).
 		Directory("./npm-packages"), nil
 }
 
