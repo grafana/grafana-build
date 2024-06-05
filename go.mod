@@ -8,12 +8,12 @@ require (
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1
-	go.opentelemetry.io/otel v1.25.0
+	go.opentelemetry.io/otel v1.27.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.25.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.25.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.25.0
 	go.opentelemetry.io/otel/sdk v1.25.0
-	go.opentelemetry.io/otel/trace v1.25.0
+	go.opentelemetry.io/otel/trace v1.27.0
 	golang.org/x/sync v0.6.0
 )
 
@@ -32,7 +32,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.6 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	go.opentelemetry.io/otel/metric v1.25.0 // indirect
+	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/net v0.23.0 // indirect
