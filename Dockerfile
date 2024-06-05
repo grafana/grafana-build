@@ -1,6 +1,6 @@
 FROM ghcr.io/equinix-labs/otel-cli:v0.4.5 as otel-cli
 
-FROM alpine:3.19 AS dagger
+FROM alpine:3.20 AS dagger
 
 # TODO: pull the binary from registry.dagger.io/cli:v0.9.8 (or similar) when
 # https://github.com/dagger/dagger/issues/6887 is resolved
