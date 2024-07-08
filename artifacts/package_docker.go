@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -18,6 +19,7 @@ var (
 	DockerArguments = arguments.Join(
 		TargzArguments,
 		[]pipeline.Argument{
+			arguments.ProDirectory,
 			arguments.DockerRegistry,
 			arguments.DockerOrg,
 			arguments.AlpineImage,
@@ -28,6 +30,7 @@ var (
 
 			arguments.ProDockerRegistry,
 			arguments.ProDockerOrg,
+			arguments.ProDockerRepo,
 			arguments.ProTagFormat,
 		},
 	)
@@ -59,6 +62,15 @@ type Docker struct {
 	BaseImage    string
 	TagFormat    string
 
+	// ProRegistry is the docker registry when using the `pro` name. (e.g. hub.docker.io)
+	ProRegistry string
+	// ProOrg is the docker org when using the `pro` name. (e.g. grafana)
+	ProOrg string
+	// ProOrg is the docker repo when using the `pro` name. (e.g. grafana-pro)
+	ProRepo string
+	// ProTagFormat is the docker tag format when using the `pro` name. (e.g. {{ .version }}-{{ .os }}-{{ .arch }})
+	ProTagFormat string
+
 	Tarball *pipeline.Artifact
 
 	// Building the Pro image requires a Debian package instead of a tar.gz
@@ -89,16 +101,11 @@ func (d *Docker) proBuilder(ctx context.Context, opts *pipeline.ArtifactContaine
 		return nil, fmt.Errorf("error getting deb from state: %w", err)
 	}
 
-	src, err := opts.State.Directory(ctx, arguments.ProDirectory)
-	if err != nil {
-		return nil, err
-	}
-
 	socket := opts.Client.Host().UnixSocket("/var/run/docker.sock")
 
 	return opts.Client.Container().From("docker").
 		WithUnixSocket("/var/run/docker.sock", socket).
-		WithMountedDirectory("/src", src).
+		WithMountedDirectory("/src", d.ProDir).
 		WithMountedFile("/src/grafana.deb", deb).
 		WithWorkdir("/src"), nil
 }
@@ -117,7 +124,7 @@ func (d *Docker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOp
 }
 
 func (d *Docker) buildPro(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
-	tags, err := docker.Tags(d.ProOrg, d.ProRegistry, d.ProRepo, d.ProTagFormat, packages.NameOpts{
+	tags, err := docker.Tags(d.ProOrg, d.ProRegistry, []string{d.ProRepo}, d.ProTagFormat, packages.NameOpts{
 		Name:    d.Name,
 		Version: d.Version,
 		BuildID: d.BuildID,
@@ -130,18 +137,21 @@ func (d *Docker) buildPro(ctx context.Context, builder *dagger.Container, opts *
 
 	builder = builder.
 		WithExec([]string{"docker", "build", "--platform=linux/amd64", ".", "-f", "./cmd/hgrun/Dockerfile", "-t", "hrun:latest"})
+
 	builder = docker.Build(opts.Client, builder, &docker.BuildOpts{
 		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 		Tags:       tags,
 		Platform:   dagger.Platform("linux/amd64"),
 		BuildArgs: []string{
-			"RELEASE_TYPE=%s",
-			"GRAFANA_VERSION=%s",
+			"RELEASE_TYPE=prerelease",
+			// I think because deb files use a ~ as a version delimiter of some kind, so the hg docker image uses that instead of a -
+			fmt.Sprintf("GRAFANA_VERSION=%s", strings.Replace(d.Version, "-", "~", 1)),
 			"HGRUN_IMAGE=hgrun:latest",
 		},
 	})
 
-	return nil, nil
+	// Save the resulting docker image to the local filesystem
+	return builder.WithExec([]string{"docker", "save", tags[0], "-o", "pro.tar"}).File("pro.tar"), nil
 }
 
 func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
@@ -170,6 +180,7 @@ func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts 
 			"JS_SRC=tgz-builder",
 			fmt.Sprintf("BASE_IMAGE=%s", d.BaseImage),
 		},
+		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 	}
 
 	b := docker.Build(opts.Client, builder, buildOpts)
@@ -182,7 +193,7 @@ func (d *Docker) BuildDir(ctx context.Context, builder *dagger.Container, opts *
 }
 
 func (d *Docker) publishPro(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	return nil, nil
+	panic("not implemented")
 }
 
 func (d *Docker) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
@@ -220,6 +231,11 @@ func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *da
 	if _, arch := backend.OSAndArch(d.Distro); arch == "riscv64" {
 		return nil
 	}
+
+	if d.Pro {
+		return nil
+	}
+
 	return docker.Verify(ctx, client, file, d.Src, d.YarnCache, d.Distro)
 }
 
@@ -228,10 +244,11 @@ func (d *Docker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir
 }
 
 func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
-	tarball, err := NewTarballFromString(ctx, log, artifact, state)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		pro     bool
+		tarball *pipeline.Artifact
+		deb     *pipeline.Artifact
+	)
 
 	options, err := pipeline.ParseFlags(artifact, DockerFlags)
 	if err != nil {
@@ -241,6 +258,26 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 	p, err := GetPackageDetails(ctx, options, state)
 	if err != nil {
 		return nil, err
+	}
+
+	if p.Name == packages.PackagePro {
+		pro = true
+	}
+
+	// The Pro docker image depends on the deb while everything else depends on the targz
+	if pro {
+		artifact, err := NewDebFromString(ctx, log, artifact, state)
+		if err != nil {
+			return nil, err
+		}
+		deb = artifact
+	} else {
+		artifact, err := NewTarballFromString(ctx, log, artifact, state)
+		if err != nil {
+			return nil, err
+		}
+
+		tarball = artifact
 	}
 
 	ubuntu, err := options.Bool(flags.Ubuntu)
@@ -288,6 +325,22 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 	if err != nil {
 		return nil, err
 	}
+	proRegistry, err := state.String(ctx, arguments.ProDockerRegistry)
+	if err != nil {
+		return nil, err
+	}
+	proOrg, err := state.String(ctx, arguments.ProDockerOrg)
+	if err != nil {
+		return nil, err
+	}
+	proRepo, err := state.String(ctx, arguments.ProDockerRepo)
+	if err != nil {
+		return nil, err
+	}
+	proTagFormat, err := state.String(ctx, arguments.ProTagFormat)
+	if err != nil {
+		return nil, err
+	}
 
 	base := alpineImage
 	if ubuntu {
@@ -300,12 +353,9 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 	}
 
 	var (
-		pro    bool
 		proDir *dagger.Directory
 	)
-
-	if p.Name == packages.PackagePro {
-		pro = true
+	if pro {
 		dir, err := state.Directory(ctx, arguments.ProDirectory)
 		if err != nil {
 			return nil, err
@@ -337,6 +387,7 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 			Pro:        pro,
 			ProDir:     proDir,
 			Tarball:    tarball,
+			Deb:        deb,
 
 			Ubuntu:       ubuntu,
 			BaseImage:    base,
@@ -344,6 +395,11 @@ func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string,
 			Org:          org,
 			Repositories: repos,
 			TagFormat:    format,
+
+			ProRegistry:  proRegistry,
+			ProOrg:       proOrg,
+			ProRepo:      proRepo,
+			ProTagFormat: proTagFormat,
 
 			Src:       src,
 			YarnCache: yarnCache,

@@ -53,6 +53,11 @@ var (
 		Usage: "Overrides the organization of the images",
 		Value: "grafana",
 	}
+	ProDockerRepoFlag = &cli.StringFlag{
+		Name:  "pro-repo",
+		Usage: "Overrides the docker repository of the built images",
+		Value: "grafana-pro",
+	}
 	ProTagFormatFlag = &cli.StringFlag{
 		Name:  "pro-tag-format",
 		Usage: "Provide a go template for formatting the docker tag(s) for Grafana Pro images",
@@ -70,5 +75,6 @@ var (
 	// The docker registry for Grafana Pro is often different than the one for Grafana & Enterprise
 	ProDockerRegistry = pipeline.NewStringFlagArgument(ProDockerRegistryFlag)
 	ProDockerOrg      = pipeline.NewStringFlagArgument(ProDockerOrgFlag)
+	ProDockerRepo     = pipeline.NewStringFlagArgument(ProDockerRepoFlag)
 	ProTagFormat      = pipeline.NewStringFlagArgument(ProTagFormatFlag)
 )

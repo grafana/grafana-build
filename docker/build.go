@@ -40,8 +40,12 @@ func Build(d *dagger.Client, builder *dagger.Container, opts *BuildOpts) *dagger
 	if p := opts.Platform; p != "" {
 		args = append(args, fmt.Sprintf("--platform=%s", string(p)))
 	}
+	dockerfile := opts.Dockerfile
+	if dockerfile == "" {
+		dockerfile = "Dockerfile"
+	}
 
-	args = append(args, ".")
+	args = append(args, ".", "-f", dockerfile)
 
 	for _, v := range opts.BuildArgs {
 		args = append(args, fmt.Sprintf("--build-arg=%s", v))

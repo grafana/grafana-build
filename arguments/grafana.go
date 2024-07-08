@@ -59,9 +59,9 @@ type GrafanaDirectoryOpts struct {
 	PatchesRef  string
 }
 
-func (o *GrafanaDirectoryOpts) githubToken(ctx context.Context) (string, error) {
+func githubToken(ctx context.Context, token string) (string, error) {
 	// Since GrafanaDir was not provided, we must clone it.
-	ght := o.GitHubToken
+	ght := token
 
 	// If GitHubToken was not set from flag
 	if ght != "" {
@@ -79,7 +79,7 @@ func (o *GrafanaDirectoryOpts) githubToken(ctx context.Context) (string, error) 
 	return token, nil
 }
 
-func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaDirectoryOpts, error) {
+func GrafanaDirectoryOptsFromFlags(c cliutil.CLIContext) *GrafanaDirectoryOpts {
 	return &GrafanaDirectoryOpts{
 		GrafanaRepo:    c.String("grafana-repo"),
 		EnterpriseRepo: c.String("enterprise-repo"),
@@ -91,7 +91,7 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 		PatchesRepo:    c.String("patches-repo"),
 		PatchesPath:    c.String("patches-path"),
 		PatchesRef:     c.String("patches-ref"),
-	}, nil
+	}
 }
 
 func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, ght string) (*dagger.Directory, error) {
@@ -156,12 +156,9 @@ func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Direct
 }
 
 func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
-	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
-	if err != nil {
-		return nil, err
-	}
+	o := GrafanaDirectoryOptsFromFlags(opts.CLIContext)
 
-	ght, err := o.githubToken(ctx)
+	ght, err := githubToken(ctx, o.GitHubToken)
 	if err != nil {
 		log.Println("No github token found:", err)
 	}
@@ -202,17 +199,14 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
 	// Get the Grafana directory...
-	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
-	if err != nil {
-		return nil, err
-	}
+	o := GrafanaDirectoryOptsFromFlags(opts.CLIContext)
 
 	grafanaDir, err := grafanaDirectory(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	ght, err := o.githubToken(ctx)
+	ght, err := githubToken(ctx, o.GitHubToken)
 	if err != nil {
 		return nil, nil
 	}
