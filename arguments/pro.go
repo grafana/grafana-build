@@ -29,7 +29,7 @@ var ProDirectoryFlags = []cli.Flag{
 	},
 }
 
-// GrafanaDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has Grafana in it.
+// ProDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has a repository that has the Grafana Pro docker image.
 // Where possible, when cloning and no authentication options are provided, the valuefunc will try to use the configured github CLI for cloning.
 var ProDirectory = pipeline.Argument{
 	Name:        "pro-dir",
