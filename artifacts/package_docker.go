@@ -180,7 +180,6 @@ func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts 
 			"JS_SRC=tgz-builder",
 			fmt.Sprintf("BASE_IMAGE=%s", d.BaseImage),
 		},
-		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 	}
 
 	b := docker.Build(opts.Client, builder, buildOpts)
