@@ -135,9 +135,6 @@ func (d *Docker) buildPro(ctx context.Context, builder *dagger.Container, opts *
 		return nil, err
 	}
 
-	builder = builder.
-		WithExec([]string{"docker", "build", "--platform=linux/amd64", ".", "-f", "./cmd/hgrun/Dockerfile", "-t", "hrun:latest"})
-
 	builder = docker.Build(opts.Client, builder, &docker.BuildOpts{
 		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 		Tags:       tags,
@@ -146,7 +143,6 @@ func (d *Docker) buildPro(ctx context.Context, builder *dagger.Container, opts *
 			"RELEASE_TYPE=prerelease",
 			// I think because deb files use a ~ as a version delimiter of some kind, so the hg docker image uses that instead of a -
 			fmt.Sprintf("GRAFANA_VERSION=%s", strings.Replace(d.Version, "-", "~", 1)),
-			"HGRUN_IMAGE=hgrun:latest",
 		},
 	})
 
