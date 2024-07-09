@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DefaultGoVersion      = "1.22.4"
+	DefaultGoVersion      = "1.22.5"
 	DefaultViceroyVersion = "v0.4.0"
 )
 

@@ -99,7 +99,7 @@ func (d *Deb) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 	panic("not implemented") // TODO: Implement
 }
 
-func (d *Deb) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *Deb) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

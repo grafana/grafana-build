@@ -63,7 +63,7 @@ func (d *Zip) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 	return nil
 }
 
-func (d *Zip) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *Zip) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

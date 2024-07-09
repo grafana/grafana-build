@@ -11,7 +11,6 @@ type BuildOpts struct {
 	// Dockerfile is the path to the dockerfile with the '-f' command.
 	// If it's not provided, then the docker command will default to 'Dockerfile' in `pwd`.
 	Dockerfile string
-	BaseImage  string
 
 	// Tags are provided as the '-t' argument, and can include the registry domain as well as the repository.
 	// Docker build supports building the same image with multiple tags.
@@ -41,19 +40,14 @@ func Build(d *dagger.Client, builder *dagger.Container, opts *BuildOpts) *dagger
 	if p := opts.Platform; p != "" {
 		args = append(args, fmt.Sprintf("--platform=%s", string(p)))
 	}
-
-	args = append(args, ".")
-	buildArgs := []string{"GRAFANA_TGZ=grafana.tar.gz",
-		"GO_SRC=tgz-builder",
-		"JS_SRC=tgz-builder",
-		fmt.Sprintf("BASE_IMAGE=%s", opts.BaseImage),
+	dockerfile := opts.Dockerfile
+	if dockerfile == "" {
+		dockerfile = "Dockerfile"
 	}
 
-	if opts.BuildArgs != nil {
-		buildArgs = append(buildArgs, opts.BuildArgs...)
-	}
+	args = append(args, ".", "-f", dockerfile)
 
-	for _, v := range buildArgs {
+	for _, v := range opts.BuildArgs {
 		args = append(args, fmt.Sprintf("--build-arg=%s", v))
 	}
 
