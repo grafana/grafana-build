@@ -292,7 +292,7 @@ func (t *Tarball) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublis
 	return nil
 }
 
-func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (t *Tarball) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

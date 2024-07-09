@@ -123,7 +123,7 @@ func (d *RPM) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 	panic("not implemented") // TODO: Implement
 }
 
-func (d *RPM) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *RPM) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

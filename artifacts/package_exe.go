@@ -65,7 +65,7 @@ func (d *Exe) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 	panic("not implemented") // TODO: Implement
 }
 
-func (d *Exe) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *Exe) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	// Not a directory so this shouldn't be called
 	return nil
 }

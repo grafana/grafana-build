@@ -45,7 +45,7 @@ type ArtifactHandler interface {
 
 	Publisher(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error)
 	PublishFile(ctx context.Context, opts *ArtifactPublishFileOpts) error
-	PublisDir(ctx context.Context, opts *ArtifactPublishDirOpts) error
+	PublishDir(ctx context.Context, opts *ArtifactPublishDirOpts) error
 
 	// Filename should return a deterministic file or folder name that this build will produce.
 	// This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output

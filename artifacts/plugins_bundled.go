@@ -53,7 +53,7 @@ func (f *BundledPlugins) PublishFile(ctx context.Context, opts *pipeline.Artifac
 	panic("not implemented") // TODO: Implement
 }
 
-func (f *BundledPlugins) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (f *BundledPlugins) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	return nil
 }
 

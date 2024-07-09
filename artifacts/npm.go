@@ -57,7 +57,7 @@ func (f *NPMPackages) PublishFile(ctx context.Context, opts *pipeline.ArtifactPu
 	panic("not implemented") // TODO: Implement
 }
 
-func (f *NPMPackages) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (f *NPMPackages) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

@@ -203,7 +203,7 @@ func (d *Docker) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublish
 	panic("not implemented")
 }
 
-func (d *Docker) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *Docker) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("This artifact does not produce directories")
 }
 

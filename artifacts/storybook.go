@@ -57,7 +57,7 @@ func (f *Storybook) PublishFile(ctx context.Context, opts *pipeline.ArtifactPubl
 	panic("not implemented") // TODO: Implement
 }
 
-func (f *Storybook) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (f *Storybook) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 
