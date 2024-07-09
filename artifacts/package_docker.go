@@ -140,7 +140,7 @@ func (d *Docker) buildPro(ctx context.Context, builder *dagger.Container, opts *
 		Tags:       tags,
 		Platform:   dagger.Platform("linux/amd64"),
 		BuildArgs: []string{
-			"RELEASE_TYPE=prerelease",
+			"RELEASE_TYPE=main",
 			// I think because deb files use a ~ as a version delimiter of some kind, so the hg docker image uses that instead of a -
 			fmt.Sprintf("GRAFANA_VERSION=%s", strings.Replace(d.Version, "-", "~", 1)),
 		},
