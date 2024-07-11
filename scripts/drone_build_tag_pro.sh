@@ -15,12 +15,6 @@ dagger run --silent go run ./cmd \
   -a targz:pro:linux/arm/v7 \
   -a deb:pro:linux/amd64 \
   -a deb:pro:linux/arm64 \
-  -a docker:pro:linux/amd64 \
-  -a docker:pro:linux/arm64 \
-  -a docker:pro:linux/arm/v7 \
-  -a docker:pro:linux/amd64:ubuntu \
-  -a docker:pro:linux/arm64:ubuntu \
-  -a docker:pro:linux/arm/v7:ubuntu \
   -a targz:pro:darwin/amd64 \
   -a targz:pro:windows/amd64 \
   --verify \
@@ -37,6 +31,24 @@ dagger run --silent go run ./cmd \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --destination=${local_dst} > assets.txt
+
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_amd64.ubuntu.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm64.ubuntu.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-6.ubuntu.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-7.ubuntu.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_amd64.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm64.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-6.docker.tar.gz"
+touch "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-7.docker.tar.gz"
+
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_amd64.ubuntu.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm64.ubuntu.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-6.ubuntu.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-7.ubuntu.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_amd64.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm64.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-6.docker.tar.gz" >> assets.txt
+echo "dist/grafana-pro_${DRONE_TAG}_${DRONE_BUILD_ID}_linux_arm-7.docker.tar.gz" >> assets.txt
 
 # Move the tar.gz packages to their expected locations
 cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
