@@ -17,6 +17,7 @@ dagger run --silent go run ./cmd \
   --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=${SOURCE_COMMIT} \
+  --grafana-repo="https://github.com/grafana/grafana.git" \
   --enterprise-ref=${DRONE_COMMIT} \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
