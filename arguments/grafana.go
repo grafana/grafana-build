@@ -128,9 +128,7 @@ func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Direct
 		WithMountedDirectory("/patches", dir).
 		WithWorkdir("/src").
 		WithExec([]string{"git", "config", "--local", "user.name", "grafana"}).
-		WithExec([]string{"git", "config", "--local", "user.email", "engineering@grafana.com"}).
-		WithExec([]string{"git", "--no-pager", "log", "--decorate=short", "--pretty=oneline"}).
-		WithExec([]string{"git", "remote", "-v"})
+		WithExec([]string{"git", "config", "--local", "user.email", "engineering@grafana.com"})
 
 	for _, v := range entries {
 		if filepath.Ext(v) != ".patch" {
