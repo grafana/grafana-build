@@ -105,6 +105,8 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 }
 
 func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Directory, repo, patchesPath, ref, ght string) (*dagger.Directory, error) {
+	log.Println("applying patches")
+
 	// Clone the patches repository on 'main'
 	dir, err := git.CloneWithGitHubToken(client, ght, repo, ref)
 	if err != nil {
@@ -128,28 +130,16 @@ func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Direct
 		WithMountedDirectory("/patches", dir).
 		WithWorkdir("/src").
 		WithExec([]string{"git", "config", "--local", "user.name", "grafana"}).
-		WithExec([]string{"git", "config", "--local", "user.email", "engineering@grafana.com"})
-
-	branch, err := container.
-		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD"}).
-		Stdout(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("error reading branch name: %w", err)
-	}
+		WithExec([]string{"git", "config", "--local", "user.email", "engineering@grafana.com"}).
+		WithExec([]string{"git", "--no-pager", "log", "--decorate=short", "--pretty=oneline"}).
+		WithExec([]string{"git", "remote", "-v"})
 
 	for _, v := range entries {
 		if filepath.Ext(v) != ".patch" {
 			continue
 		}
 
-		base := filepath.Base(v)
-		container = container.WithExec([]string{"/bin/sh", "-c", `git checkout -b tmp`}).
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`git am --3way --ignore-whitespace --ignore-space-change --committer-date-is-author-date %s > /dev/null 2>&1`, path.Join("/patches", patchesPath, v))}).
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`git checkout %s`, branch)}).
-			WithExec([]string{"/bin/sh", "-c", `git merge --squash tmp`}).
-			WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`git commit -m "apply security patch: %s"`, path.Join(patchesPath, base))}).
-			WithExec([]string{"/bin/sh", "-c", `git branch -D tmp`})
+		container = container.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`git am --3way --ignore-whitespace --ignore-space-change --committer-date-is-author-date %s > /dev/null 2>&1`, path.Join("/patches", patchesPath, v))})
 	}
 
 	return container.Directory("/src"), nil
