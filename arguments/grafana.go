@@ -105,8 +105,6 @@ func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, r
 }
 
 func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Directory, repo, patchesPath, ref, ght string) (*dagger.Directory, error) {
-	log.Println("applying patches")
-
 	// Clone the patches repository on 'main'
 	dir, err := git.CloneWithGitHubToken(client, ght, repo, ref)
 	if err != nil {
