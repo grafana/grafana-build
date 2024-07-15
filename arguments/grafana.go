@@ -154,6 +154,23 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 		return nil, err
 	}
 
+	gitContainer := opts.Client.Container().From("alpine/git").
+		WithWorkdir("/src").
+		WithMountedDirectory("/src/.git", src.Directory(".git")).
+		WithEntrypoint([]string{})
+
+	commitFile := gitContainer.
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.grafana-commit"}).
+		File("/src/.buildinfo.grafana-commit")
+
+	branchFile := gitContainer.
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD > .buildinfo.grafana-branch"}).
+		File("/src/.buildinfo.grafana-branch")
+
+	src = src.
+		WithFile(".buildinfo.commit", commitFile).
+		WithFile(".buildinfo.branch", branchFile)
+
 	if o.PatchesRepo != "" {
 		withPatches, err := applyPatches(ctx, opts.Client, src, o.PatchesRepo, o.PatchesPath, o.PatchesRef, ght)
 		if err != nil {
