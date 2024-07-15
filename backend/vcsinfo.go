@@ -32,7 +32,6 @@ func GetVCSInfo(d *dagger.Client, src *dagger.Directory, version string, enterpr
 		WithEntrypoint([]string{}).
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.commit"}).
 		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD > .buildinfo.branch"})
 
 	info := &VCSInfo{
