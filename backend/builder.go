@@ -149,7 +149,7 @@ func Builder(
 		return nil, err
 	}
 
-	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
+	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{

@@ -27,21 +27,15 @@ func WithVCSInfo(c *dagger.Container, info *VCSInfo, enterprise bool) *dagger.Co
 }
 
 // VCSInfo gets the VCS data from the directory 'src', writes them to a file on the given container, and returns the files which can be used in other containers.
-func GetVCSInfo(d *dagger.Client, src *dagger.Directory, version string, enterprise bool) *VCSInfo {
-	c := d.Container().From("alpine/git").
-		WithEntrypoint([]string{}).
-		WithMountedDirectory("/src", src).
-		WithWorkdir("/src").
-		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD > .buildinfo.branch"})
-
+func GetVCSInfo(src *dagger.Directory, version string, enterprise bool) *VCSInfo {
 	info := &VCSInfo{
 		Version: version,
-		Commit:  c.File(".buildinfo.commit"),
-		Branch:  c.File(".buildinfo.branch"),
+		Commit:  src.File(".buildinfo.commit"),
+		Branch:  src.File(".buildinfo.branch"),
 	}
 
 	if enterprise {
-		info.EnterpriseCommit = c.File(".buildinfo.enterprise-commit")
+		info.EnterpriseCommit = src.File(".buildinfo.enterprise-commit")
 	}
 
 	return info
