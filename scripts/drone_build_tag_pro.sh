@@ -28,6 +28,8 @@ dagger run --silent go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
   --go-version=${GO_VERSION} \
+  --patches-repo=${PATCHES_REPO} \
+  --patches-path=${PATCHES_PATH} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --destination=${local_dst} > assets.txt
