@@ -42,8 +42,6 @@ dagger run go run ./cmd \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
-  --patches-repo=${PATCHES_REPO} \
-  --patches-path=${PATCHES_PATH} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --version=${DRONE_TAG} \
