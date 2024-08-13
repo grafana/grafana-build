@@ -77,7 +77,6 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BeforeRemove: "/src/packaging/deb/control/prerm",
 		Depends: []string{
 			"adduser",
-			"libfontconfig1",
 			"musl",
 		},
 		EnvFolder: "/pkg/etc/default",
