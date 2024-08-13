@@ -91,8 +91,6 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		AfterInstall: "/src/packaging/rpm/control/postinst",
 		Depends: []string{
 			"/sbin/service",
-			"fontconfig",
-			"freetype",
 		},
 		ExtraArgs: []string{
 			"--rpm-posttrans=/src/packaging/rpm/control/posttrans",
