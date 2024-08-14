@@ -262,14 +262,10 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		targz.NewMappedDir("packaging/docker", grafanaDir.Directory("packaging/docker")),
 		targz.NewMappedDir("packaging/wrappers", grafanaDir.Directory("packaging/wrappers")),
 		targz.NewMappedDir("bin", backendDir),
-		targz.NewMappedDir("public", frontendDir, dagger.ContainerWithDirectoryOpts{
-			Exclude: []string{"node_modules", "*/node_modules", "**/*/node_modules"},
-		}),
+		targz.NewMappedDir("public", frontendDir),
 		targz.NewMappedDir("npm-artifacts", npmDir),
 		targz.NewMappedDir("storybook", storybookDir),
-		targz.NewMappedDir("plugins-bundled", pluginsDir, dagger.ContainerWithDirectoryOpts{
-			Exclude: []string{"node_modules", "*/node_modules", "**/*/node_modules"},
-		}),
+		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
 	root := fmt.Sprintf("grafana-%s", version)

@@ -6,14 +6,13 @@ import (
 	"dagger.io/dagger"
 )
 
-func NewMappedDir(path string, directory *dagger.Directory, opts ...dagger.ContainerWithDirectoryOpts) MappedDirectory {
-	return MappedDirectory{path: path, directory: directory, opts: opts}
+func NewMappedDir(path string, directory *dagger.Directory) MappedDirectory {
+	return MappedDirectory{path: path, directory: directory}
 }
 
 type MappedDirectory struct {
 	path      string
 	directory *dagger.Directory
-	opts      []dagger.ContainerWithDirectoryOpts
 }
 
 type MappedFile struct {
@@ -52,7 +51,7 @@ func Build(packager *dagger.Container, opts *Opts) *dagger.File {
 
 	for _, v := range opts.Directories {
 		path := path.Join(root, v.path)
-		packager = packager.WithDirectory(path, v.directory, v.opts...)
+		packager = packager.WithMountedDirectory(path, v.directory)
 		paths = append(paths, path)
 	}
 
