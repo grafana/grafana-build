@@ -7,6 +7,7 @@ dagger run --silent go run ./cmd docker publish \
   $(find $local_dir | grep docker.tar.gz | grep -v sha256 | awk '{print "--package=file://"$0}') \
   --username=${DOCKER_USERNAME} \
   --password=${DOCKER_PASSWORD} \
+  --latest \
   --repo="grafana-enterprise-dev"
 
 # Publish packages to the downloads bucket
