@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-build
 
-go 1.21
+go 1.23.0
 
 require (
 	dagger.io/dagger v0.11.6
