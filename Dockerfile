@@ -1,6 +1,6 @@
 FROM ghcr.io/equinix-labs/otel-cli:v0.4.5 as otel-cli
 
-FROM alpine:3.19 AS dagger
+FROM alpine:3.20 AS dagger
 
 # TODO: pull the binary from registry.dagger.io/cli:v0.9.8 (or similar) when
 # https://github.com/dagger/dagger/issues/6887 is resolved
@@ -9,7 +9,7 @@ ADD https://github.com/dagger/dagger/releases/download/${DAGGER_VERSION}/dagger_
 RUN tar zxf /tmp/dagger_${DAGGER_VERSION}_linux_amd64.tar.gz -C /tmp
 RUN mv /tmp/dagger /bin/dagger
 
-FROM golang:1.22-alpine
+FROM golang:1.23-alpine
 
 ARG DAGGER_VERSION=v0.11.6
 
