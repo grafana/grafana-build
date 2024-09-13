@@ -156,6 +156,7 @@ func Builder(
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/emails", src.Directory("emails")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
@@ -181,6 +182,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").
