@@ -18,6 +18,8 @@ type BuildOpts struct {
 	Tags []string
 	// BuildArgs are provided to the docker command as '--build-arg'
 	BuildArgs []string
+	// Set the target build stage to build as '--target'
+	Target string
 
 	// Platform, if set to the non-default value, will use buildkit's emulation to build the docker image. This can be useful if building a docker image for a platform that doesn't match the host platform.
 	Platform dagger.Platform
@@ -53,6 +55,10 @@ func Build(d *dagger.Client, builder *dagger.Container, opts *BuildOpts) *dagger
 
 	for _, v := range opts.Tags {
 		args = append(args, "-t", v)
+	}
+
+	if opts.Target != "" {
+		args = append(args, "--target", opts.Target)
 	}
 
 	return builder.WithExec(args)
