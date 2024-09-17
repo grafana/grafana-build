@@ -1,0 +1,28 @@
+name: PR Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  grafana-integration-test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/grafana-integration-test' }}
+    strategy:
+      matrix:
+        version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout grafana
+        uses: actions/checkout@v4
+        with:
+          repository: grafana/grafana
+          ref: ${{ matrix.version }}
+          path: grafana
+      - uses: dagger/dagger-for-github@v6
+        with:
+          verb: run
+          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana
