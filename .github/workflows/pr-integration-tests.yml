@@ -15,7 +15,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    if: ${{ github.event.issue.pull_request && startsWith(github.event.issue.pull_request, '/grafana-integration-tests') }}
     steps:
       - uses: actions/checkout@v4
       - name: Checkout grafana
