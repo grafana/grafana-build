@@ -23,6 +23,8 @@ jobs:
           repository: grafana/grafana
           ref: ${{ matrix.version }}
           path: grafana
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache
       - uses: dagger/dagger-for-github@v6
         with:
           verb: run
