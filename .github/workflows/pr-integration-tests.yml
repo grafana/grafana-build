@@ -1,4 +1,4 @@
-name: PR Comment
+name: PR Integration tests
 
 on:
   issue_comment:
@@ -10,7 +10,8 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/grafana-integration-test' }}
     strategy:
       matrix:
-        version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
+        version: [main]
+        #version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
     permissions:
       id-token: write
       contents: read
