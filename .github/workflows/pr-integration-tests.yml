@@ -11,6 +11,7 @@ jobs:
     strategy:
       matrix:
         version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
+        type: [oss, enterprise]
     permissions:
       id-token: write
       contents: read
@@ -22,6 +23,13 @@ jobs:
           repository: grafana/grafana
           ref: ${{ matrix.version }}
           path: grafana
+      - name: Checkout grafana-enterprise
+        if: matrix.type == 'enterprise'
+        uses: actions/checkout@v4
+        with:
+          repository: grafana/grafana-enterprise
+          ref: ${{ matrix.version }}
+          path: grafana-enterprise
       - name: Clean runner
         run: |
           df -h
@@ -40,7 +48,15 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/share/swift
           df -h
-      - uses: dagger/dagger-for-github@v6
+      - name: OSS tests
+        uses: dagger/dagger-for-github@v6
+        if: matrix.type == 'oss'
         with:
           verb: run
           args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana
+      - name: Enterprise tests
+        uses: dagger/dagger-for-github@v6
+        if: matrix.type == 'enterprise'
+        with:
+          verb: run
+          args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise
