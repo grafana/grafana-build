@@ -93,7 +93,7 @@ func (d *EntDocker) BuildFile(ctx context.Context, builder *dagger.Container, op
 	builder = docker.Build(opts.Client, builder, &docker.BuildOpts{
 		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 		Tags:       tags,
-		Target:     "hosted-grafana-enterprise",
+		Target:     "hosted-grafana-localenterprise",
 		Platform:   dagger.Platform("linux/amd64"),
 		BuildArgs: []string{
 			"RELEASE_TYPE=main",

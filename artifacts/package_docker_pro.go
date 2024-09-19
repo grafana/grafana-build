@@ -94,7 +94,7 @@ func (d *ProDocker) BuildFile(ctx context.Context, builder *dagger.Container, op
 	builder = docker.Build(opts.Client, builder, &docker.BuildOpts{
 		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 		Tags:       tags,
-		Target:     "hosted-grafana-pro",
+		Target:     "hosted-grafana-localpro",
 		Platform:   dagger.Platform("linux/amd64"),
 		BuildArgs: []string{
 			"RELEASE_TYPE=main",
