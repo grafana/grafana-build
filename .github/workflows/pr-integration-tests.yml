@@ -11,7 +11,9 @@ jobs:
     strategy:
       matrix:
         version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
-        type: [oss, enterprise]
+        type: [oss]
+        # TODO: figure out enterprise auth 
+        # type: [oss, enterprise]
     permissions:
       id-token: write
       contents: read
@@ -49,15 +51,17 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/share/swift
           df -h
+      - name: Get Grafana golang version
+        run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
       - name: OSS tests
         uses: dagger/dagger-for-github@v6
         if: matrix.type == 'oss'
         with:
           verb: run
-          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana
+          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION}
       - name: Enterprise tests
         uses: dagger/dagger-for-github@v6
         if: matrix.type == 'enterprise'
         with:
           verb: run
-          args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise
+          args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise --go-version=${GRAFANA_GO_VERSION}
