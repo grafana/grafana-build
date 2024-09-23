@@ -58,10 +58,27 @@ var (
 		Usage: "Overrides the docker repository of the built images",
 		Value: "grafana-pro",
 	}
-	ProTagFormatFlag = &cli.StringFlag{
-		Name:  "pro-tag-format",
-		Usage: "Provide a go template for formatting the docker tag(s) for Grafana Pro images",
-		Value: docker.DefaultProTagFormat,
+
+	EntDockerRegistryFlag = &cli.StringFlag{
+		Name:  "enterprise-registry",
+		Usage: "Prefix the image name with the registry provided",
+		Value: "docker.io",
+	}
+	EntDockerOrgFlag = &cli.StringFlag{
+		Name:  "enterprise-org",
+		Usage: "Overrides the organization of the images",
+		Value: "grafana",
+	}
+	EntDockerRepoFlag = &cli.StringFlag{
+		Name:  "enterprise-repo",
+		Usage: "Overrides the docker repository of the built images",
+		Value: "grafana-enterprise",
+	}
+
+	HGTagFormatFlag = &cli.StringFlag{
+		Name:  "hg-tag-format",
+		Usage: "Provide a go template for formatting the docker tag(s) for Hosted Grafana images",
+		Value: docker.DefaultHGTagFormat,
 	}
 
 	DockerRegistry  = pipeline.NewStringFlagArgument(DockerRegistryFlag)
@@ -76,5 +93,10 @@ var (
 	ProDockerRegistry = pipeline.NewStringFlagArgument(ProDockerRegistryFlag)
 	ProDockerOrg      = pipeline.NewStringFlagArgument(ProDockerOrgFlag)
 	ProDockerRepo     = pipeline.NewStringFlagArgument(ProDockerRepoFlag)
-	ProTagFormat      = pipeline.NewStringFlagArgument(ProTagFormatFlag)
+
+	EntDockerRegistry = pipeline.NewStringFlagArgument(EntDockerRegistryFlag)
+	EntDockerOrg      = pipeline.NewStringFlagArgument(EntDockerOrgFlag)
+	EntDockerRepo     = pipeline.NewStringFlagArgument(EntDockerRepoFlag)
+
+	HGTagFormat = pipeline.NewStringFlagArgument(HGTagFormatFlag)
 )

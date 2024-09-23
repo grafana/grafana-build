@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var ProDirectoryFlags = []cli.Flag{
+var HGDirectoryFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     "hosted-grafana-dir",
 		Usage:    "Local clone of HG to use, instead of git cloning",
@@ -29,24 +29,24 @@ var ProDirectoryFlags = []cli.Flag{
 	},
 }
 
-// ProDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has a repository that has the Grafana Pro docker image.
+// HGDirectory will provide the valueFunc that initializes and returns a *dagger.Directory that has a repository that has the Grafana Pro/Enterprise docker image.
 // Where possible, when cloning and no authentication options are provided, the valuefunc will try to use the configured github CLI for cloning.
-var ProDirectory = pipeline.Argument{
-	Name:        "pro-dir",
-	Description: "The source tree of that has the Dockerfile for Grafana Pro",
-	Flags:       ProDirectoryFlags,
-	ValueFunc:   proDirectory,
+var HGDirectory = pipeline.Argument{
+	Name:        "hg-dir",
+	Description: "The source tree of that has the Dockerfile for Grafana Pro/Enterprise",
+	Flags:       HGDirectoryFlags,
+	ValueFunc:   hgDirectory,
 }
 
-type ProDirectoryOpts struct {
+type HGDirectoryOpts struct {
 	GitHubToken string
 	HGDir       string
 	HGRepo      string
 	HGRef       string
 }
 
-func ProDirectoryOptsFromFlags(c cliutil.CLIContext) *ProDirectoryOpts {
-	return &ProDirectoryOpts{
+func HGDirectoryOptsFromFlags(c cliutil.CLIContext) *HGDirectoryOpts {
+	return &HGDirectoryOpts{
 		GitHubToken: c.String("github-token"),
 		HGDir:       c.String("hosted-grafana-dir"),
 		HGRepo:      c.String("hosted-grafana-repo"),
@@ -54,8 +54,8 @@ func ProDirectoryOptsFromFlags(c cliutil.CLIContext) *ProDirectoryOpts {
 	}
 }
 
-func proDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
-	o := ProDirectoryOptsFromFlags(opts.CLIContext)
+func hgDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
+	o := HGDirectoryOptsFromFlags(opts.CLIContext)
 	ght, err := githubToken(ctx, o.GitHubToken)
 	if err != nil {
 		return nil, fmt.Errorf("could not get GitHub token: %w", err)

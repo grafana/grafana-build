@@ -16,55 +16,54 @@ import (
 )
 
 var (
-	ProDockerArguments = arguments.Join(
+	EntDockerArguments = arguments.Join(
 		DebArguments,
 		[]pipeline.Argument{
 			arguments.HGDirectory,
-			arguments.ProDockerRegistry,
-			arguments.ProDockerOrg,
-			arguments.ProDockerRepo,
+			arguments.EntDockerRegistry,
+			arguments.EntDockerOrg,
+			arguments.EntDockerRepo,
 			arguments.HGTagFormat,
 		},
 	)
-	ProDockerFlags = flags.JoinFlags(
+	EntDockerFlags = flags.JoinFlags(
 		DebFlags,
 		flags.DockerFlags,
 	)
 )
 
-var ProDockerInitializer = Initializer{
-	InitializerFunc: NewProDockerFromString,
-	Arguments:       ProDockerArguments,
+var EntDockerInitializer = Initializer{
+	InitializerFunc: NewEntDockerFromString,
+	Arguments:       EntDockerArguments,
 }
 
-// ProDocker uses a built deb installer to create a docker image
-type ProDocker struct {
+// EntDocker uses a built deb installer to create a docker image
+type EntDocker struct {
 	Name    packages.Name
 	Version string
 	BuildID string
 	Distro  backend.Distribution
-	ProDir  *dagger.Directory
+	EntDir  *dagger.Directory
 
-	// ProRegistry is the docker registry when using the `pro` name. (e.g. hub.docker.io)
-	ProRegistry string
-	// ProOrg is the docker org when using the `pro` name. (e.g. grafana)
-	ProOrg string
-	// ProOrg is the docker repo when using the `pro` name. (e.g. grafana-pro)
-	ProRepo string
-	// TagFormat is the docker tag format when using the `pro` name. (e.g. {{ .version }}-{{ .os }}-{{ .arch }})
+	// EntRegistry is the docker registry when using the `enterprise` name. (e.g. hub.docker.io)
+	EntRegistry string
+	// EntOrg is the docker org when using the `enterprise` name. (e.g. grafana)
+	EntOrg string
+	// EntOrg is the docker repo when using the `enterprise` name. (e.g. grafana-enterprise)
+	EntRepo string
+	// TagFormat is the docker tag format when using the `enterprise` name. (e.g. {{ .version }}-{{ .os }}-{{ .arch }})
 	TagFormat string
 
-	// Building the Pro image requires a Debian package instead of a tar.gz
 	Deb *pipeline.Artifact
 }
 
-func (d *ProDocker) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
+func (d *EntDocker) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
 	return []*pipeline.Artifact{
 		d.Deb,
 	}, nil
 }
 
-func (d *ProDocker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+func (d *EntDocker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	deb, err := opts.Store.File(ctx, d.Deb)
 	if err != nil {
 		return nil, fmt.Errorf("error getting deb from state: %w", err)
@@ -74,13 +73,13 @@ func (d *ProDocker) Builder(ctx context.Context, opts *pipeline.ArtifactContaine
 
 	return opts.Client.Container().From("docker").
 		WithUnixSocket("/var/run/docker.sock", socket).
-		WithMountedDirectory("/src", d.ProDir).
+		WithMountedDirectory("/src", d.EntDir).
 		WithMountedFile("/src/grafana.deb", deb).
 		WithWorkdir("/src"), nil
 }
 
-func (d *ProDocker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
-	tags, err := docker.Tags(d.ProOrg, d.ProRegistry, []string{d.ProRepo}, d.TagFormat, packages.NameOpts{
+func (d *EntDocker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	tags, err := docker.Tags(d.EntOrg, d.EntRegistry, []string{d.EntRepo}, d.TagFormat, packages.NameOpts{
 		Name:    d.Name,
 		Version: d.Version,
 		BuildID: d.BuildID,
@@ -94,7 +93,7 @@ func (d *ProDocker) BuildFile(ctx context.Context, builder *dagger.Container, op
 	builder = docker.Build(opts.Client, builder, &docker.BuildOpts{
 		Dockerfile: "./docker/hosted-grafana-all/Dockerfile",
 		Tags:       tags,
-		Target:     "hosted-grafana-localpro",
+		Target:     "hosted-grafana-localenterprise",
 		Platform:   dagger.Platform("linux/amd64"),
 		BuildArgs: []string{
 			"RELEASE_TYPE=main",
@@ -104,22 +103,22 @@ func (d *ProDocker) BuildFile(ctx context.Context, builder *dagger.Container, op
 	})
 
 	// Save the resulting docker image to the local filesystem
-	return builder.WithExec([]string{"docker", "save", tags[0], "-o", "pro.tar"}).File("pro.tar"), nil
+	return builder.WithExec([]string{"docker", "save", tags[0], "-o", "enterprise.tar"}).File("enterprise.tar"), nil
 }
 
-func (d *ProDocker) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
+func (d *EntDocker) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
 	panic("This artifact does not produce directories")
 }
 
-func (d *ProDocker) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+func (d *EntDocker) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	panic("not implemented")
 }
 
-func (d *ProDocker) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
+func (d *EntDocker) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
 	panic("not implemented")
 }
 
-func (d *ProDocker) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *EntDocker) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("This artifact does not produce directories")
 }
 
@@ -128,21 +127,21 @@ func (d *ProDocker) PublishDir(ctx context.Context, opts *pipeline.ArtifactPubli
 // also affect the filename to ensure that there are no collisions.
 // For example, the backend for `linux/amd64` and `linux/arm64` should not both produce a `bin` folder, they should produce a
 // `bin/linux-amd64` folder and a `bin/linux-arm64` folder. Callers can mount this as `bin` or whatever if they want.
-func (d *ProDocker) Filename(ctx context.Context) (string, error) {
-	ext := "docker-pro.tar.gz"
+func (d *EntDocker) Filename(ctx context.Context) (string, error) {
+	ext := "docker-enterprise.tar.gz"
 
 	return packages.FileName(d.Name, d.Version, d.BuildID, d.Distro, ext)
 }
 
-func (d *ProDocker) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+func (d *EntDocker) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
 	return nil
 }
 
-func (d *ProDocker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+func (d *EntDocker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	panic("not implemented") // TODO: Implement
 }
 
-func NewProDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+func NewEntDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	options, err := pipeline.ParseFlags(artifact, DockerFlags)
 	if err != nil {
 		return nil, err
@@ -158,15 +157,15 @@ func NewProDockerFromString(ctx context.Context, log *slog.Logger, artifact stri
 		return nil, err
 	}
 
-	proRegistry, err := state.String(ctx, arguments.ProDockerRegistry)
+	entRegistry, err := state.String(ctx, arguments.EntDockerRegistry)
 	if err != nil {
 		return nil, err
 	}
-	proOrg, err := state.String(ctx, arguments.ProDockerOrg)
+	entOrg, err := state.String(ctx, arguments.EntDockerOrg)
 	if err != nil {
 		return nil, err
 	}
-	proRepo, err := state.String(ctx, arguments.ProDockerRepo)
+	entRepo, err := state.String(ctx, arguments.EntDockerRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -180,21 +179,21 @@ func NewProDockerFromString(ctx context.Context, log *slog.Logger, artifact stri
 		return nil, err
 	}
 
-	log.Info("initializing Pro Docker artifact", "Org", proOrg, "registry", proRegistry, "repo", proRepo, "tag", tagFormat)
+	log.Info("initializing Enterprise Docker artifact", "Org", entOrg, "registry", entRegistry, "repo", entRepo, "tag", tagFormat)
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
-		Handler: &ProDocker{
+		Handler: &EntDocker{
 			Name:    p.Name,
 			Version: p.Version,
 			BuildID: p.BuildID,
 			Distro:  p.Distribution,
-			ProDir:  dir,
+			EntDir:  dir,
 			Deb:     deb,
 
-			ProRegistry: proRegistry,
-			ProOrg:      proOrg,
-			ProRepo:     proRepo,
+			EntRegistry: entRegistry,
+			EntOrg:      entOrg,
+			EntRepo:     entRepo,
 			TagFormat:   tagFormat,
 		},
 		Type:  pipeline.ArtifactTypeFile,
