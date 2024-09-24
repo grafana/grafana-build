@@ -9,7 +9,9 @@ jobs:
   grafana-integration-tests:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/grafana-integration-tests')) }}
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
         type: [oss]
@@ -18,7 +20,26 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      checks: write
     steps:
+      - name: "Create check"
+        id: create-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const check = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: context.sha,
+              name: "pr-integration-tests",
+              status: "in_progress",
+              output: {
+                title: "Grafana Integration Tests",
+                summary: '',
+                text: ''
+              },
+            });
+            return { id: check.data.id }
       - name: Checkout grafana
         uses: actions/checkout@v4
         with:
@@ -65,3 +86,14 @@ jobs:
         with:
           verb: run
           args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise --go-version=${GRAFANA_GO_VERSION}
+      - name: "Update check"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.checks.update({
+              repo: context.repo.repo,
+              owner: context.repo.owner,
+              check_run_id: ${{ fromJSON(steps.create-check.outputs.result).id }},
+              status: "completed",
+              conclusion: "${{ job.status }}",
+            });
