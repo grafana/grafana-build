@@ -4,14 +4,14 @@ FROM alpine:3.20 AS dagger
 
 # TODO: pull the binary from registry.dagger.io/cli:v0.9.8 (or similar) when
 # https://github.com/dagger/dagger/issues/6887 is resolved
-ARG DAGGER_VERSION=v0.11.6
+ARG DAGGER_VERSION=v0.13.3
 ADD https://github.com/dagger/dagger/releases/download/${DAGGER_VERSION}/dagger_${DAGGER_VERSION}_linux_amd64.tar.gz /tmp
 RUN tar zxf /tmp/dagger_${DAGGER_VERSION}_linux_amd64.tar.gz -C /tmp
 RUN mv /tmp/dagger /bin/dagger
 
 FROM golang:1.23-alpine
 
-ARG DAGGER_VERSION=v0.11.6
+ARG DAGGER_VERSION=v0.13.3
 
 WORKDIR /src
 RUN apk add --no-cache git wget bash jq
