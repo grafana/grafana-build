@@ -60,17 +60,17 @@ var (
 	}
 
 	EntDockerRegistryFlag = &cli.StringFlag{
-		Name:  "enterprise-registry",
+		Name:  "docker-enterprise-registry",
 		Usage: "Prefix the image name with the registry provided",
 		Value: "docker.io",
 	}
 	EntDockerOrgFlag = &cli.StringFlag{
-		Name:  "enterprise-org",
+		Name:  "docker-enterprise-org",
 		Usage: "Overrides the organization of the images",
 		Value: "grafana",
 	}
 	EntDockerRepoFlag = &cli.StringFlag{
-		Name:  "enterprise-repo",
+		Name:  "docker-enterprise-repo",
 		Usage: "Overrides the docker repository of the built images",
 		Value: "grafana-enterprise",
 	}
