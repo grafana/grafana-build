@@ -2,13 +2,10 @@ name: PR Integration Tests
 
 on:
   workflow_dispatch: {}
-  issue_comment:
-    types: [created]
 
 jobs:
   grafana-integration-tests:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/grafana-integration-tests')) }}
     strategy:
       matrix:
         version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
@@ -60,10 +57,12 @@ jobs:
         if: matrix.type == 'grafana'
         with:
           verb: run
+          dagger-flags: '--quiet'
           args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION}
       - name: Enterprise tests
         uses: dagger/dagger-for-github@v6
         if: matrix.type == 'enterprise'
         with:
           verb: run
+          dagger-flags: '--quiet'
           args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise --go-version=${GRAFANA_GO_VERSION}
