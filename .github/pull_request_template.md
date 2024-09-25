@@ -7,6 +7,6 @@ run integration tests, add a comment to this PR with the following:
 /grafana-integration-tests
 ```
 
-* [ ] I have added the `/grafana-integration-tests` comment to this PR
+* [ ] I have ran the integraiton tests `gh workflow run --ref=${THIS_BRANCH} --repo=grafana/grafana-build pr-integration-tests.yml`
 * [ ] All integration tests have passed
 
