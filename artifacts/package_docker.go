@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -78,9 +79,13 @@ func (d *Docker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOp
 }
 
 func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	// Unlike most other things we push to, docker image tags do not support all characters.
+	// Specifically, the `+` character used in the `buildmetadata` section of semver.
+	version := strings.ReplaceAll(d.Version, "+", "-")
+
 	tags, err := docker.Tags(d.Org, d.Registry, d.Repositories, d.TagFormat, packages.NameOpts{
 		Name:    d.Name,
-		Version: d.Version,
+		Version: version,
 		BuildID: d.BuildID,
 		Distro:  d.Distro,
 	})
