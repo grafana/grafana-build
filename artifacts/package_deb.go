@@ -3,6 +3,7 @@ package artifacts
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -52,6 +53,11 @@ func (d *Deb) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
 
 func (d *Deb) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	return fpm.Builder(opts.Client), nil
+}
+
+func debVersion(version string) string {
+	// If there is a `+security-` modifier to the version, simply use `-`
+	return strings.ReplaceAll(version, "+security-", "-")
 }
 
 func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {

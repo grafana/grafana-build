@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -67,6 +68,12 @@ func (d *RPM) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
 
 func (d *RPM) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	return fpm.Builder(opts.Client), nil
+}
+
+func rpmVersion(version string) string {
+	// https://docs.fedoraproject.org/en-US/packaging-guidelines/Versioning/#_snapshots
+	// If there's a buildmeta revision, then use that as a snapshot version
+	return strings.ReplaceAll(version, "+", "^")
 }
 
 func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
