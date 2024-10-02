@@ -69,7 +69,7 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 	return fpm.Build(builder, fpm.BuildOpts{
 		Name:         d.Name,
 		Enterprise:   d.Enterprise,
-		Version:      d.Version,
+		Version:      debVersion(d.Version),
 		BuildID:      d.BuildID,
 		Distribution: d.Distribution,
 		PackageType:  fpm.PackageTypeDeb,

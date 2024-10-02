@@ -85,7 +85,7 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 	rpm := fpm.Build(builder, fpm.BuildOpts{
 		Name:         d.Name,
 		Enterprise:   d.Enterprise,
-		Version:      d.Version,
+		Version:      rpmVersion(d.Version),
 		BuildID:      d.BuildID,
 		Distribution: d.Distribution,
 		PackageType:  fpm.PackageTypeRPM,
