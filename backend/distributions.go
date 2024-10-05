@@ -248,6 +248,22 @@ func BuildOptsStaticARM(distro Distribution, experiments []string, tags []string
 	}
 }
 
+// BuildOptsStaticS390X builds Grafana statically for the s390x arch
+func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, _ = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "/toolchain/s390x-linux-musl-cross/bin/s390x-linux-musl-gcc",
+		CXX:               "/toolchain/s390x-linux-musl-cross/bin/s390x-linux-musl-cpp",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              "s390x",
+		CGOEnabled:        true,
+	}
+}
+
 func StdZigBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, arch = OSAndArch(distro)
@@ -309,6 +325,7 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistLinuxARM:          BuildOptsStaticARM,
 	DistLinuxARMv6:        BuildOptsStaticARM,
 	DistLinuxARMv7:        BuildOptsStaticARM,
+	DistLinuxS390X:        BuildOptsStaticS390X,
 	DistLinuxARM64:        StdZigBuildOpts,
 	DistLinuxARM64Dynamic: StdZigBuildOpts,
 	DistLinuxAMD64:        StdZigBuildOpts,
