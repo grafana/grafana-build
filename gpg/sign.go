@@ -29,16 +29,16 @@ func Signer(d *dagger.Client, pubkey, privkey, passphrase string) *dagger.Contai
 		gpgPassphraseSecret = d.SetSecret("gpg-passphrase", passphrase)
 	)
 
-	return d.Container().From("debian:sid").
+	return d.Container().From("debian:stable").
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-yq", "rpm", "gnupg2", "file"}).
 		WithMountedSecret("/root/.rpmdb/privkeys/grafana.key", gpgPrivateKeySecret).
 		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
 		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
 		WithExec([]string{"/bin/sh", "-c", `
-			echo "DEBUG: Mounted RPM Pub Key file detected to be: $(file "/root/.rpmdb/pubkeys/grafana.key")";
-			echo "DEBUG: Mounted RPM Pub Key file has $(wc -c "/root/.rpmdb/pubkeys/grafana.key") bytes";
-			echo "DEBUG: Mounted RPM Pub Key file has $(wc -l "/root/.rpmdb/pubkeys/grafana.key") lines";
+			echo "xDEBUG: Mounted RPM Pub Key file detected to be: $(file "/root/.rpmdb/pubkeys/grafana.key")";
+			echo "xDEBUG: Mounted RPM Pub Key file has $(wc -c "/root/.rpmdb/pubkeys/grafana.key") bytes";
+			echo "xDEBUG: Mounted RPM Pub Key file has $(wc -l "/root/.rpmdb/pubkeys/grafana.key") lines";
 			if grep -q "PUBLIC KEY" "/root/.rpmdb/pubkeys/grafana.key"; then
 				cp "/root/.rpmdb/pubkeys/grafana.key" "/tmp/grafana.key";
 			else
