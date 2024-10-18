@@ -31,11 +31,26 @@ func Signer(d *dagger.Client, pubkey, privkey, passphrase string) *dagger.Contai
 
 	return d.Container().From("debian:sid").
 		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-yq", "rpm", "gnupg2"}).
+		WithExec([]string{"apt-get", "install", "-yq", "rpm", "gnupg2", "file"}).
 		WithMountedSecret("/root/.rpmdb/privkeys/grafana.key", gpgPrivateKeySecret).
 		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
 		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
-		WithExec([]string{"rpm", "--import", "/root/.rpmdb/pubkeys/grafana.key"}).
+		WithExec([]string{"/bin/sh", "-c", `
+			echo "DEBUG: Mounted RPM Pub Key file detected to be: $(file "/root/.rpmdb/pubkeys/grafana.key")";
+			echo "DEBUG: Mounted RPM Pub Key file has $(wc -c "/root/.rpmdb/pubkeys/grafana.key") bytes";
+			echo "DEBUG: Mounted RPM Pub Key file has $(wc -l "/root/.rpmdb/pubkeys/grafana.key") lines";
+			if grep -q "PUBLIC KEY" "/root/.rpmdb/pubkeys/grafana.key"; then
+				cp "/root/.rpmdb/pubkeys/grafana.key" "/tmp/grafana.key";
+			else
+				gpg --enarmor "/root/.rpmdb/pubkeys/grafana.key" > "/tmp/grafana.key";
+			fi;
+			if [ "$(tail -n 1 "/tmp/grafana.key" | wc -l)" = 0 ]; then
+				echo >> "/tmp/grafana.key";
+			fi;
+			echo "DEBUG: Final RPM Pub Key file has $(wc -c "/tmp/grafana.key") bytes";
+			echo "DEBUG: Final RPM Pub Key file has $(wc -l "/tmp/grafana.key") lines";
+		`}).
+		WithExec([]string{"rpm", "--import", "/tmp/grafana.key"}).
 		WithNewFile("/root/.rpmmacros", RPMMacros, dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 		}).
