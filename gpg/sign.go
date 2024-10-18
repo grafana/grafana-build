@@ -35,17 +35,7 @@ func Signer(d *dagger.Client, pubkey, privkey, passphrase string) *dagger.Contai
 		WithMountedSecret("/root/.rpmdb/privkeys/grafana.key", gpgPrivateKeySecret).
 		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
 		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
-		WithExec([]string{"/bin/sh", "-c", `
-			if grep -q "PUBLIC KEY" "/root/.rpmdb/pubkeys/grafana.key"; then
-				cp "/root/.rpmdb/pubkeys/grafana.key" "/tmp/grafana.key";
-			else
-				gpg --enarmor "/root/.rpmdb/pubkeys/grafana.key" > "/tmp/grafana.key";
-			fi;
-			if [ "$(tail -n 1 "/tmp/grafana.key" | wc -l)" = 0 ]; then
-				echo >> "/tmp/grafana.key";
-			fi;
-		`}).
-		WithExec([]string{"rpm", "--import", "/tmp/grafana.key"}).
+		WithExec([]string{"rpm", "--import", "/root/.rpmdb/pubkeys/grafana.key"}).
 		WithNewFile("/root/.rpmmacros", RPMMacros, dagger.ContainerWithNewFileOpts{
 			Permissions: 0400,
 		}).
