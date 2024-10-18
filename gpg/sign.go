@@ -36,9 +36,9 @@ func Signer(d *dagger.Client, pubkey, privkey, passphrase string) *dagger.Contai
 		WithMountedSecret("/root/.rpmdb/pubkeys/grafana.key", gpgPublicKeySecret).
 		WithMountedSecret("/root/.rpmdb/passkeys/grafana.key", gpgPassphraseSecret).
 		WithExec([]string{"/bin/sh", "-c", `
-			echo "xDEBUG: Mounted RPM Pub Key file detected to be: $(file "/root/.rpmdb/pubkeys/grafana.key")";
-			echo "xDEBUG: Mounted RPM Pub Key file has $(wc -c "/root/.rpmdb/pubkeys/grafana.key") bytes";
-			echo "xDEBUG: Mounted RPM Pub Key file has $(wc -l "/root/.rpmdb/pubkeys/grafana.key") lines";
+			echo "DEBUG: Mounted RPM Pub Key file detected to be: $(file "/root/.rpmdb/pubkeys/grafana.key")";
+			echo "DEBUG: Mounted RPM Pub Key file has $(wc -c "/root/.rpmdb/pubkeys/grafana.key") bytes";
+			echo "DEBUG: Mounted RPM Pub Key file has $(wc -l "/root/.rpmdb/pubkeys/grafana.key") lines";
 			if grep -q "PUBLIC KEY" "/root/.rpmdb/pubkeys/grafana.key"; then
 				cp "/root/.rpmdb/pubkeys/grafana.key" "/tmp/grafana.key";
 			else
