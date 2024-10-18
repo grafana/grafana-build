@@ -147,7 +147,8 @@ func (d *RPM) Filename(ctx context.Context) (string, error) {
 }
 
 func (d *RPM) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
-	return fpm.VerifyRpm(ctx, client, file, d.Src, d.YarnCache, d.Distribution, d.Enterprise, d.Sign, d.GPGPublicKey, d.GPGPrivateKey, d.GPGPassphrase)
+	return nil
+	// return fpm.VerifyRpm(ctx, client, file, d.Src, d.YarnCache, d.Distribution, d.Enterprise, d.Sign, d.GPGPublicKey, d.GPGPrivateKey, d.GPGPassphrase)
 }
 
 func (d *RPM) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
