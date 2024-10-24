@@ -22,7 +22,7 @@ dagger run --silent go run ./cmd \
   -a targz:grafana:darwin/amd64 \
   -a targz:grafana:darwin/arm64 \
   -a zip:grafana:windows/amd64 \
-  -a exe:grafana:windows/amd64 \
+  -a msi:grafana:windows/amd64 \
   -a docker:grafana:linux/amd64 \
   -a docker:grafana:linux/arm64 \
   -a docker:grafana:linux/arm/v7 \
