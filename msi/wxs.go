@@ -8,18 +8,6 @@ import (
 	"text/template"
 )
 
-type componentGroup struct {
-	RefID     string
-	Directory string
-	Dirname   string
-}
-
-type wxsFeature struct {
-	Name            string
-	Title           string
-	ComponentGroups []componentGroup
-}
-
 type wxsCfg struct {
 	GrafanaVersion string
 	UpgradeCode    string
