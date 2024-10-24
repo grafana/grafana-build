@@ -30,6 +30,7 @@ const (
 	debFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.deb%[8]s"
 	rpmFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s-%[4]s-1.%[6]s.rpm%[8]s"
 	exeFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.exe%[8]s"
+	msiFormat   = "artifacts/downloads%[9]s/%[1]s/%[2]s/release/%[3]s_%[4]s_%[6]s.msi%[8]s"
 
 	tarGzMainFormat = "%[2]s/main/%[3]s-%[4]s.%[5]s-%[6]s%[7]s.tar.gz%[8]s"
 	debMainFormat   = "%[2]s/main/%[3]s_%[4]s_%[6]s.deb%[8]s"
@@ -66,6 +67,7 @@ var Handlers = map[string]HandlerFunc{
 	".rpm":           RPMHandler,
 	".docker.tar.gz": DockerHandler,
 	".exe":           EXEHandler,
+	".msi":           MSIHandler,
 	".zip":           ZipHandler,
 }
 
@@ -86,6 +88,16 @@ func ZipHandler(name string) []string {
 
 	for i, v := range files {
 		files[i] = strings.ReplaceAll(v, "exe", "zip")
+	}
+
+	return files
+}
+
+func MSIHandler(name string) []string {
+	files := EXEHandler(strings.ReplaceAll(name, "msi", "exe"))
+
+	for i, v := range files {
+		files[i] = strings.ReplaceAll(v, "exe", "msi")
 	}
 
 	return files

@@ -16,5 +16,5 @@ var Artifacts = map[string]artifacts.Initializer{
 	"docker-pro":        artifacts.ProDockerInitializer,
 	"docker-enterprise": artifacts.EntDockerInitializer,
 	"storybook":         artifacts.StorybookInitializer,
-	"exe":               artifacts.ExeInitializer,
+	"msi":               artifacts.MSIInitializer,
 }
