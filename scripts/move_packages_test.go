@@ -191,6 +191,7 @@ func TestGetHandler(t *testing.T) {
 	runTests(t, "DOCKER: ", dockerMapping)
 	runTests(t, "CDN: ", cdnMapping)
 	runTests(t, "ZIP: ", zipMapping)
+	runTests(t, "MSI: ", msiMapping)
 	runTests(t, "NPM: ", npmMapping)
 	runTests(t, "DEB: ", debMapping)
 	runTests(t, "RPM: ", rpmMapping)
