@@ -6,7 +6,7 @@ set -e
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # Build all of the grafana.tar.gz packages.
-dagger run go run ./cmd \
+dagger run --silent go run ./cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
