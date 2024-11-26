@@ -92,7 +92,6 @@ func (d *RPM) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		NameOverride: d.NameOverride,
 		ConfigFiles: [][]string{
 			{"/src/packaging/rpm/sysconfig/grafana-server", "/pkg/etc/sysconfig/grafana-server"},
-			{"/src/packaging/rpm/init.d/grafana-server", "/pkg/etc/rc.d/init.d/grafana-server"},
 			{"/src/packaging/rpm/systemd/grafana-server.service", "/pkg/usr/lib/systemd/system/grafana-server.service"},
 		},
 		AfterInstall: "/src/packaging/rpm/control/postinst",
