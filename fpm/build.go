@@ -113,6 +113,12 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 		}
 	)
 
+	// init.d scripts are service management scripts that start/stop/restart/enable the grafana service without systemd.
+	// these are likely to be deprecated as systemd is now the default pretty much everywhere.
+	if opts.PackageType != PackageTypeRPM {
+		packagePaths = append(packagePaths, "/pkg/etc/init.d")
+	}
+
 	container := builder.
 		WithFile("/src/grafana.tar.gz", targz).
 		WithEnvVariable("XZ_DEFAULTS", "-T0").
