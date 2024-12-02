@@ -13,8 +13,7 @@ func NPMPackages(builder *dagger.Container, src *dagger.Directory, ersion string
 	return builder.WithExec([]string{"mkdir", "npm-packages"}).
 		WithEnvVariable("SHELL", "/bin/bash").
 		WithExec([]string{"yarn", "install", "--immutable"}).
-		WithExec([]string{"yarn", "run", "packages:build"}).
-		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("yarn run lerna version %s --exact --no-git-tag-version --no-push --force-publish -y && yarn lerna exec --no-private -- yarn pack --out /src/npm-packages/%%s-%v.tgz", ersion, "v"+ersion)}).
+		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("yarn run packages:build && yarn run lerna version %s --exact --no-git-tag-version --no-push --force-publish -y && yarn lerna exec --no-private -- yarn pack --out /src/npm-packages/%%s-%v.tgz", ersion, "v"+ersion)}).
 		Directory("./npm-packages")
 }
 
