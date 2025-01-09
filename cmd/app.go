@@ -7,7 +7,6 @@ import (
 
 type CLI struct {
 	artifacts map[string]artifacts.Initializer
-	app       *cli.App
 }
 
 func (c *CLI) ArtifactsCommand() *cli.Command {

@@ -3,7 +3,10 @@ package arguments
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
+	"path"
+	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/cliutil"
@@ -50,11 +53,15 @@ type GrafanaDirectoryOpts struct {
 	EnterpriseRef string
 	// GitHubToken is used when cloning Grafana/Grafana Enterprise.
 	GitHubToken string
+
+	PatchesRepo string
+	PatchesPath string
+	PatchesRef  string
 }
 
-func (o *GrafanaDirectoryOpts) githubToken(ctx context.Context) (string, error) {
+func githubToken(ctx context.Context, token string) (string, error) {
 	// Since GrafanaDir was not provided, we must clone it.
-	ght := o.GitHubToken
+	ght := token
 
 	// If GitHubToken was not set from flag
 	if ght != "" {
@@ -72,7 +79,7 @@ func (o *GrafanaDirectoryOpts) githubToken(ctx context.Context) (string, error) 
 	return token, nil
 }
 
-func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*GrafanaDirectoryOpts, error) {
+func GrafanaDirectoryOptsFromFlags(c cliutil.CLIContext) *GrafanaDirectoryOpts {
 	return &GrafanaDirectoryOpts{
 		GrafanaRepo:    c.String("grafana-repo"),
 		EnterpriseRepo: c.String("enterprise-repo"),
@@ -81,38 +88,97 @@ func GrafanaDirectoryOptsFromFlags(ctx context.Context, c cliutil.CLIContext) (*
 		GrafanaRef:     c.String("grafana-ref"),
 		EnterpriseRef:  c.String("enterprise-ref"),
 		GitHubToken:    c.String("github-token"),
-	}, nil
+		PatchesRepo:    c.String("patches-repo"),
+		PatchesPath:    c.String("patches-path"),
+		PatchesRef:     c.String("patches-ref"),
+	}
 }
 
-func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, o *GrafanaDirectoryOpts) (*dagger.Directory, error) {
+func cloneOrMount(ctx context.Context, client *dagger.Client, localPath, repo, ref string, ght string) (*dagger.Directory, error) {
 	// If GrafanaDir was provided, then we can just use that one.
 	if path := localPath; path != "" {
 		slog.Info("Using local Grafana found", "path", path)
 		return daggerutil.HostDir(client, path)
 	}
 
-	ght, err := o.githubToken(ctx)
+	return git.CloneWithGitHubToken(client, ght, repo, ref)
+}
+
+func applyPatches(ctx context.Context, client *dagger.Client, src *dagger.Directory, repo, patchesPath, ref, ght string) (*dagger.Directory, error) {
+	// Clone the patches repository on 'main'
+	dir, err := git.CloneWithGitHubToken(client, ght, repo, ref)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error cloning patches repository: %w", err)
 	}
 
-	src, err := git.CloneWithGitHubToken(client, ght, repo, ref)
+	entries, err := dir.Entries(ctx, dagger.DirectoryEntriesOpts{
+		Path: patchesPath,
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing entries in repository: %w", err)
 	}
 
-	return src, nil
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("no patches in the given path")
+	}
+
+	container := client.Container().From(git.GitImage).
+		WithEntrypoint([]string{}).
+		WithMountedDirectory("/src", src).
+		WithMountedDirectory("/patches", dir).
+		WithWorkdir("/src").
+		WithExec([]string{"git", "config", "--local", "user.name", "grafana"}).
+		WithExec([]string{"git", "config", "--local", "user.email", "engineering@grafana.com"})
+
+	for _, v := range entries {
+		if filepath.Ext(v) != ".patch" {
+			continue
+		}
+
+		container = container.WithExec([]string{"/bin/sh", "-c", fmt.Sprintf(`git am --3way --ignore-whitespace --ignore-space-change --committer-date-is-author-date %s > /dev/null 2>&1`, path.Join("/patches", patchesPath, v))})
+	}
+
+	return container.Directory("/src"), nil
 }
 
 func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
-	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
+	o := GrafanaDirectoryOptsFromFlags(opts.CLIContext)
+
+	ght, err := githubToken(ctx, o.GitHubToken)
+	if err != nil {
+		log.Println("No github token found:", err)
+	}
+
+	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, ght)
 	if err != nil {
 		return nil, err
 	}
 
-	src, err := cloneOrMount(ctx, opts.Client, o.GrafanaDir, o.GrafanaRepo, o.GrafanaRef, o)
-	if err != nil {
-		return nil, err
+	gitContainer := opts.Client.Container().From("alpine/git").
+		WithWorkdir("/src").
+		WithMountedDirectory("/src/.git", src.Directory(".git")).
+		WithEntrypoint([]string{})
+
+	commitFile := gitContainer.
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse HEAD > .buildinfo.grafana-commit"}).
+		File("/src/.buildinfo.grafana-commit")
+
+	branchFile := gitContainer.
+		WithExec([]string{"/bin/sh", "-c", "git rev-parse --abbrev-ref HEAD > .buildinfo.grafana-branch"}).
+		File("/src/.buildinfo.grafana-branch")
+
+	src = src.
+		WithFile(".buildinfo.commit", commitFile).
+		WithFile(".buildinfo.branch", branchFile)
+
+	if o.PatchesRepo != "" {
+		withPatches, err := applyPatches(ctx, opts.Client, src, o.PatchesRepo, o.PatchesPath, o.PatchesRef, ght)
+		if err != nil {
+			opts.Log.Debug("patch application skipped", "error", err)
+		} else {
+			// Only replace src when there was no error.
+			src = withPatches
+		}
 	}
 
 	nodeVersion, err := frontend.NodeVersion(opts.Client, src).Stdout(ctx)
@@ -136,17 +202,19 @@ func grafanaDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, er
 
 func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
 	// Get the Grafana directory...
-	o, err := GrafanaDirectoryOptsFromFlags(ctx, opts.CLIContext)
-	if err != nil {
-		return nil, err
-	}
+	o := GrafanaDirectoryOptsFromFlags(opts.CLIContext)
 
 	grafanaDir, err := grafanaDirectory(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, o)
+	ght, err := githubToken(ctx, o.GitHubToken)
+	if err != nil {
+		return nil, nil
+	}
+
+	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, ght)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +259,21 @@ var GrafanaDirectoryFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:     "github-token",
-		Usage:    "Github token to use for git cloning, by default will be pulled from GitHub",
+		Usage:    "GitHub token to use for git cloning, by default will be pulled from GitHub",
 		Required: false,
+	},
+	&cli.StringFlag{
+		Name:  "patches-repo",
+		Usage: "GitHub repository that contains git patches to apply to the Grafana source code. Must be an https git URL",
+	},
+	&cli.StringFlag{
+		Name:  "patches-path",
+		Usage: "Path to folder containing '.patch' files to apply",
+	},
+	&cli.StringFlag{
+		Name:  "patches-ref",
+		Usage: "Ref to checkout in the patches repository",
+		Value: "main",
 	},
 }
 

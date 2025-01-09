@@ -104,9 +104,6 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 		packagePaths = []string{
 			"/pkg/usr/sbin",
 			"/pkg/usr/share",
-			// init.d scripts are service management scripts that start/stop/restart/enable the grafana service without systemd.
-			// these are likely to be deprecated as systemd is now the default pretty much everywhere.
-			"/pkg/etc/init.d",
 			// holds default environment variables for the grafana-server service
 			opts.EnvFolder,
 			// /etc/grafana is empty in the installation, but is set up by the postinstall script and must be created first.
@@ -115,6 +112,12 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 			"/pkg/usr/lib/systemd/system",
 		}
 	)
+
+	// init.d scripts are service management scripts that start/stop/restart/enable the grafana service without systemd.
+	// these are likely to be deprecated as systemd is now the default pretty much everywhere.
+	if opts.PackageType != PackageTypeRPM {
+		packagePaths = append(packagePaths, "/pkg/etc/init.d")
+	}
 
 	container := builder.
 		WithFile("/src/grafana.tar.gz", targz).

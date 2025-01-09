@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 
 	"dagger.io/dagger"
@@ -46,7 +45,7 @@ type ArtifactHandler interface {
 
 	Publisher(ctx context.Context, opts *ArtifactContainerOpts) (*dagger.Container, error)
 	PublishFile(ctx context.Context, opts *ArtifactPublishFileOpts) error
-	PublisDir(ctx context.Context, opts *ArtifactPublishDirOpts) error
+	PublishDir(ctx context.Context, opts *ArtifactPublishDirOpts) error
 
 	// Filename should return a deterministic file or folder name that this build will produce.
 	// This filename is used as a map key for caching, so implementers need to ensure that arguments or flags that affect the output
@@ -87,17 +86,4 @@ type Artifact struct {
 // This is a good opportunity for an artifact to handle being given a Flag in a different way than just storing its options.
 func (a *Artifact) Apply(f Flag, o OptionsHandler) error {
 	return o.Apply(f)
-}
-
-func Directory(ctx context.Context, a *Artifact, opts *ArtifactContainerOpts) (*dagger.Directory, error) {
-	if a.Type != ArtifactTypeDirectory {
-		return nil, fmt.Errorf("%s: %w", a.ArtifactString, ErrorNotADirectory)
-	}
-
-	builder, err := a.Handler.Builder(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.Handler.BuildDir(ctx, builder, opts)
 }

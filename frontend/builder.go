@@ -20,6 +20,7 @@ func Builder(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, 
 				WithoutDirectory(".github").
 				WithoutDirectory("docs").
 				WithoutDirectory("pkg").
+				WithoutDirectory("apps").
 				WithoutDirectory(".nx"),
 			dagger.ContainerWithDirectoryOpts{
 				Exclude: []string{

@@ -3,6 +3,7 @@ package artifacts
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -54,6 +55,11 @@ func (d *Deb) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts)
 	return fpm.Builder(opts.Client), nil
 }
 
+func debVersion(version string) string {
+	// If there is a `+security-` modifier to the version, simply use `-`
+	return strings.ReplaceAll(version, "+security-", "-")
+}
+
 func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
 	targz, err := opts.Store.File(ctx, d.Tarball)
 	if err != nil {
@@ -63,7 +69,7 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 	return fpm.Build(builder, fpm.BuildOpts{
 		Name:         d.Name,
 		Enterprise:   d.Enterprise,
-		Version:      d.Version,
+		Version:      debVersion(d.Version),
 		BuildID:      d.BuildID,
 		Distribution: d.Distribution,
 		PackageType:  fpm.PackageTypeDeb,
@@ -77,7 +83,6 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BeforeRemove: "/src/packaging/deb/control/prerm",
 		Depends: []string{
 			"adduser",
-			"libfontconfig1",
 			"musl",
 		},
 		EnvFolder: "/pkg/etc/default",
@@ -99,7 +104,7 @@ func (d *Deb) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFil
 	panic("not implemented") // TODO: Implement
 }
 
-func (d *Deb) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (d *Deb) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

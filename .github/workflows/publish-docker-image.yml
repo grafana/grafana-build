@@ -1,0 +1,28 @@
+name: Publish Docker Image
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - id: push-to-dockerhub
+        name: Build and push
+        uses: grafana/shared-workflows/actions/build-push-to-dockerhub@main
+        with:
+          context: .
+          repository: ${{ github.repository }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=main
+

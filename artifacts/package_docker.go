@@ -2,7 +2,9 @@ package artifacts
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/arguments"
@@ -37,7 +39,7 @@ var DockerInitializer = Initializer{
 	Arguments:       DockerArguments,
 }
 
-// PacakgeDocker uses a built tar.gz package to create a .rpm installer for RHEL-ish Linux distributions.
+// PacakgeDocker uses a built tar.gz package to create a docker image from the Dockerfile in the tar.gz
 type Docker struct {
 	Name       packages.Name
 	Version    string
@@ -77,9 +79,13 @@ func (d *Docker) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOp
 }
 
 func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	// Unlike most other things we push to, docker image tags do not support all characters.
+	// Specifically, the `+` character used in the `buildmetadata` section of semver.
+	version := strings.ReplaceAll(d.Version, "+", "-")
+
 	tags, err := docker.Tags(d.Org, d.Registry, d.Repositories, d.TagFormat, packages.NameOpts{
 		Name:    d.Name,
-		Version: d.Version,
+		Version: version,
 		BuildID: d.BuildID,
 		Distro:  d.Distro,
 	})
@@ -90,9 +96,14 @@ func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts 
 		// Tags are provided as the '-t' argument, and can include the registry domain as well as the repository.
 		// Docker build supports building the same image with multiple tags.
 		// You might want to also include a 'latest' version of the tag.
-		Tags:      tags,
-		Platform:  backend.Platform(d.Distro),
-		BaseImage: d.BaseImage,
+		Tags:     tags,
+		Platform: backend.Platform(d.Distro),
+		BuildArgs: []string{
+			"GRAFANA_TGZ=grafana.tar.gz",
+			"GO_SRC=tgz-builder",
+			"JS_SRC=tgz-builder",
+			fmt.Sprintf("BASE_IMAGE=%s", d.BaseImage),
+		},
 	}
 
 	b := docker.Build(opts.Client, builder, buildOpts)
@@ -101,19 +112,24 @@ func (d *Docker) BuildFile(ctx context.Context, builder *dagger.Container, opts 
 }
 
 func (d *Docker) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
-	panic("not implemented") // TODO: Implement
+	panic("This artifact does not produce directories")
+}
+
+func (d *Docker) publishPro(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	panic("not implemented")
 }
 
 func (d *Docker) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented") // TODO: Implement
+	socket := opts.Client.Host().UnixSocket("/var/run/docker.sock")
+	return opts.Client.Container().From("docker").WithUnixSocket("/var/run/docker.sock", socket), nil
 }
 
 func (d *Docker) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
-	panic("not implemented") // TODO: Implement
+	panic("not implemented")
 }
 
-func (d *Docker) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
-	panic("not implemented") // TODO: Implement
+func (d *Docker) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+	panic("This artifact does not produce directories")
 }
 
 // Filename should return a deterministic file or folder name that this build will produce.
@@ -135,6 +151,7 @@ func (d *Docker) VerifyFile(ctx context.Context, client *dagger.Client, file *da
 	if _, arch := backend.OSAndArch(d.Distro); arch == "riscv64" {
 		return nil
 	}
+
 	return docker.Verify(ctx, client, file, d.Src, d.YarnCache, d.Distro)
 }
 
@@ -143,17 +160,17 @@ func (d *Docker) VerifyDirectory(ctx context.Context, client *dagger.Client, dir
 }
 
 func NewDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
-	tarball, err := NewTarballFromString(ctx, log, artifact, state)
-	if err != nil {
-		return nil, err
-	}
-
 	options, err := pipeline.ParseFlags(artifact, DockerFlags)
 	if err != nil {
 		return nil, err
 	}
 
 	p, err := GetPackageDetails(ctx, options, state)
+	if err != nil {
+		return nil, err
+	}
+
+	tarball, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {
 		return nil, err
 	}

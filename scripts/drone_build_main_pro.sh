@@ -17,12 +17,14 @@ dagger run --silent go run ./cmd \
   --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=${SOURCE_COMMIT} \
+  --grafana-repo="https://github.com/grafana/grafana.git" \
   --enterprise-ref=${DRONE_COMMIT} \
-  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --go-version=${GO_VERSION} \
   --ubuntu-base=${UBUNTU_BASE} \
   --alpine-base=${ALPINE_BASE} \
+  --patches-repo=${PATCHES_REPO} \
+  --patches-path=${PATCHES_PATH} \
   --destination=${local_dst} > assets.txt
 
 echo "Final list of artifacts:"

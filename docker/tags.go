@@ -21,6 +21,7 @@ const (
 	DefaultTagFormat       = "{{ .version }}-{{ .arch }}"
 	DefaultUbuntuTagFormat = "{{ .version }}-ubuntu-{{ .arch }}"
 	DefaultBoringTagFormat = "{{ .version }}-{{ .arch }}-boringcrypto"
+	DefaultHGTagFormat     = "{{ .version }}-{{ .arch }}"
 )
 
 // Tags returns the name of the grafana docker image based on the tar package name.

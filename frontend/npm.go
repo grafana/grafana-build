@@ -16,17 +16,18 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 	var (
 		out = fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)
 
-		lernaBuild = fmt.Sprintf("yarn lerna version %s --exact --no-git-tag-version --no-push --force-publish -y", ersion)
+		lernaBuild = fmt.Sprintf("yarn run packages:build && yarn lerna version %s --exact --no-git-tag-version --no-push --force-publish -y", ersion)
 		lernaPack  = fmt.Sprintf("yarn lerna exec --no-private -- yarn pack --out %s", out)
 
-		nxBuild = fmt.Sprintf("yarn nx release version %s --no-git-commit --no-git-tag --no-stage-changes --group grafanaPackages", ersion)
+		nxBuild = fmt.Sprintf("yarn run packages:build && yarn nx release version %s --no-git-commit --no-git-tag --no-stage-changes --group grafanaPackages", ersion)
 		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.relase.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
 	)
 
 	return builder.WithExec([]string{"mkdir", "npm-packages"}).
-		WithExec([]string{"yarn", "packages:build"}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
-		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaPack, nxPack)}).
+		WithEnvVariable("SHELL", "/bin/bash").
+		WithExec([]string{"yarn", "install", "--immutable"}).
+		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
+		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaPack, nxPack)}).
 		Directory("./npm-packages"), nil
 }
 

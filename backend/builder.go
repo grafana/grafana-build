@@ -24,7 +24,7 @@ func distroOptsFunc(log *slog.Logger, distro Distribution) (DistroBuildOptsFunc,
 	if val, ok := DistributionGoOpts[distro]; ok {
 		return DistroOptsLogger(log, val), nil
 	}
-	return nil, errors.New("unrecognized distirbution")
+	return nil, errors.New("unrecognized distribution")
 }
 
 func WithGoEnv(log *slog.Logger, container *dagger.Container, distro Distribution, opts *BuildOpts) (*dagger.Container, error) {
@@ -92,8 +92,10 @@ func GolangContainer(
 	}
 
 	container := golang.Container(d, platform, goVersion).
-		WithExec([]string{"apk", "add", "zig", "--repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing"}).
-		WithExec([]string{"apk", "add", "--update", "build-base", "alpine-sdk", "musl", "musl-dev"}).
+		WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
+		WithExec([]string{"wget", "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"}).
+		WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
+		WithExec([]string{"mv", "/zig", "/bin/zig"}).
 		// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
 		WithExec([]string{"mkdir", "/toolchain"}).
 		WithExec([]string{"wget", "http://musl.cc/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
@@ -147,13 +149,14 @@ func Builder(
 		return nil, err
 	}
 
-	commitInfo := GetVCSInfo(d, src, version, opts.Enterprise)
+	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/emails", src.Directory("emails")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
@@ -179,6 +182,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").

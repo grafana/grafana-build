@@ -58,16 +58,6 @@ type Argument struct {
 	Requires []Argument
 }
 
-// NewArgument returns an argument without a ValueFunc or flags.
-// These arguments must be provided by the CLI in the argument string.
-func NewArgument(t ArgumentType, name, description string) Argument {
-	return Argument{
-		ArgumentType: t,
-		Name:         name,
-		Description:  description,
-	}
-}
-
 func (a Argument) Directory(ctx context.Context, opts *ArgumentOpts) (*dagger.Directory, error) {
 	if a.ValueFunc == nil {
 		return nil, fmt.Errorf("error: %w. Flag missing: %s (%s)", ErrorFlagNotProvided, a.Name, a.Description)

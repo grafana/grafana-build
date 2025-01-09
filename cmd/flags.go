@@ -254,6 +254,6 @@ var GCOMFlags = []cli.Flag{
 var JoinFlags = flags.Join
 
 func JoinFlagsWithDefault(f ...[]cli.Flag) []cli.Flag {
-	// Kind of gross but ensures that DeafultFlags are registered before any others.
+	// Kind of gross but ensures that DefaultFlags are registered before any others.
 	return JoinFlags(append([][]cli.Flag{flags.DefaultFlags}, f...)...)
 }

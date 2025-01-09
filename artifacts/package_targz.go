@@ -203,7 +203,6 @@ func (t *Tarball) Builder(ctx context.Context, opts *pipeline.ArtifactContainerO
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("echo %s > VERSION", version)})
 
 	return container, nil
-
 }
 
 func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
@@ -247,26 +246,26 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 	}
 
 	files := []targz.MappedFile{
-		{"VERSION", b.File("VERSION")},
-		{"LICENSE", grafanaDir.File("LICENSE")},
-		{"NOTICE.md", grafanaDir.File("NOTICE.md")},
-		{"README.md", grafanaDir.File("README.md")},
-		{"Dockerfile", grafanaDir.File("Dockerfile")},
-		{"tools/zoneinfo.zip", opts.Client.Container().From(fmt.Sprintf("golang:%s", t.GoVersion)).File("/usr/local/go/lib/time/zoneinfo.zip")},
+		targz.NewMappedFile("VERSION", b.File("VERSION")),
+		targz.NewMappedFile("LICENSE", grafanaDir.File("LICENSE")),
+		targz.NewMappedFile("NOTICE.md", grafanaDir.File("NOTICE.md")),
+		targz.NewMappedFile("README.md", grafanaDir.File("README.md")),
+		targz.NewMappedFile("Dockerfile", grafanaDir.File("Dockerfile")),
+		targz.NewMappedFile("tools/zoneinfo.zip", opts.Client.Container().From(fmt.Sprintf("golang:%s", t.GoVersion)).File("/usr/local/go/lib/time/zoneinfo.zip")),
 	}
 
 	directories := []targz.MappedDirectory{
-		{"conf", grafanaDir.Directory("conf")},
-		{"docs/sources", grafanaDir.Directory("docs/sources")},
-		{"packaging/deb", grafanaDir.Directory("packaging/deb")},
-		{"packaging/rpm", grafanaDir.Directory("packaging/rpm")},
-		{"packaging/docker", grafanaDir.Directory("packaging/docker")},
-		{"packaging/wrappers", grafanaDir.Directory("packaging/wrappers")},
-		{"bin", backendDir},
-		{"public", frontendDir},
-		{"npm-artifacts", npmDir},
-		{"storybook", storybookDir},
-		{"plugins-bundled", pluginsDir},
+		targz.NewMappedDir("conf", grafanaDir.Directory("conf")),
+		targz.NewMappedDir("docs/sources", grafanaDir.Directory("docs/sources")),
+		targz.NewMappedDir("packaging/deb", grafanaDir.Directory("packaging/deb")),
+		targz.NewMappedDir("packaging/rpm", grafanaDir.Directory("packaging/rpm")),
+		targz.NewMappedDir("packaging/docker", grafanaDir.Directory("packaging/docker")),
+		targz.NewMappedDir("packaging/wrappers", grafanaDir.Directory("packaging/wrappers")),
+		targz.NewMappedDir("bin", backendDir),
+		targz.NewMappedDir("public", frontendDir),
+		targz.NewMappedDir("npm-artifacts", npmDir),
+		targz.NewMappedDir("storybook", storybookDir),
+		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
 	root := fmt.Sprintf("grafana-%s", version)
@@ -293,7 +292,7 @@ func (t *Tarball) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublis
 	return nil
 }
 
-func (t *Tarball) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (t *Tarball) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

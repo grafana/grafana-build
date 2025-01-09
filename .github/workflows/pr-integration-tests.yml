@@ -1,0 +1,68 @@
+name: PR Integration Tests
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  grafana-integration-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [main, v11.2.x, v11.1.x, v11.0.x, v10.4.x, v10.3.x]
+        type: [grafana]
+        # TODO: figure out enterprise auth 
+        # type: [grafana, enterprise]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout grafana-build
+        uses: actions/checkout@v4
+      - name: Checkout grafana
+        uses: actions/checkout@v4
+        with:
+          repository: grafana/grafana
+          ref: ${{ matrix.version }}
+          path: grafana
+      - name: Checkout grafana-enterprise
+        if: matrix.type == 'enterprise'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: grafana/grafana-enterprise
+          ref: ${{ matrix.version }}
+          path: grafana-enterprise
+      - name: Clean runner
+        run: |
+          df -h
+          docker builder prune -f
+          docker system prune -a -f
+          sudo rm -rf /opt/google/chrome
+          sudo rm -rf /opt/microsoft/msedge
+          sudo rm -rf /opt/microsoft/powershell
+          sudo rm -rf /opt/pipx
+          sudo rm -rf /usr/lib/mono
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/swift
+          df -h
+      - name: Get Grafana golang version
+        run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
+      - name: Grafana tests
+        uses: dagger/dagger-for-github@v6
+        if: matrix.type == 'grafana'
+        with:
+          verb: run
+          dagger-flags: '--quiet'
+          args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION}
+      - name: Enterprise tests
+        uses: dagger/dagger-for-github@v6
+        if: matrix.type == 'enterprise'
+        with:
+          verb: run
+          dagger-flags: '--quiet'
+          args: go run ./cmd artifacts -a targz:grafana-enterprise:linux/amd64 --grafana-dir=grafana --enterprise-dir=grafana-enterprise --go-version=${GRAFANA_GO_VERSION}

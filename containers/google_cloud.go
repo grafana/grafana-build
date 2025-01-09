@@ -88,20 +88,6 @@ func GCSUploadDirectory(d *dagger.Client, image string, auth GCPAuthenticator, d
 	return container.WithExec([]string{"/bin/sh", "-c", "gcloud storage cp -r /src/* ${GCS_DESTINATION}"}), nil
 }
 
-func GCSUploadFile(d *dagger.Client, image string, auth GCPAuthenticator, file *dagger.File, dst string) (*dagger.Container, error) {
-	container := d.Container().From(image).
-		WithMountedFile("/src/file", file)
-
-	var err error
-	container, err = auth.Authenticate(d, container)
-	if err != nil {
-		return nil, err
-	}
-	secret := d.SetSecret("gcs-destination", dst)
-	container = container.WithSecretVariable("GCS_DESTINATION", secret)
-	return container.WithExec([]string{"/bin/sh", "-c", "gcloud storage cp /src/file ${GCS_DESTINATION}"}), nil
-}
-
 func GCSDownloadFile(d *dagger.Client, image string, auth GCPAuthenticator, url string) (*dagger.File, error) {
 	var (
 		container = d.Container().From(image)

@@ -43,16 +43,6 @@ func findInitializer(val string, initializers map[string]Initializer) (Initializ
 	return *initializer, nil
 }
 
-func findFlag(f []pipeline.Flag, name string) (pipeline.Flag, error) {
-	for _, v := range f {
-		if v.Name == name {
-			return v, nil
-		}
-	}
-
-	return pipeline.Flag{}, ErrorFlagNotFound
-}
-
 // The ArtifactsFromStrings function should provide all of the necessary arguments to produce each artifact
 // dleimited by colons. It's a repeated flag, so all permutations are stored in 1 instance of the ArtifactsFlag struct.
 // Examples:

@@ -7,6 +7,7 @@ import (
 func Build(builder *dagger.Container) *dagger.Directory {
 	public := builder.
 		WithExec([]string{"yarn", "run", "build"}).
+		WithExec([]string{"/bin/sh", "-c", "find /src/public -type d -name node_modules -print0 | xargs -0 rm -rf"}).
 		Directory("/src/public")
 
 	return public
@@ -16,6 +17,7 @@ func BuildPlugins(builder *dagger.Container) *dagger.Directory {
 	public := builder.
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "run", "plugins:build-bundled"}).
+		WithExec([]string{"/bin/sh", "-c", "find /src/plugins-bundled -type d -name node_modules -print0 | xargs -0 rm -rf"}).
 		Directory("/src/plugins-bundled")
 
 	return public

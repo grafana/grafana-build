@@ -15,15 +15,14 @@ dagger run --silent go run ./cmd \
   -a targz:pro:linux/arm/v7 \
   -a deb:pro:linux/amd64 \
   -a deb:pro:linux/arm64 \
+  -a targz:pro:darwin/amd64 \
+  -a targz:pro:windows/amd64 \
   -a docker:pro:linux/amd64 \
   -a docker:pro:linux/arm64 \
   -a docker:pro:linux/arm/v7 \
   -a docker:pro:linux/amd64:ubuntu \
   -a docker:pro:linux/arm64:ubuntu \
   -a docker:pro:linux/arm/v7:ubuntu \
-  -a targz:pro:darwin/amd64 \
-  -a targz:pro:windows/amd64 \
-  --verify \
   --checksum \
   --parallel=2 \
   --yarn-cache=${YARN_CACHE_FOLDER} \

@@ -43,8 +43,8 @@ dagger run go run ./cmd artifacts \
   -a zip:enterprise:windows/amd64 \
   -a zip:grafana:windows/arm64 \
   -a zip:enterprise:windows/arm64 \
-  -a exe:grafana:windows/amd64 \
-  -a exe:enterprise:windows/amd64 \
+  -a msi:grafana:windows/amd64 \
+  -a msi:enterprise:windows/amd64 \
   --parallel=2 \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \

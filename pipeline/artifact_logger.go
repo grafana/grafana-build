@@ -68,7 +68,7 @@ func (a *ArtifactHandlerLogger) PublishFile(ctx context.Context, opts *ArtifactP
 	panic("not implemented")
 }
 
-func (a *ArtifactHandlerLogger) PublisDir(ctx context.Context, opts *ArtifactPublishDirOpts) error {
+func (a *ArtifactHandlerLogger) PublishDir(ctx context.Context, opts *ArtifactPublishDirOpts) error {
 	panic("not implemented")
 }
 

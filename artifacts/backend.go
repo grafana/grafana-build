@@ -35,7 +35,7 @@ var BackendInitializer = Initializer{
 type Backend struct {
 	// Name allows different backend compilations to be different even if all other factors are the same.
 	// For example, Grafana Enterprise, Grafana, and Grafana Pro may be built using the same options,
-	// but are fundamentally different because of the source code of the bianry.
+	// but are fundamentally different because of the source code of the binary.
 	Name           packages.Name
 	Src            *dagger.Directory
 	Distribution   backend.Distribution
@@ -92,7 +92,7 @@ func (b *Backend) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublis
 	panic("not implemented") // TODO: Implement
 }
 
-func (b *Backend) PublisDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+func (b *Backend) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
 	panic("not implemented") // TODO: Implement
 }
 

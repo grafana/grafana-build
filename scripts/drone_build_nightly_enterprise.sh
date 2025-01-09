@@ -29,7 +29,7 @@ dagger run --silent go run ./cmd \
   -a targz:enterprise:darwin/amd64 \
   -a targz:enterprise:darwin/arm64 \
   -a zip:enterprise:windows/amd64 \
-  -a exe:enterprise:windows/amd64 \
+  -a msi:enterprise:windows/amd64 \
   -a docker:enterprise:linux/amd64 \
   -a docker:enterprise:linux/arm64 \
   -a docker:enterprise:linux/arm/v7 \

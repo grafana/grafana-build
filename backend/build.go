@@ -54,7 +54,7 @@ func Build(
 	out string,
 	opts *BuildOpts,
 ) *dagger.Directory {
-	vcsinfo := GetVCSInfo(d, src, opts.Version, opts.Enterprise)
+	vcsinfo := GetVCSInfo(src, opts.Version, opts.Enterprise)
 	builder = WithVCSInfo(builder, vcsinfo, opts.Enterprise)
 
 	ldflags := LDFlagsDynamic(vcsinfo)
