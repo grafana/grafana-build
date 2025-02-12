@@ -2,8 +2,9 @@
 local_dst="dist/${DRONE_BUILD_EVENT}"
 set -e
 
+docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
-docker run --privileged --rm tonistiigi/binfmt --install all
+docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 
 # Build all of the grafana.tar.gz packages.
 dagger run go run ./cmd \

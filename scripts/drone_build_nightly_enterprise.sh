@@ -2,8 +2,9 @@
 set -e
 local_dst="${DRONE_WORKSPACE}/dist"
 
+docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
-docker run --privileged --rm tonistiigi/binfmt --install all
+docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 
   # -a targz:enterprise:linux/arm/v6 \
   # -a targz:enterprise:linux/arm/v7 \
