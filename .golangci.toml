@@ -41,7 +41,6 @@ enable = [
   "ineffassign",
   "misspell",
   "nakedret",
-  "exportloopref",
   "staticcheck",
   "stylecheck",
   "typecheck",
