@@ -47,7 +47,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{},
-			GoTags:             DefaultTags,
+			GoTags:             append(DefaultTags, "enterprise"),
 		},
 	},
 	{
@@ -69,7 +69,7 @@ var PackageNameFlags = []pipeline.Flag{
 			Enterprise:         true,
 			WireTag:            "enterprise",
 			GoExperiments:      []string{"boringcrypto"},
-			GoTags:             DefaultTags,
+			GoTags:             append(DefaultTags, "enterprise"),
 		},
 	},
 }
