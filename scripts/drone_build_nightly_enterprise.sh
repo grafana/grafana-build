@@ -42,7 +42,7 @@ dagger run --silent go run ./cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=main \
   --enterprise-ref=main \
-  --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
+  --grafana-repo=https://github.com/grafana/grafana.git \
   --github-token=${GITHUB_TOKEN} \
   --destination=${local_dst} \
   --yarn-cache=${YARN_CACHE_FOLDER} \
