@@ -1,13 +1,12 @@
 package backend
 
 import (
+	"dagger.io/dagger"
 	"errors"
 	"fmt"
-	"log/slog"
-
-	"dagger.io/dagger"
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/golang"
+	"log/slog"
 )
 
 // BuildOpts are general options that can change the way Grafana is compiled regardless of distribution.
@@ -155,7 +154,6 @@ func Builder(
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
-
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
@@ -189,6 +187,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
+		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
