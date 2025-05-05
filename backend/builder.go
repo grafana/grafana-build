@@ -183,7 +183,7 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	builder := withCue(golang.Container(d, platform, goVersion), src)
 
-	if _, err := os.Stat(".citools"); err == nil {
+	if _, err := os.Stat("./.citools"); err == nil {
 		log.Info("Detected .citools directory, including into the build.")
 		// .citools contain refs to executable dependencies
 		builder = builder.WithDirectory("/src/.citools", src.Directory(".citools"))
