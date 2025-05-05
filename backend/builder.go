@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-build/containers"
 	"github.com/grafana/grafana-build/golang"
 	"log/slog"
+	"os"
 )
 
 // BuildOpts are general options that can change the way Grafana is compiled regardless of distribution.
@@ -179,15 +180,20 @@ func Builder(
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
 	// withCue is only required during `make gen-go` in 9.5.x or older.
-	return withCue(golang.Container(d, platform, goVersion), src).
-		WithExec([]string{"apk", "add", "make"}).
+	builder := withCue(golang.Container(d, platform, goVersion), src)
+
+	if _, err := os.Stat(".citools"); err == nil {
+		// .citools contain refs to executable dependencies
+		builder = builder.WithDirectory("/src/.citools", src.Directory(".citools"))
+	}
+
+	return builder.WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
-		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
