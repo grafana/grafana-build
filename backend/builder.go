@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // BuildOpts are general options that can change the way Grafana is compiled regardless of distribution.
@@ -183,15 +184,9 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	builder := withCue(golang.Container(d, platform, goVersion), src)
 
-	if _, err := os.Stat("./.citools"); err == nil {
-		log.Info("Detected .citools directory, including into the build.")
-		// .citools contain refs to executable dependencies
-		builder = builder.WithDirectory("/src/.citools", src.Directory(".citools"))
-	} else {
-		log.Info(".citools directory not detected.")
-	}
-
 	log.Info("@@@@@@@@@@@@@@@@@@@")
+
+	var citoolsDir string
 	filepath.Walk("./", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -201,11 +196,18 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 			return nil
 		}
 
-		log.Info(path)
+		if strings.HasSuffix(info.Name(), ".citools") {
+			citoolsDir = path
+		}
 		return nil
 	})
-
-	log.Info("@@@@@@@@@@@@@@@@@@@")
+	if citoolsDir != "" {
+		log.Info("Detected .citools directory, including into the build.")
+		// .citools contain refs to executable dependencies
+		builder = builder.WithDirectory("/src/.citools", src.Directory(".citools"))
+	} else {
+		log.Info(".citools directory not detected.")
+	}
 
 	return builder.WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
