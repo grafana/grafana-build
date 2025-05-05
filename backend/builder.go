@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-build/golang"
 	"log/slog"
 	"os"
+	"path/filepath"
 )
 
 // BuildOpts are general options that can change the way Grafana is compiled regardless of distribution.
@@ -189,6 +190,22 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 	} else {
 		log.Info(".citools directory not detected.")
 	}
+
+	log.Info("@@@@@@@@@@@@@@@@@@@")
+	filepath.Walk("./", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			return nil
+		}
+
+		log.Info(path)
+		return nil
+	})
+
+	log.Info("@@@@@@@@@@@@@@@@@@@")
 
 	return builder.WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
