@@ -196,11 +196,15 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 			return nil
 		}
 
+		log.Info(path)
 		if strings.HasSuffix(info.Name(), ".citools") {
 			citoolsDir = path
 		}
 		return nil
 	})
+
+	log.Info("@@@@@")
+	log.Info("Citools dir: ", citoolsDir)
 	if citoolsDir != "" {
 		log.Info("Detected .citools directory, including into the build.")
 		// .citools contain refs to executable dependencies
