@@ -52,7 +52,7 @@ var PackageNameFlags = []pipeline.Flag{
 	{
 		Name: "pro",
 		Options: map[pipeline.FlagOption]any{
-			DockerRepositories: []string{"grafana-pro-image-tags"},
+			DockerRepositories: []string{"grafana-pro"},
 			PackageName:        string(packages.PackagePro),
 			Enterprise:         true,
 			WireTag:            "pro",

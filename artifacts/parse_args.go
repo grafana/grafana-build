@@ -62,14 +62,15 @@ func ArtifactsFromStrings(ctx context.Context, log *slog.Logger, a []string, reg
 	return artifacts, nil
 }
 
-// Parse parses the artifact string `val` and finds the matching initializer.
-func Parse(ctx context.Context, log *slog.Logger, val string, initializers map[string]Initializer, state pipeline.StateHandler) (*pipeline.Artifact, error) {
-	initializer, err := findInitializer(val, initializers)
+// Parse parses the artifact string `artifact` and finds the matching initializer.
+func Parse(ctx context.Context, log *slog.Logger, artifact string, initializers map[string]Initializer, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	artifact = strings.TrimSpace(artifact)
+	initializer, err := findInitializer(artifact, initializers)
 	if err != nil {
 		return nil, err
 	}
 
 	initializerFunc := initializer.InitializerFunc
 	// TODO soon, the initializer might need more info about flags
-	return initializerFunc(ctx, log, val, state)
+	return initializerFunc(ctx, log, artifact, state)
 }
