@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: stable
           cache: true
-      - uses: golangci/golangci-lint-action@v4
+      - uses: golangci/golangci-lint-action@d6238b002a20823d52840fda27e2d4891c5952dc
         with:
           version: latest
           args: --max-same-issues=0 --max-issues-per-linter=0 --verbose
