@@ -2,7 +2,6 @@ package artifacts
 
 import (
 	"context"
-	"log"
 	"log/slog"
 
 	"dagger.io/dagger"
@@ -30,10 +29,6 @@ type Version struct {
 }
 
 func (b *Version) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	log.Println("builder")
-	log.Println("builder")
-	log.Println("builder")
-	log.Println("builder")
 	return opts.Client.Container().WithNewFile("/VERSION", b.Version), nil
 }
 
@@ -42,11 +37,6 @@ func (b *Version) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error
 }
 
 func (b *Version) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
-	log.Println("buildfile")
-	log.Println("buildfile")
-	log.Println("buildfile")
-	log.Println("buildfile")
-	log.Println("buildfile")
 	return builder.File("/VERSION"), nil
 }
 
