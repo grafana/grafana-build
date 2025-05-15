@@ -1,8 +1,0 @@
-name: Build Grafana Backend
-outputs: {}
-inputs: {}
-runs:
-  using: composite
-  steps:
-  - shell: bash
-    run: dagger run go run ./cmd backend build
