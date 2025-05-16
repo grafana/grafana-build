@@ -19,12 +19,14 @@ type Flag struct {
 
 // OptionsHandler is used for storing and setting options populated from artifact flags in a map.
 type OptionsHandler struct {
-	Options map[FlagOption]any
+	Artifact string
+	Options  map[FlagOption]any
 }
 
-func NewOptionsHandler() *OptionsHandler {
+func NewOptionsHandler(artifact string) *OptionsHandler {
 	return &OptionsHandler{
-		Options: map[FlagOption]any{},
+		Artifact: artifact,
+		Options:  map[FlagOption]any{},
 	}
 }
 
@@ -46,7 +48,7 @@ func (o *OptionsHandler) Apply(flag Flag) error {
 func (o *OptionsHandler) Get(option FlagOption) (any, error) {
 	val, ok := o.Options[option]
 	if !ok {
-		return "", fmt.Errorf("%s: %w", option, ErrorFlagOptionNotFound)
+		return "", fmt.Errorf("[%s] %s: %w", o.Artifact, option, ErrorFlagOptionNotFound)
 	}
 
 	return val, nil
@@ -83,9 +85,9 @@ func (o *OptionsHandler) Bool(option FlagOption) (bool, error) {
 	return v.(bool), nil
 }
 
-func ParseFlags(astring string, flags []Flag) (*OptionsHandler, error) {
-	h := NewOptionsHandler()
-	f := strings.Split(astring, ":")
+func ParseFlags(artifact string, flags []Flag) (*OptionsHandler, error) {
+	h := NewOptionsHandler(artifact)
+	f := strings.Split(artifact, ":")
 
 	for _, v := range f {
 		for _, flag := range flags {
