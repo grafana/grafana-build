@@ -43,6 +43,8 @@ type Backend struct {
 	GoVersion      string
 	ViceroyVersion string
 
+	GoBuildCache *dagger.CacheVolume
+	GoModCache   *dagger.CacheVolume
 	// Version is embedded in the binary at build-time
 	Version string
 }
@@ -57,6 +59,8 @@ func (b *Backend) Builder(ctx context.Context, opts *pipeline.ArtifactContainerO
 		b.Src,
 		b.GoVersion,
 		b.ViceroyVersion,
+		b.GoBuildCache,
+		b.GoModCache,
 	)
 }
 
@@ -127,6 +131,8 @@ type NewBackendOpts struct {
 	Tags           []string
 	Static         bool
 	WireTag        string
+	GoBuildCache   *dagger.CacheVolume
+	GoModCache     *dagger.CacheVolume
 }
 
 func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
@@ -135,6 +141,16 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 	viceroyVersion, err := state.String(ctx, arguments.ViceroyVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	goModCache, err := state.CacheVolume(ctx, arguments.GoModCache)
+	if err != nil {
+		return nil, err
+	}
+
+	goBuildCache, err := state.CacheVolume(ctx, arguments.GoBuildCache)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +211,8 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 			GoVersion:      goVersion,
 			ViceroyVersion: viceroyVersion,
 			Src:            src,
+			GoModCache:     goModCache,
+			GoBuildCache:   goBuildCache,
 		},
 	})
 }
@@ -221,6 +239,8 @@ func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *Ne
 			GoVersion:      opts.GoVersion,
 			ViceroyVersion: opts.ViceroyVersion,
 			Src:            opts.Src,
+			GoModCache:     opts.GoModCache,
+			GoBuildCache:   opts.GoBuildCache,
 		},
 	})
 }

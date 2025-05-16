@@ -33,7 +33,7 @@ func GoLDFlags(flags []LDFlag) string {
 
 // GoBuildCommand returns the arguments for go build to be used in 'WithExec'.
 func GoBuildCommand(output string, ldflags []LDFlag, tags []string, main string) []string {
-	args := []string{"go", "build",
+	args := []string{"go", "build", "-v", "-x",
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),
 		"-trimpath",
