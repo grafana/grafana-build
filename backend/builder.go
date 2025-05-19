@@ -137,12 +137,11 @@ func Builder(
 	src *dagger.Directory,
 	goVersion string,
 	viceroyVersion string,
+	goBuildCache *dagger.CacheVolume,
+	goModCache *dagger.CacheVolume,
 ) (*dagger.Container, error) {
 	var (
-		version  = opts.Version
-		cacheKey = "go-mod-" + version
-		cacheDir = golang.ModuleDir(d, platform, src, goVersion)
-		cache    = d.CacheVolume(cacheKey)
+		version = opts.Version
 	)
 
 	// for some distros we use the golang official iamge. For others, we use viceroy.
@@ -150,6 +149,10 @@ func Builder(
 	if err != nil {
 		return nil, err
 	}
+
+	builder = builder.
+		WithMountedCache("/root/.cache/go", goBuildCache).
+		WithEnvVariable("GOCACHE", "/root/.cache/go")
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 
@@ -170,7 +173,7 @@ func Builder(
 
 	builder = golang.WithCachedGoDependencies(
 		builder,
-		cacheDir, cache,
+		goModCache,
 	)
 
 	return builder, nil

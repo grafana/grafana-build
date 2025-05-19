@@ -101,6 +101,16 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 
+	goModCache, err := state.CacheVolume(ctx, arguments.GoModCache)
+	if err != nil {
+		return nil, err
+	}
+
+	goBuildCache, err := state.CacheVolume(ctx, arguments.GoBuildCache)
+	if err != nil {
+		return nil, err
+	}
+
 	p, err := GetPackageDetails(ctx, options, state)
 	if err != nil {
 		return nil, err
@@ -111,7 +121,7 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 	if err != nil {
 		return nil, err
 	}
-	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, static, wireTag, tags, goVersion, viceroyVersion, experiments)
+	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, goModCache, goBuildCache, static, wireTag, tags, goVersion, viceroyVersion, experiments)
 }
 
 // NewTarball returns a properly initialized Tarball artifact.
@@ -127,6 +137,8 @@ func NewTarball(
 	buildID string,
 	src *dagger.Directory,
 	cache *dagger.CacheVolume,
+	goModCache *dagger.CacheVolume,
+	goBuildCache *dagger.CacheVolume,
 	static bool,
 	wireTag string,
 	tags []string,
@@ -146,6 +158,8 @@ func NewTarball(
 		ViceroyVersion: viceroyVersion,
 		Experiments:    experiments,
 		Enterprise:     enterprise,
+		GoBuildCache:   goBuildCache,
+		GoModCache:     goModCache,
 	})
 	if err != nil {
 		return nil, err

@@ -20,19 +20,9 @@ func Container(d *dagger.Client, platform dagger.Platform, version string) *dagg
 	return d.Container(opts).From(goImage)
 }
 
-func WithCachedGoDependencies(container *dagger.Container, dir *dagger.Directory, cache *dagger.CacheVolume) *dagger.Container {
-	return container.WithMountedCache("/go/pkg/mod", cache, dagger.ContainerWithMountedCacheOpts{
-		Source: dir,
-	})
-}
-
-func ModuleDir(d *dagger.Client, platform dagger.Platform, src *dagger.Directory, goVersion string) *dagger.Directory {
-	container := Container(d, platform, goVersion).
-		WithWorkdir("/src").
-		// We need to mount the whole src directory as it might contain local
-		// Go modules:
-		WithMountedDirectory("/src", src).
-		WithExec([]string{"go", "mod", "download"})
-
-	return container.Directory("/go/pkg/mod")
+func WithCachedGoDependencies(container *dagger.Container, cache *dagger.CacheVolume) *dagger.Container {
+	return container.
+		WithEnvVariable("GOMODCACHE", "/go/pkg/mod").
+		WithMountedCache("/go/pkg/mod", cache).
+		WithExec([]string{"ls", "-al", "/go/pkg/mod"})
 }

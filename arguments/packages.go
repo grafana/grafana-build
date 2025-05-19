@@ -12,7 +12,8 @@ import (
 
 var flagBuildID = &cli.StringFlag{
 	Name:  "build-id",
-	Usage: "Build ID to use in package names. If not set, then a random string is generated",
+	Usage: "Build ID to use in package names",
+	Value: "local",
 }
 
 var BuildID = pipeline.Argument{
