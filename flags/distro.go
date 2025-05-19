@@ -14,6 +14,7 @@ var StaticDistributions = []backend.Distribution{
 	backend.DistLinuxARM64,
 	backend.DistLinuxARMv7,
 	backend.DistLinuxRISCV64,
+	backend.DistLinuxS390X,
 }
 
 var DynamicDistributions = []backend.Distribution{
