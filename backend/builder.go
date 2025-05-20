@@ -184,10 +184,26 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 	// withCue is only required during `make gen-go` in 9.5.x or older.
 	builder := withCue(golang.Container(d, platform, goVersion), src)
 
-	log.Info("@@@@@@@@@@@@@@@@@@@")
+	// .citools contain refs to executable dependencies
+	builder = withCitoolsDir(log, builder, src)
 
+	return builder.WithExec([]string{"apk", "add", "make"}).
+		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+		}).
+		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/apps", src.Directory("apps")).
+		WithDirectory("/src/.bingo", src.Directory(".bingo")).
+		WithFile("/src/Makefile", src.File("Makefile")).
+		WithWorkdir("/src").
+		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
+		File("/src/pkg/server/wire_gen.go")
+}
+
+func withCitoolsDir(log *slog.Logger, builder *dagger.Container, src *dagger.Directory) *dagger.Container {
 	var citoolsDir string
-	filepath.Walk("./", func(path string, info os.FileInfo, err error) error {
+
+	_ = filepath.Walk("./", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -203,25 +219,11 @@ func Wire(d *dagger.Client, log *slog.Logger, src *dagger.Directory, platform da
 		return nil
 	})
 
-	log.Info("@@@@@")
-	log.Info("Citools dir: ", citoolsDir)
-	if citoolsDir != "" {
-		log.Info("Detected .citools directory, including into the build.")
-		// .citools contain refs to executable dependencies
-		builder = builder.WithDirectory("/src/.citools", src.Directory(".citools"))
-	} else {
+	if citoolsDir == "" {
 		log.Info(".citools directory not detected.")
+		return builder
 	}
 
-	return builder.WithExec([]string{"apk", "add", "make"}).
-		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
-		}).
-		WithDirectory("/src/pkg", src.Directory("pkg")).
-		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/.bingo", src.Directory(".bingo")).
-		WithFile("/src/Makefile", src.File("Makefile")).
-		WithWorkdir("/src").
-		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
-		File("/src/pkg/server/wire_gen.go")
+	log.Info("Detected .citools directory, including into the build.")
+	return builder.WithDirectory("/src/.citools", src.Directory(".citools"))
 }
