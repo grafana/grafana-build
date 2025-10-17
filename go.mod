@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	dagger.io/dagger v0.18.6
 	github.com/Masterminds/semver v1.5.0
-	github.com/quasilyte/go-ruleguard/dsl v0.3.22
+	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.6
 	go.opentelemetry.io/otel v1.35.0
