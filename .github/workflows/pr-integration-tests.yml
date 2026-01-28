@@ -17,16 +17,16 @@ jobs:
       contents: read
     steps:
       - name: Checkout grafana-build
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Checkout grafana
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: grafana/grafana
           ref: ${{ matrix.version }}
           path: grafana
       - name: Checkout grafana-enterprise
         if: matrix.type == 'enterprise'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: grafana/grafana-enterprise
