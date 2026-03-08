@@ -2,7 +2,7 @@ module github.com/grafana/grafana-build
 
 go 1.23.8
 
-toolchain go1.24.1
+toolchain go1.26.1
 
 require (
 	dagger.io/dagger v0.18.6
