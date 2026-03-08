@@ -1,8 +1,6 @@
 module github.com/grafana/grafana-build
 
-go 1.23.8
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
 	dagger.io/dagger v0.18.6
@@ -12,7 +10,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.6
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
-	golang.org/x/sync v0.14.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
